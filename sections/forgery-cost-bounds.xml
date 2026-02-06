@@ -1,0 +1,26 @@
+<section anchor="sec-forgery" title="Forgery Cost Bounds">
+
+  <t>This section establishes lower bounds on the computational cost
+  of forging Proof of Process evidence, providing quantifiable
+  security guarantees for Relying Parties.</t>
+
+  <section anchor="sec-forgery-model" title="Cost Model">
+    <t>The total cost of forging an evidence chain of duration D
+    with n evidence packets is:</t>
+    <t>C_total = C_vdf(n, T_difficulty) + C_entropy(n) + C_hardware</t>
+    <t>where:</t>
+    <t>
+      <list style="symbols">
+        <t>C_vdf is the cost of computing n VDF proofs sequentially,
+        which cannot be parallelized below T_difficulty sequential
+        steps per proof.</t>
+        <t>C_entropy is the cost of generating synthetic behavioral
+        data with sufficient entropy to pass statistical tests.</t>
+        <t>C_hardware is the cost of obtaining a valid device
+        attestation certificate (zero for software-only tiers,
+        significant for hardware-bound tiers).</t>
+      </list>
+    </t>
+  </section>
+
+</section>
