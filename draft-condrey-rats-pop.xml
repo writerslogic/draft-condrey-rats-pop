@@ -12,6 +12,9 @@
   <!ENTITY RFC2104 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.2104.xml">
   <!ENTITY RFC3339 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.3339.xml">
   <!ENTITY RFC6234 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.6234.xml">
+  <!ENTITY RFC8610 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8610.xml">
+  <!ENTITY RFC8949 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8949.xml">
+  <!ENTITY RFC9052 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9052.xml">
   <!ENTITY RFC9334 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9334.xml">
   <!ENTITY RFC3161 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.3161.xml">
   <!ENTITY RFC5869 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.5869.xml">
@@ -179,6 +182,9 @@
         &RFC2104;
         &RFC3339;
         &RFC6234;
+        &RFC8610;
+        &RFC8949;
+        &RFC9052;
         &RFC9334;
       </references>
 
