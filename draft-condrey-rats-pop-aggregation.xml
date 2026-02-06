@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+  <!ENTITY RFC2119 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml">
+  <!ENTITY RFC8174 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8174.xml">
+  <!ENTITY RFC6234 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.6234.xml">
+  <!ENTITY RFC6962 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.6962.xml">
+  <!ENTITY RFC8610 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8610.xml">
+  <!ENTITY RFC8949 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8949.xml">
+  <!ENTITY RFC9052 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.9052.xml">
+  <!ENTITY RFC9334 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.9334.xml">
+]>
+<rfc ipr="trust200902" category="info" submissionType="independent"
+     docName="draft-condrey-rats-pop-aggregation-00">
+
+  <front>
+    <title abbrev="PoP Aggregation">Proof of Process: Succinct Evidence Aggregation Extension</title>
+
+    <author fullname="David Condrey" initials="D." surname="Condrey">
+      <organization>Writerslogic Inc</organization>
+      <address>
+        <email>david@writerslogic.com</email>
+      </address>
+    </author>
+
+    <date month="February" day="6" year="2026"/>
+
+    <area>Security</area>
+    <workgroup>Remote ATtestation procedureS</workgroup>
+
+    <keyword>VDF</keyword>
+    <keyword>aggregation</keyword>
+    <keyword>STARK</keyword>
+    <keyword>Halo2</keyword>
+    <keyword>Succinct Evidence</keyword>
+
+    <abstract>
+      <t>This document defines an extension to the Proof of Process
+      architecture that enables succinct aggregation of evidence records
+      using Merkle tree structures and recursive proof systems.  By
+      leveraging Verifiable Delay Functions (VDFs), STARK proof
+      composition, and Halo2 recursive circuits, Verifiers can
+      efficiently validate large volumes of authorship evidence without
+      processing each individual record.  The aggregation mechanism
+      preserves the temporal ordering guarantees of the base protocol
+      while reducing verification complexity from linear to
+      logarithmic.</t>
+    </abstract>
+  </front>
+
+  <middle>
+    <section title="Introduction">
+      <t>The Proof of Process (PoP) architecture defined in the base
+      specification generates a continuous stream of evidence records
+      during the creative authorship process.  For long-duration works
+      or prolific authors, the volume of evidence can grow to millions
+      of individual records, making full verification impractical for
+      many Relying Parties.</t>
+
+      <t>This document specifies a succinct aggregation extension that
+      compresses arbitrarily large evidence chains into constant-size
+      proofs.  The extension operates at three levels: Merkle tree
+      commitment of batched VDF outputs, STARK-based proof composition
+      for cross-batch verification, and Halo2 recursive circuits for
+      full-chain summarization.</t>
+
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL",
+      "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT
+      RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be
+      interpreted as described in BCP 14 <xref target="RFC2119"/>
+      <xref target="RFC8174"/> when, and only when, they appear in
+      all capitals, as shown here.</t>
+    </section>
+
+    <section title="Merkle Tree Aggregation">
+      <t>Evidence records produced during a single authorship session
+      are organized into a binary Merkle tree as defined in
+      <xref target="RFC6962"/>.  Each leaf node contains the SHA-256
+      hash (<xref target="RFC6234"/>) of a serialized evidence record
+      encoded in CBOR (<xref target="RFC8949"/>).  The Merkle root
+      serves as a succinct commitment to the entire batch.</t>
+
+      <t>The Attester MUST construct the Merkle tree using the
+      append-only property: new evidence records are added as
+      rightmost leaves, and the tree is never rebalanced.  This
+      ensures that inclusion proofs for earlier records remain valid
+      as new records are appended.  Batch sizes SHOULD be powers of
+      two to simplify proof generation.</t>
+
+      <t>Inclusion proofs allow a Verifier to confirm that a specific
+      evidence record is part of a committed batch without downloading
+      the entire batch.  The proof consists of the sibling hashes
+      along the path from the leaf to the root, requiring O(log n)
+      hashes for a batch of n records.</t>
+    </section>
+
+    <section title="Recursive Proof Composition">
+      <t>While Merkle trees provide efficient inclusion proofs within
+      a single batch, verifying temporal ordering across batches still
+      requires processing each batch root sequentially.  This document
+      defines a recursive proof composition scheme using STARK and
+      Halo2 proof systems to eliminate this linear dependency.</t>
+
+      <t>A STARK proof attests to the correct computation of VDF
+      outputs within a batch.  The prover generates a STARK proof
+      that the VDF chain from the first to the last record in a batch
+      was computed correctly.  Multiple STARK proofs are then composed
+      using Halo2 recursive circuits, producing a single constant-size
+      proof that covers an arbitrary number of batches.</t>
+
+      <t>The recursive proof MUST be signed using COSE_Sign1
+      (<xref target="RFC9052"/>) with the same Attester key used for
+      individual evidence records.  The payload of the COSE structure
+      contains the Halo2 proof bytes, the first and last VDF outputs,
+      and the total record count.</t>
+    </section>
+
+    <section title="Security Considerations">
+      <t>The aggregation mechanism introduces a trust dependency on
+      the soundness of the underlying proof systems.  If the STARK or
+      Halo2 proof system is broken, an adversary could forge aggregated
+      proofs without possessing the original evidence.  Implementers
+      SHOULD support multiple proof systems to allow migration.</t>
+    </section>
+
+    <section title="IANA Considerations">
+      <t>This document has no IANA actions.</t>
+    </section>
+  </middle>
+
+  <back>
+    <references title="Normative References">
+      &RFC2119;
+      &RFC8174;
+      &RFC6234;
+      &RFC6962;
+      &RFC8610;
+      &RFC8949;
+      &RFC9052;
+    </references>
+
+    <references title="Informative References">
+      &RFC9334;
+    </references>
+  </back>
+</rfc>

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+  <!ENTITY RFC2119 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml">
+  <!ENTITY RFC8174 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8174.xml">
+  <!ENTITY RFC8949 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8949.xml">
+  <!ENTITY RFC9052 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.9052.xml">
+  <!ENTITY RFC9334 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.9334.xml">
+  <!ENTITY RFC5280 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.5280.xml">
+  <!ENTITY RFC6960 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.6960.xml">
+]>
+<rfc ipr="trust200902" category="std" consensus="true"
+     submissionType="independent"
+     docName="draft-condrey-rats-witnessd-revocation-00">
+
+  <front>
+    <title abbrev="PoP Revocation">Evidence Status and Revocation Protocol for Proof of Process</title>
+
+    <author fullname="David Condrey" initials="D." surname="Condrey">
+      <organization>Writerslogic Inc</organization>
+      <address>
+        <email>david@writerslogic.com</email>
+      </address>
+    </author>
+
+    <date month="February" day="6" year="2026"/>
+
+    <area>Security</area>
+    <workgroup>Remote ATtestation procedureS</workgroup>
+
+    <keyword>attestation</keyword>
+    <keyword>revocation</keyword>
+    <keyword>privacy</keyword>
+
+    <abstract>
+      <t>This document defines the evidence status and revocation
+      protocol for the Proof of Process architecture.  It specifies
+      mechanisms for revoking compromised evidence chains, checking
+      the validity status of previously issued attestation results,
+      and revoking device attestation certificates when Attester
+      keys are compromised.  The protocol balances the need for
+      timely revocation with author privacy by using privacy-
+      preserving status checking that does not reveal which specific
+      evidence chains are being queried.</t>
+    </abstract>
+  </front>
+
+  <middle>
+    <section title="Introduction">
+      <t>The Proof of Process architecture generates long-lived
+      evidence chains and attestation results that Relying Parties
+      may depend on months or years after their creation.  Over such
+      time spans, the security assumptions underlying the evidence
+      may change: device keys may be compromised, software
+      vulnerabilities may be discovered in Attester implementations,
+      or authors may discover that evidence was collected during
+      periods of unauthorized access to their devices.</t>
+
+      <t>This document defines a revocation and status checking
+      protocol that allows evidence chains and device certificates
+      to be revoked, and that allows Relying Parties to check the
+      current validity of evidence they depend on.  The protocol
+      draws on established revocation mechanisms from the PKI
+      ecosystem (<xref target="RFC5280"/>, <xref target="RFC6960"/>)
+      while adapting them to the specific requirements of the Proof
+      of Process architecture.</t>
+
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL",
+      "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT
+      RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be
+      interpreted as described in BCP 14 <xref target="RFC2119"/>
+      <xref target="RFC8174"/> when, and only when, they appear in
+      all capitals, as shown here.</t>
+    </section>
+
+    <section title="Evidence Revocation">
+      <t>An author MAY revoke a specific evidence chain or a range
+      of evidence records within a chain.  Revocation is performed
+      by submitting a signed revocation request to the status service.
+      The revocation request MUST be signed with the same device key
+      that produced the original evidence, or with a designated
+      revocation key established during enrollment.</t>
+
+      <t>The revocation request contains the evidence chain
+      identifier, the range of sequence numbers to revoke (or a
+      wildcard indicating the entire chain), a revocation reason
+      code, and an optional revocation timestamp.  Valid reason
+      codes include key compromise, software vulnerability,
+      unauthorized access, and voluntary withdrawal.  The request
+      is encoded in CBOR (<xref target="RFC8949"/>) and wrapped
+      in a COSE_Sign1 structure (<xref target="RFC9052"/>).</t>
+
+      <t>Once a revocation request is accepted, the status service
+      MUST include the revoked evidence in all subsequent status
+      responses.  Revocation is permanent and cannot be reversed.
+      If an author wishes to re-establish evidence for a work
+      whose chain was revoked, they MUST create a new evidence
+      chain from the current document state.</t>
+    </section>
+
+    <section title="Status Checking Protocol">
+      <t>Relying Parties check the validity of evidence chains and
+      device certificates using a status checking protocol inspired
+      by OCSP (<xref target="RFC6960"/>).  The Relying Party sends
+      a status request containing the hash of the evidence chain
+      identifier to the status service.  The service responds with
+      a signed status response indicating whether the evidence is
+      valid, revoked, or unknown.</t>
+
+      <t>To protect author privacy, the status checking protocol
+      uses a blinded query mechanism.  The Relying Party computes a
+      blinded hash of the evidence chain identifier and sends this
+      blinded value to the status service.  The service evaluates
+      the query against its revocation database without learning
+      which specific evidence chain is being checked.  This prevents
+      the status service from building a profile of which evidence
+      chains are most frequently queried.</t>
+
+      <t>Status responses are signed by the status service key and
+      include a freshness timestamp and a next-update time.  Relying
+      Parties SHOULD cache status responses until the next-update
+      time to reduce query frequency.  A cached response that has
+      passed its next-update time MUST be refreshed before the
+      Relying Party makes any new trust decisions based on the
+      corresponding evidence.</t>
+    </section>
+
+    <section title="Device Certificate Revocation">
+      <t>Device attestation certificates issued during enrollment
+      may need to be revoked if the Attester's private key is
+      compromised.  Certificate revocation follows the standard
+      X.509 revocation model (<xref target="RFC5280"/>), with the
+      Endorser publishing Certificate Revocation Lists (CRLs) at
+      regular intervals.  Verifiers MUST check the revocation status
+      of the device certificate before accepting evidence signed by
+      the corresponding key as described in the RATS architecture
+      (<xref target="RFC9334"/>).</t>
+
+      <t>When a device certificate is revoked, all evidence produced
+      by that device after the revocation effective date is
+      automatically considered invalid.  Evidence produced before
+      the revocation effective date remains valid unless separately
+      revoked through the evidence revocation mechanism described
+      above.  This distinction allows Relying Parties to continue
+      trusting historical evidence from a device whose key was
+      compromised at a known point in time.</t>
+    </section>
+
+    <section title="Security Considerations">
+      <t>The revocation protocol introduces a dependency on the
+      availability of the status service.  If the status service is
+      unreachable, Relying Parties must decide whether to accept
+      evidence without a fresh status check (fail-open) or reject
+      it (fail-closed).  This document RECOMMENDS a fail-closed
+      policy for high-value evidence, such as evidence used in
+      legal proceedings, and permits fail-open with cached responses
+      for lower-stakes applications.</t>
+    </section>
+
+    <section title="IANA Considerations">
+      <t>This document has no IANA actions.</t>
+    </section>
+  </middle>
+
+  <back>
+    <references title="Normative References">
+      &RFC2119;
+      &RFC8174;
+      &RFC8949;
+      &RFC9052;
+      &RFC5280;
+      &RFC6960;
+    </references>
+
+    <references title="Informative References">
+      &RFC9334;
+    </references>
+  </back>
+</rfc>
