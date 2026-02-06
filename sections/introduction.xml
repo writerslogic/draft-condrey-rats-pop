@@ -1,0 +1,24 @@
+<section anchor="sec-introduction" title="Introduction">
+
+  <t>The proliferation of AI-generated content has created an urgent
+  need for mechanisms that can attest to the human authorship process
+  of digital works. Current approaches such as watermarking and
+  AI-detection classifiers operate on the finished output and are
+  increasingly unreliable as generative models improve.</t>
+
+  <t>This document specifies the Proof of Process (PoP) protocol,
+  which takes a fundamentally different approach: rather than analyzing
+  finished content, it captures tamper-evident evidence of the creation
+  process itself. The framework builds on the IETF RATS architecture
+  <xref target="RFC9334"/> and defines roles, evidence formats, and
+  verification procedures for process-based authorship attestation.</t>
+
+  <t>The key insight is that human authorship exhibits measurable
+  behavioral characteristics — typing cadence, revision patterns,
+  pause distributions, error-correction sequences — that are
+  computationally expensive to fabricate in real time. By binding
+  these behavioral observations to cryptographic time proofs, the
+  framework creates evidence that is both tamper-evident and
+  temporally authentic.</t>
+
+</section>

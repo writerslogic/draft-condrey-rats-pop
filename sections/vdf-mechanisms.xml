@@ -1,0 +1,26 @@
+<section anchor="sec-vdf" title="Verifiable Delay Function Mechanisms">
+
+  <t>The Proof of Process framework employs Verifiable Delay Functions
+  (VDFs) to bind evidence to elapsed wall-clock time. A VDF is a
+  function that requires a prescribed number of sequential computation
+  steps to evaluate, but whose output can be efficiently verified.</t>
+
+  <section anchor="sec-vdf-construction" title="VDF Construction">
+    <t>This document specifies the use of repeated squaring in an
+    RSA group as the VDF primitive:</t>
+    <t>y = x^(2^T_difficulty) mod N</t>
+    <t>where x is derived from the evidence packet hash, T_difficulty
+    controls the time parameter, and N is an RSA modulus from a
+    trusted setup. The proof pi enables verification in O(log T)
+    time using Wesolowski's protocol.</t>
+  </section>
+
+  <section anchor="sec-vdf-calibration" title="Difficulty Calibration">
+    <t>The T_difficulty parameter MUST be calibrated to the Attester's
+    hardware such that the VDF evaluation requires approximately the
+    same wall-clock time as the evidence collection window. This
+    calibration is performed during device enrollment and recorded
+    in the device attestation certificate.</t>
+  </section>
+
+</section>
