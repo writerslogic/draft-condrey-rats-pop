@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+  <!ENTITY RFC2119 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml">
+  <!ENTITY RFC8174 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8174.xml">
+  <!ENTITY RFC8610 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8610.xml">
+  <!ENTITY RFC8949 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8949.xml">
+  <!ENTITY RFC9052 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.9052.xml">
+  <!ENTITY RFC9334 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.9334.xml">
+]>
+<rfc ipr="trust200902" category="info" submissionType="independent"
+     docName="draft-condrey-rats-pop-schema-00">
+
+  <front>
+    <title abbrev="PoP Schema">Proof of Process: CDDL Schema Definition</title>
+
+    <author fullname="David Condrey" initials="D." surname="Condrey">
+      <organization>Writerslogic Inc</organization>
+      <address>
+        <email>david@writerslogic.com</email>
+      </address>
+    </author>
+
+    <date month="February" day="6" year="2026"/>
+
+    <area>Security</area>
+    <workgroup>Remote ATtestation procedureS</workgroup>
+
+    <keyword>CDDL</keyword>
+    <keyword>schema</keyword>
+    <keyword>CBOR</keyword>
+
+    <abstract>
+      <t>This document provides the formal Concise Data Definition
+      Language (CDDL) schema for all data structures used in the
+      Proof of Process architecture.  It defines the CBOR encoding
+      of evidence packets, attestation results, device enrollment
+      records, and revocation status messages.  The schema serves as
+      the normative reference for interoperable implementations of
+      the Proof of Process protocol suite.</t>
+    </abstract>
+  </front>
+
+  <middle>
+    <section title="Introduction">
+      <t>The Proof of Process (PoP) architecture relies on
+      well-defined data structures for evidence collection,
+      attestation, and verification.  This document specifies the
+      CDDL (<xref target="RFC8610"/>) schema for all protocol
+      messages, ensuring that independent implementations can
+      interoperate when exchanging evidence and attestation results
+      encoded in CBOR (<xref target="RFC8949"/>).</t>
+
+      <t>The schema definitions in this document are normative.
+      Implementations that claim conformance with the Proof of Process
+      specification MUST produce and consume data structures that
+      validate against the CDDL rules defined herein.</t>
+
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL",
+      "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT
+      RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be
+      interpreted as described in BCP 14 <xref target="RFC2119"/>
+      <xref target="RFC8174"/> when, and only when, they appear in
+      all capitals, as shown here.</t>
+    </section>
+
+    <section title="Evidence Packet Schema">
+      <t>An evidence packet is the fundamental unit of authorship
+      evidence.  It captures a snapshot of the creative process at
+      a single point in time and is signed by the Attester's device
+      key using COSE_Sign1 (<xref target="RFC9052"/>).</t>
+
+      <t>The evidence packet contains the following fields: a
+      monotonically increasing sequence number, a UNIX timestamp in
+      milliseconds, the VDF output binding this record to its
+      predecessor, a content hash of the document state, keystroke
+      timing entropy, and an optional process metrics block.  All
+      fields are encoded as a CBOR map with integer keys for
+      compact representation.</t>
+
+      <figure>
+        <preamble>The CDDL definition of an evidence packet:</preamble>
+        <artwork><![CDATA[
+evidence-packet = {
+  1 => uint,              ; sequence number
+  2 => uint,              ; timestamp (ms since epoch)
+  3 => bstr,              ; VDF output
+  4 => bstr .size 32,     ; content hash (SHA-256)
+  5 => [+ uint],          ; keystroke timing deltas
+  ? 6 => process-metrics, ; optional process metrics
+}
+
+process-metrics = {
+  1 => uint,    ; words added
+  2 => uint,    ; words deleted
+  3 => uint,    ; cursor repositions
+  4 => float32, ; typing speed (WPM)
+}
+]]></artwork>
+      </figure>
+    </section>
+
+    <section title="Attestation Result Schema">
+      <t>An attestation result is produced by a Verifier after
+      evaluating one or more evidence packets against an appraisal
+      policy.  The result indicates whether the evidence is consistent
+      with genuine human authorship and includes a confidence score.</t>
+
+      <t>The attestation result is encoded as a COSE_Sign1 structure
+      where the payload is a CBOR map containing the verification
+      outcome, the range of sequence numbers evaluated, and the
+      appraisal policy identifier used.  Verifiers MUST sign the
+      result with their own key, distinct from the Attester key.</t>
+
+      <figure>
+        <preamble>The CDDL definition of an attestation result:</preamble>
+        <artwork><![CDATA[
+attestation-result = {
+  1 => verdict,           ; verification outcome
+  2 => uint,              ; first sequence number
+  3 => uint,              ; last sequence number
+  4 => tstr,              ; appraisal policy ID
+  5 => float32,           ; confidence score [0.0, 1.0]
+  ? 6 => [+ tstr],        ; warning messages
+}
+
+verdict = &(
+  authentic: 0,
+  inconclusive: 1,
+  fabricated: 2,
+)
+]]></artwork>
+      </figure>
+    </section>
+
+    <section title="Security Considerations">
+      <t>Schema validation alone does not guarantee the authenticity
+      of evidence or attestation results.  Implementations MUST
+      perform cryptographic signature verification in addition to
+      schema validation.  A well-formed evidence packet that fails
+      signature verification MUST be rejected regardless of schema
+      conformance.</t>
+    </section>
+
+    <section title="IANA Considerations">
+      <t>This document has no IANA actions.  Future versions may
+      request CBOR tag assignments for the data structures defined
+      herein.</t>
+    </section>
+  </middle>
+
+  <back>
+    <references title="Normative References">
+      &RFC2119;
+      &RFC8174;
+      &RFC8610;
+      &RFC8949;
+      &RFC9052;
+    </references>
+
+    <references title="Informative References">
+      &RFC9334;
+    </references>
+  </back>
+</rfc>
