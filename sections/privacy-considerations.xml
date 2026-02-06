@@ -16,7 +16,7 @@
         document being authored. Only cryptographic digests of content
         state transitions are retained.</t>
         <t>Behavioral features MUST be quantized to prevent
-        de-anonymization through stylometric analysis.
+        de-anonymization through stylometric analysis.</t>
       </list>
     </t>
   </section>
