@@ -1,0 +1,30 @@
+<section anchor="sec-jitter-seal" title="Jitter Seal Mechanism">
+
+  <t>The jitter seal binds evidence packets to the physical timing
+  characteristics of the authorship environment, creating a
+  non-transferable proof of temporal authenticity.</t>
+
+  <section anchor="sec-jitter-capture" title="Timing Capture">
+    <t>The Attester captures inter-keystroke timing intervals at
+    microsecond resolution. These intervals exhibit natural jitter
+    from human motor control that serves as a behavioral entropy
+    source. The jitter seal is computed as:</t>
+    <t>seal = HMAC-SHA-256(device_key, timing_vector || T_difficulty || nonce)</t>
+    <t>where T_difficulty is the VDF difficulty parameter that
+    determines the minimum wall-clock time required to produce
+    the seal.</t>
+  </section>
+
+  <section anchor="sec-jitter-verify" title="Seal Verification">
+    <t>The Verifier checks the jitter seal by:</t>
+    <t>
+      <list style="numbers">
+        <t>Reconstructing the timing vector from the evidence packet.</t>
+        <t>Verifying the HMAC using the Attester's public key.</t>
+        <t>Confirming that the VDF proof is valid for the stated
+        T_difficulty parameter.</t>
+      </list>
+    </t>
+  </section>
+
+</section>

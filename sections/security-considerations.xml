@@ -1,0 +1,27 @@
+<section anchor="sec-security" title="Security Considerations">
+
+  <t>The security of the Proof of Process framework depends on several
+  assumptions about the Attester's operating environment and the
+  cryptographic primitives employed.</t>
+
+  <section anchor="sec-security-attester" title="Attester Compromise">
+    <t>If the Attester's device key is compromised, an adversary can
+    forge evidence packets. Mitigations include:</t>
+    <t>
+      <list style="symbols">
+        <t>Hardware-bound keys stored in a TPM or Secure Enclave.</t>
+        <t>Key rotation with forward secrecy for evidence chains.</t>
+        <t>Device attestation certificates issued by the platform
+        vendor.</t>
+      </list>
+    </t>
+  </section>
+
+  <section anchor="sec-security-replay" title="Replay Attacks">
+    <t>An adversary may attempt to replay previously captured evidence
+    packets. The VDF time-binding and session nonces prevent replay
+    across sessions, but within-session replay is mitigated by the
+    monotonic sequence numbers in each evidence packet.</t>
+  </section>
+
+</section>
