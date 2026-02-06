@@ -1,0 +1,39 @@
+<section anchor="sec-privacy" title="Privacy Considerations">
+
+  <t>The Proof of Process framework collects behavioral evidence during
+  content creation. This section addresses the privacy implications of
+  such collection and the mechanisms employed to protect author privacy.</t>
+
+  <section anchor="sec-privacy-data-min" title="Data Minimization">
+    <t>Evidence packets MUST be constructed using the principle of data
+    minimization as defined in <xref target="RFC6973"/>. Specifically:</t>
+    <t>
+      <list style="symbols">
+        <t>Keystroke-level timing data MUST be aggregated into statistical
+        summaries (mean, variance, entropy) rather than stored as raw
+        event sequences.</t>
+        <t>The Attester MUST NOT record the plaintext content of the
+        document being authored. Only cryptographic digests of content
+        state transitions are retained.</t>
+        <t>Behavioral features MUST be quantized to prevent
+        de-anonymization through stylometric analysis.
+      </list>
+    </t>
+  </section>
+
+  <section anchor="sec-privacy-continuation" title="Continuation Token Privacy">
+    <t>Continuation tokens (<xref target="sec-continuation"/>) link
+    evidence across sessions. To prevent tracking:</t>
+    <t>
+      <list style="symbols">
+        <t>Tokens MUST be derived using HKDF (<xref target="RFC5869"/>)
+        with a per-session salt.</t>
+        <t>The Verifier MUST NOT be able to correlate tokens across
+        different documents by the same author.</t>
+        <t>Token rotation MUST occur at configurable intervals, with
+        a RECOMMENDED maximum of 24 hours.</t>
+      </list>
+    </t>
+  </section>
+
+</section>
