@@ -6,6 +6,7 @@
   <!ENTITY RFC8949 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8949.xml">
   <!ENTITY RFC9334 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.9334.xml">
   <!ENTITY RFC6962 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.6962.xml">
+  <!ENTITY I-D.condrey-rats-pop SYSTEM "https://bib.ietf.org/public/rfc/bibxml3/reference.I-D.condrey-rats-pop.xml">
 ]>
 <rfc ipr="trust200902" category="info" submissionType="independent"
      docName="draft-condrey-rats-pop-collaborative-00">
@@ -151,6 +152,7 @@
       &RFC9052;
       &RFC8949;
       &RFC6962;
+      &I-D.condrey-rats-pop;
     </references>
 
     <references title="Informative References">

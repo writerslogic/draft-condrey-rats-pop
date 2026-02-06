@@ -7,10 +7,9 @@
   <!ENTITY RFC8949 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8949.xml">
   <!ENTITY RFC9052 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.9052.xml">
   <!ENTITY RFC9334 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.9334.xml">
+  <!ENTITY I-D.condrey-rats-pop SYSTEM "https://bib.ietf.org/public/rfc/bibxml3/reference.I-D.condrey-rats-pop.xml">
 ]>
-<rfc ipr="trust200902" category="std" consensus="true"
-     submissionType="independent"
-     docName="draft-condrey-rats-witnessd-enrollment-00">
+<rfc ipr="trust200902" docName="draft-condrey-rats-witnessd-enrollment-00" category="std" consensus="true" submissionType="independent">
 
   <front>
     <title abbrev="PoP Enrollment">Trust Anchor Bootstrap Protocol for Proof of Process</title>
@@ -159,6 +158,7 @@
 
     <references title="Informative References">
       &RFC9334;
+      &I-D.condrey-rats-pop;
     </references>
   </back>
 </rfc>
