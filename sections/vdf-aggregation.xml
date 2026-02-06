@@ -1,0 +1,25 @@
+<section anchor="sec-vdf-agg" title="VDF Evidence Aggregation">
+
+  <t>When evidence chains span extended authorship sessions, the
+  cumulative VDF proofs can become prohibitively large. This section
+  defines a succinct aggregation mechanism.</t>
+
+  <section anchor="sec-vdf-agg-merkle" title="Merkle-Sampled Proofs">
+    <t>Rather than requiring verification of every VDF proof in the
+    chain, the Verifier MAY use Merkle-sampled audit proofs. The
+    Attester constructs a Merkle tree over all VDF outputs in the
+    chain and provides:</t>
+    <t>
+      <list style="numbers">
+        <t>The Merkle root of all VDF outputs.</t>
+        <t>A random sample of k VDF proofs (where k is determined
+        by the desired statistical confidence).</t>
+        <t>Merkle inclusion proofs for each sampled VDF output.</t>
+      </list>
+    </t>
+    <t>The Verifier checks the sampled VDF proofs and their Merkle
+    inclusion, achieving probabilistic assurance over the entire
+    chain with O(k log n) verification cost instead of O(n).</t>
+  </section>
+
+</section>
