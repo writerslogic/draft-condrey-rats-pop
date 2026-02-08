@@ -9,8 +9,8 @@
     microsecond resolution. These intervals exhibit natural jitter
     from human motor control that serves as a behavioral entropy
     source. The jitter seal is computed as:</t>
-    <t>seal = HMAC-SHA-256(device_key, timing_vector || T_difficulty || nonce)</t>
-    <t>where T_difficulty is the VDF difficulty parameter that
+    <t>seal = HMAC-SHA-256(device_key, timing_vector || t_vdf || nonce)</t>
+    <t>where t_vdf is the VDF difficulty parameter that
     determines the minimum wall-clock time required to produce
     the seal.</t>
   </section>
@@ -22,7 +22,7 @@
         <t>Reconstructing the timing vector from the evidence packet.</t>
         <t>Verifying the HMAC using the Attester's public key.</t>
         <t>Confirming that the VDF proof is valid for the stated
-        T_difficulty parameter.</t>
+        t_vdf parameter.</t>
         <t>Checking that the timing entropy exceeds the minimum
         threshold for the claimed assurance tier.</t>
       </list>

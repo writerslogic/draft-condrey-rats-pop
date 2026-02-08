@@ -8,7 +8,7 @@
       <list style="symbols">
         <t>Typing cadence metrics: mean IKI of 180ms, variance 45ms^2.</t>
         <t>Revision events: 12 backspace sequences, 3 cut-paste operations.</t>
-        <t>VDF proof with T_difficulty calibrated to 30 seconds on her hardware.</t>
+        <t>VDF proof with t_vdf calibrated to 30 seconds on her hardware.</t>
         <t>Content hash binding to the document state at window close.</t>
       </list>
     </t>

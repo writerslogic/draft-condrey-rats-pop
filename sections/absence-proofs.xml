@@ -9,7 +9,7 @@
     <t>
       <list style="hanging">
         <t hangText="Computationally-bound:">Demonstrates that the
-        T_difficulty parameter of the VDF proof would require more
+        t_vdf parameter of the VDF proof would require more
         computation time than was available in the claimed authorship
         window.</t>
         <t hangText="Monitoring-dependent:">Relies on a trusted
