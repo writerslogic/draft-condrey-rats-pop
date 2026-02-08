@@ -23,4 +23,15 @@
     </t>
   </section>
 
+  <section anchor="sec-forgery-quantified" title="Quantified Bounds">
+    <t>For a T2 evidence chain of duration D minutes with 30-second
+    windows, the minimum forgery cost is:</t>
+    <t>C_total >= D/0.5 * C_vdf_single + D/0.5 * C_entropy_single</t>
+    <t>where C_vdf_single is the cost of one sequential VDF evaluation
+    (approximately 30 seconds of single-core computation) and
+    C_entropy_single is the cost of generating one behavioral sample
+    with sufficient entropy (estimated at 10-100x real-time for
+    current generative models).</t>
+  </section>
+
 </section>

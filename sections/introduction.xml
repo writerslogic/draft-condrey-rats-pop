@@ -14,11 +14,15 @@
   verification procedures for process-based authorship attestation.</t>
 
   <t>The key insight is that human authorship exhibits measurable
-  behavioral characteristics — typing cadence, revision patterns,
-  pause distributions, error-correction sequences — that are
+  behavioral characteristics -- typing cadence, revision patterns,
+  pause distributions, error-correction sequences -- that are
   computationally expensive to fabricate in real time. By binding
   these behavioral observations to cryptographic time proofs, the
   framework creates evidence that is both tamper-evident and
   temporally authentic.</t>
+
+  <t>This document defines the core protocol mechanisms. Companion
+  documents specify evidence aggregation, collaborative authorship
+  extensions, the CDDL schema, and worked examples.</t>
 
 </section>
