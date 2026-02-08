@@ -1,0 +1,34 @@
+<section anchor="sec-appendix-examples" title="Worked Examples">
+
+  <section anchor="sec-example-short" title="Short Writing Session">
+    <t>Alice writes a 500-word blog post over 45 minutes. Her PoP
+    daemon collects 90 evidence packets (one per 30-second window).
+    Each packet contains:</t>
+    <t>
+      <list style="symbols">
+        <t>Typing cadence metrics: mean IKI of 180ms, variance 45ms^2.</t>
+        <t>Revision events: 12 backspace sequences, 3 cut-paste operations.</t>
+        <t>VDF proof with T_difficulty calibrated to 30 seconds on her hardware.</t>
+        <t>Content hash binding to the document state at window close.</t>
+      </list>
+    </t>
+    <t>The Verifier confirms the chain of 90 packets spans 45 minutes
+    of wall-clock time with consistent behavioral characteristics,
+    producing a T2 (Standard) attestation result.</t>
+  </section>
+
+  <section anchor="sec-example-verify" title="Verification Workflow">
+    <t>Bob receives Alice's published document with an attached PoP
+    evidence bundle. His verification process:</t>
+    <t>
+      <list style="numbers">
+        <t>Parse the evidence bundle and extract the chain of packets.</t>
+        <t>Verify each packet's HMAC and VDF proof.</t>
+        <t>Check chain continuity via prev-hash linkage.</t>
+        <t>Validate that the final content hash matches the published document.</t>
+        <t>Assess behavioral entropy against configured thresholds.</t>
+      </list>
+    </t>
+  </section>
+
+</section>
