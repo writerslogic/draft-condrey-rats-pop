@@ -22,4 +22,12 @@
     </t>
   </section>
 
+  <section anchor="sec-absence-construction" title="Constructing Absence Proofs">
+    <t>To construct a computationally-bound absence proof, the Verifier
+    calculates the minimum sequential computation time required for the
+    claimed number of VDF proofs and compares it against the claimed
+    authorship window. If the required computation time exceeds the
+    window duration, the claim is demonstrably false.</t>
+  </section>
+
 </section>
