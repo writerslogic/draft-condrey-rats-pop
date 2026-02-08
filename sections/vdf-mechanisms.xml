@@ -23,4 +23,18 @@
     in the device attestation certificate.</t>
   </section>
 
+  <section anchor="sec-vdf-verification" title="Proof Verification">
+    <t>The Verifier checks each VDF proof using Wesolowski's protocol,
+    which requires O(log T_difficulty) group operations. The verification
+    proceeds as:</t>
+    <t>
+      <list style="numbers">
+        <t>Compute the challenge r = H(x, y) where H is a hash-to-prime
+        function.</t>
+        <t>Verify that pi^r * x^(2^T_difficulty mod r) = y in the RSA
+        group.</t>
+      </list>
+    </t>
+  </section>
+
 </section>
