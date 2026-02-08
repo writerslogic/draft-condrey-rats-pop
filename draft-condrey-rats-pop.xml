@@ -99,9 +99,9 @@
       from human motor control that serves as a behavioral entropy
       source. The jitter seal is computed as:</t>
 
-      <t>seal = HMAC-SHA-256(device_key, timing_vector || T_difficulty || nonce)</t>
+      <t>seal = HMAC-SHA-256(device_key, timing_vector || t_vdf || nonce)</t>
 
-      <t>where T_difficulty is the VDF difficulty parameter that
+      <t>where t_vdf is the VDF difficulty parameter that
       determines the minimum wall-clock time required to produce
       the seal.</t>
     </section>
@@ -115,9 +115,9 @@
       <t>This document specifies the use of repeated squaring in an
       RSA group as the VDF primitive:</t>
 
-      <t>y = x^(2^T_difficulty) mod N</t>
+      <t>y = x^(2^t_vdf) mod N</t>
 
-      <t>where x is derived from the evidence packet hash, T_difficulty
+      <t>where x is derived from the evidence packet hash, t_vdf
       controls the time parameter, and N is an RSA modulus from a
       trusted setup.</t>
     </section>
@@ -138,7 +138,7 @@
     <section anchor="sec-forgery" title="Forgery Cost Bounds">
       <t>The total cost of forging an evidence chain of duration D
       with n evidence packets is bounded by:</t>
-      <t>C_total = C_vdf(n, T_difficulty) + C_entropy(n) + C_hardware</t>
+      <t>C_total = C_vdf(n, t_vdf) + C_entropy(n) + C_hardware</t>
     </section>
 
     <section anchor="sec-collaborative" title="Collaborative Authorship">
