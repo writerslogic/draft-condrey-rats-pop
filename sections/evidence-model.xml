@@ -1,0 +1,40 @@
+<section anchor="sec-evidence-model" title="Evidence Model">
+
+  <t>The Proof of Process evidence model defines the structure and
+  semantics of evidence packets collected during content creation.
+  Each packet represents a discrete observation window and contains
+  cryptographically bound behavioral measurements.</t>
+
+  <section anchor="sec-evidence-packet" title="Evidence Packet Structure">
+    <t>An evidence packet is a CBOR-encoded map containing:</t>
+    <t>
+      <list style="hanging">
+        <t hangText="version (uint):">Protocol version number.</t>
+        <t hangText="session-id (uuid):">UUIDv7 identifying the
+        collection session.</t>
+        <t hangText="sequence (uint):">Monotonically increasing
+        packet number within the session.</t>
+        <t hangText="timestamp (tdate):">Wall-clock time at window
+        close.</t>
+        <t hangText="prev-hash (bstr):">SHA-256 hash of the preceding
+        packet, forming the chain.</t>
+        <t hangText="content-hash (bstr):">SHA-256 hash of document
+        state at window close.</t>
+        <t hangText="metrics (map):">Behavioral measurements for the
+        window (cadence, entropy, revision count).</t>
+        <t hangText="swf-proof (map):">Sequential Work Function output
+        binding the packet to elapsed time.</t>
+        <t hangText="seal (bstr):">HMAC-SHA-256 jitter seal.</t>
+      </list>
+    </t>
+  </section>
+
+  <section anchor="sec-evidence-chain" title="Evidence Chain">
+    <t>An evidence chain is an ordered sequence of evidence packets
+    linked by their prev-hash fields. The chain forms a tamper-evident
+    log: any modification to a packet invalidates all subsequent
+    packets in the chain. The Verifier MUST verify the entire chain
+    from head to tail before producing an Attestation Result.</t>
+  </section>
+
+</section>
