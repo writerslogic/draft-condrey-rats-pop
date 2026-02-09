@@ -14,6 +14,24 @@ Internet-Drafts for Proof of Process (PoP), an evidence framework built on the R
 | draft-condrey-rats-witnessd-enrollment | Trust Anchor Bootstrap Protocol |
 | draft-condrey-rats-witnessd-revocation | Evidence Status and Revocation Protocol |
 
+## Building
+
+Requires [xml2rfc](https://xml2rfc.tools.ietf.org/) and `xmllint`.
+
+```sh
+# Build all text and HTML outputs
+make all
+
+# Validate XML
+make lint
+
+# Run idnits checks
+make idnits
+
+# Clean generated files
+make clean
+```
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) and the [IETF contribution guidelines](https://www.ietf.org/about/participate/).
