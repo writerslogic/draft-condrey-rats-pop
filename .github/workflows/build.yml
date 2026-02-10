@@ -1,0 +1,48 @@
+name: Build and Validate Drafts
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install xml2rfc
+        run: pip install xml2rfc
+
+      - name: Install xmllint
+        run: sudo apt-get install -y libxml2-utils
+
+      - name: Validate XML
+        run: |
+          for f in draft-*.xml; do
+            echo "Validating $f..."
+            xmllint --noout "$f" || exit 1
+          done
+
+      - name: Build text output
+        run: |
+          for f in draft-*.xml; do
+            echo "Building ${f%.xml}.txt..."
+            xml2rfc --text "$f" || echo "WARN: $f build failed"
+          done
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: draft-outputs
+          path: |
+            draft-*.txt
+            draft-*.html
