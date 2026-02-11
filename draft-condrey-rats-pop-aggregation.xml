@@ -11,7 +11,7 @@
   <!ENTITY I-D.condrey-rats-pop SYSTEM "https://bib.ietf.org/public/rfc/bibxml3/reference.I-D.condrey-rats-pop.xml">
 ]>
 <rfc ipr="trust200902" category="info" submissionType="independent"
-     docName="draft-condrey-rats-pop-aggregation-00">
+     docName="draft-condrey-rats-pop-aggregation-01">
 
   <front>
     <title abbrev="PoP Aggregation">Proof of Process: Succinct Evidence Aggregation Extension</title>
