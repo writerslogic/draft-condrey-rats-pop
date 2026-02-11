@@ -9,7 +9,7 @@
   <!ENTITY I-D.condrey-rats-pop SYSTEM "https://bib.ietf.org/public/rfc/bibxml3/reference.I-D.condrey-rats-pop.xml">
 ]>
 <rfc ipr="trust200902" category="info" submissionType="independent"
-     docName="draft-condrey-rats-pop-collaborative-00">
+     docName="draft-condrey-rats-pop-collaborative-01">
 
   <front>
     <title abbrev="PoP Collaborative">Proof of Process: Collaborative Authorship Extension</title>
