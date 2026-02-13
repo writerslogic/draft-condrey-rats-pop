@@ -23,7 +23,7 @@
   <!ENTITY RFC9711 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9711.xml">
 ]>
 
-<rfc ipr="trust200902" docName="draft-condrey-rats-pop-01" category="info" submissionType="independent">
+<rfc ipr="trust200902" docName="draft-condrey-rats-pop-02" category="info" submissionType="independent">
   <front>
     <title abbrev="RATS PoP">Proof of Process: An Evidence Framework for Digital Authorship Attestation</title>
 
