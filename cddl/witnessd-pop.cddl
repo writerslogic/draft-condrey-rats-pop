@@ -1,0 +1,130 @@
+; Proof of Process (PoP) Evidence Schema
+; draft-condrey-rats-pop-protocol / draft-condrey-rats-pop-appraisal
+;
+; This schema defines the CBOR-encoded data structures for
+; evidence packets, attestation results, and supporting types
+; used in the Proof of Process framework.
+
+; === Core Evidence Packet ===
+
+evidence-packet = {
+  version: uint,                    ; Protocol version (currently 1)
+  session-id: uuid,                 ; UUIDv7 per RFC 9562
+  sequence: uint,                   ; Monotonic packet number
+  timestamp: tdate,                 ; Wall-clock time at window close
+  prev-hash: bstr,                  ; SHA-256 of preceding packet
+  content-hash: bstr,               ; SHA-256 of document state
+  metrics: process-metrics,         ; Behavioral measurements
+  swf-proof: swf-output,            ; Sequential Work Function proof
+  seal: bstr,                       ; HMAC-SHA-256 jitter seal
+  ? continuation: continuation-token,
+  ? tier: evidence-tier,
+}
+
+; === Process Metrics ===
+
+process-metrics = {
+  cadence-mean: float,              ; Mean inter-keystroke interval (ms)
+  cadence-variance: float,          ; Variance of IKI
+  entropy: float,                   ; Shannon entropy (bits/sample)
+  revision-count: uint,             ; Edit operations in window
+  pause-distribution: [* float],    ; Histogram of pause durations
+  ? error-rate: float,              ; Correction rate
+  ? snr: float,                     ; Signal-to-noise ratio
+  ? clc: float,                     ; Compositional Lyapunov Coefficient
+}
+
+; === Sequential Work Function ===
+
+swf-output = {
+  input: bstr,                      ; Derived from packet hash
+  output: bstr,                     ; SWF evaluation result
+  proof: bstr,                      ; Verification proof
+  difficulty: uint,                 ; t_vdf parameter
+}
+
+; === Continuation Token ===
+
+continuation-token = {
+  session-id: uuid,
+  prev-session-hash: bstr,          ; Hash of previous session's last packet
+  timestamp: tdate,
+  hmac: bstr,                       ; HMAC binding to device key
+}
+
+; === Evidence Tiers ===
+
+evidence-tier = &(
+  core: 1,                          ; Software-only, basic entropy
+  enhanced: 2,                      ; SWF time-binding
+  maximum: 3,                       ; Hardware-anchored timing
+)
+
+; === Attestation Result ===
+
+attestation-result = {
+  version: uint,
+  evidence-ref: bstr,               ; Hash of evidence chain head
+  verdict: verdict,
+  assurance-level: assurance-level,
+  chain-length: uint,
+  chain-duration: uint,             ; Total seconds
+  entropy-assessment: entropy-report,
+  ? warnings: [* tstr],
+  verifier-signature: bstr,         ; COSE_Sign1
+}
+
+verdict = &(
+  authentic: 1,                     ; Evidence consistent with human authorship
+  inconclusive: 2,                  ; Insufficient evidence
+  suspicious: 3,                    ; Anomalies detected
+  invalid: 4,                       ; Evidence chain broken or forged
+)
+
+assurance-level = &(
+  t1-basic: 1,                      ; Software-only attestation
+  t2-standard: 2,                   ; T1 + SWF time binding
+  t3-enhanced: 3,                   ; T2 + hardware-anchored time
+  t4-maximum: 4,                    ; T3 + continuous device attestation
+)
+
+entropy-report = {
+  timing-entropy: float,            ; bits/sample
+  revision-entropy: float,
+  pause-entropy: float,
+  meets-threshold: bool,
+}
+
+; === Forgery Cost Bound ===
+
+forgery-cost-estimate = {
+  c-swf: float,                     ; Sequential work function cost
+  c-entropy: float,                 ; Behavioral synthesis cost
+  c-hardware: float,                ; Hardware attestation cost
+  c-total: float,                   ; Sum
+  currency: tstr,                   ; e.g., "USD" or "CPU-hours"
+}
+
+; === Absence Proof ===
+
+absence-proof = {
+  proof-type: absence-type,
+  claimed-window: time-window,
+  evidence: bstr,                   ; Type-specific proof data
+  verifier-signature: bstr,
+}
+
+absence-type = &(
+  computationally-bound: 1,
+  monitoring-dependent: 2,
+  environmental: 3,
+)
+
+time-window = {
+  start: tdate,
+  end: tdate,
+}
+
+; === Primitive Types ===
+
+uuid = bstr .size 16
