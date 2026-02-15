@@ -23,7 +23,7 @@
   <!ENTITY RFC3161 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.3161.xml">
 ]>
 
-<rfc ipr="trust200902" docName="draft-condrey-rats-pop-protocol-00" category="exp" consensus="false" submissionType="IETF">
+<rfc ipr="trust200902" docName="draft-condrey-rats-pop-protocol-01" category="exp" consensus="false" submissionType="IETF">
   <front>
     <title abbrev="RATS PoP Protocol">Proof of Process Protocol: State Machine, Semantic Events, and Cryptographic Parameters</title>
 
@@ -43,7 +43,6 @@
     <keyword>authorship</keyword>
     <keyword>RATS</keyword>
     <keyword>protocol</keyword>
-    <keyword>state machine</keyword>
 
     <abstract>
       <t>This document defines the Proof of Process (PoP) protocol for
@@ -77,6 +76,118 @@
       only when, they appear in all capitals, as shown here.</t>
     </section>
 
+    <section anchor="sec-system-model" title="System Model">
+      <t>The Proof of Process protocol maps onto the RATS architecture
+      defined in <xref target="RFC9334"/>. The following entity roles
+      are defined:</t>
+
+      <section anchor="sec-system-attester" title="Attester">
+        <t>The Attester is the software component running on the author's
+        device that collects behavioral evidence during content creation.
+        It operates the evidence collection state machine, computes
+        cryptographic seals, and produces evidence packets. The Attester
+        corresponds to the RATS Attester role.</t>
+      </section>
+
+      <section anchor="sec-system-verifier" title="Verifier">
+        <t>The Verifier receives evidence chains and produces Attestation
+        Results. It implements the appraisal algorithms defined in the
+        companion document. The Verifier MUST be operated independently
+        of the Attester to prevent self-attestation.</t>
+      </section>
+
+      <section anchor="sec-system-rp" title="Relying Party">
+        <t>The Relying Party consumes Attestation Results to make trust
+        decisions about content provenance. Examples include publishers,
+        academic institutions, and content platforms.</t>
+      </section>
+
+      <section anchor="sec-system-endorser" title="Endorser">
+        <t>An Endorser provides supplementary attestations about the
+        Attester's environment, such as hardware attestation certificates
+        from platform vendors (e.g., TPM manufacturer certificates per
+        <xref target="RFC9711"/>).</t>
+      </section>
+
+      <section anchor="sec-system-compat" title="RATS Compatibility">
+        <t>The protocol supports both the passport model (Attester sends
+        evidence to Verifier, which produces result for Relying Party)
+        and the background-check model (Relying Party forwards evidence
+        to Verifier) as defined in <xref target="RFC9334"/>.</t>
+      </section>
+    </section>
+
+    <section anchor="sec-threat-model" title="Threat Model">
+      <t>The following attack taxonomy identifies the threats that the
+      Proof of Process protocol is designed to resist:</t>
+
+      <section anchor="sec-threat-retype" title="Retype Attack">
+        <t>An adversary manually retypes AI-generated content to produce
+        fresh behavioral evidence. Defense: the protocol captures
+        fine-grained revision patterns (editing, restructuring, pausing
+        to think) that differ significantly from sequential retyping.
+        The forensic assessment in the companion document detects the
+        characteristic monotonic typing pattern of retyping.</t>
+      </section>
+
+      <section anchor="sec-threat-replay" title="Replay Attack">
+        <t>An adversary captures evidence from a legitimate authorship
+        session and attempts to reuse it for different content. Defense:
+        each evidence packet includes a content-hash binding to the
+        specific document state, and session nonces prevent cross-session
+        replay.</t>
+      </section>
+
+      <section anchor="sec-threat-relay" title="Relay Attack">
+        <t>An adversary relays evidence from one authorship session to
+        claim credit for a different document. Defense: the content-hash
+        chain binds evidence to specific content transitions, making
+        relay detectable.</t>
+      </section>
+
+      <section anchor="sec-threat-swf" title="SWF Acceleration">
+        <t>An adversary uses specialized hardware (FPGAs, ASICs) to
+        accelerate VDF computation, enabling faster-than-real-time
+        evidence generation. Defense: the difficulty parameter is
+        calibrated per-device, and hardware attestation at T3/T4 tiers
+        binds computation to the enrolled device.</t>
+      </section>
+
+      <section anchor="sec-threat-ae" title="Attestation Environment Spoofing">
+        <t>An adversary spoofs the hardware attestation environment to
+        bypass device identity checks. Defense: hardware attestation
+        certificates are validated against manufacturer root certificates
+        per <xref target="RFC9711"/>.</t>
+      </section>
+
+      <section anchor="sec-threat-diversion" title="Evidence Diversion">
+        <t>An adversary redirects a legitimate evidence chain to claim
+        authorship of different content by modifying the final content
+        binding. Defense: the content-hash is included in every evidence
+        packet (not just the final one), creating an incremental binding
+        that cannot be diverted post-hoc.</t>
+      </section>
+    </section>
+
+    <section anchor="sec-security-goals" title="Security Goals">
+      <t>The protocol aims to achieve the following security properties:</t>
+      <t>
+        <list style="hanging">
+          <t hangText="Temporal Authenticity:">Evidence is bound to
+          wall-clock time through Sequential Work Functions, preventing
+          after-the-fact fabrication.</t>
+          <t hangText="Behavioral Authenticity:">Evidence captures
+          genuine human behavioral characteristics that are
+          computationally expensive to synthesize.</t>
+          <t hangText="Content Binding:">Evidence is cryptographically
+          bound to specific document content at each observation window.</t>
+          <t hangText="Non-Repudiation:">The Attester cannot deny having
+          produced a signed evidence chain, as the chain is bound to the
+          device identity key.</t>
+        </list>
+      </t>
+    </section>
+
     <section anchor="sec-state-machine" title="Evidence Collection State Machine">
       <t>The Attester operates a state machine with the following states:</t>
       <t>
@@ -88,14 +199,10 @@
           for the current window.</t>
           <t hangText="CHAINING:">Linking the sealed packet to the
           evidence chain.</t>
-          <t hangText="SUSPENDED:">Session paused (e.g., user inactive).
-          A continuation token is generated.</t>
+          <t hangText="SUSPENDED:">Session paused. A continuation token
+          is generated.</t>
         </list>
       </t>
-
-      <t>Transitions between states are triggered by semantic events
-      (keystroke, revision, pause, window-close) as defined in
-      <xref target="sec-semantic-events"/>.</t>
     </section>
 
     <section anchor="sec-semantic-events" title="Semantic Event Definitions">
@@ -109,52 +216,40 @@
           <t hangText="PAUSE:">An inactivity period exceeding the
           configured pause threshold (default: 5 seconds).</t>
           <t hangText="WINDOW_CLOSE:">The evidence collection window
-          has elapsed (default: 30 seconds), triggering transition
-          to SEALING state.</t>
+          has elapsed (default: 30 seconds).</t>
           <t hangText="SESSION_END:">The authorship session is
-          terminated, triggering chain finalization.</t>
+          terminated.</t>
         </list>
       </t>
     </section>
 
     <section anchor="sec-vdf" title="Verifiable Delay Function Mechanisms">
       <t>The framework employs Verifiable Delay Functions (VDFs) to bind
-      evidence to elapsed wall-clock time. The VDF construction uses
-      repeated squaring in an RSA group:</t>
+      evidence to elapsed wall-clock time:</t>
       <t>y = x^(2^t_vdf) mod N</t>
       <t>where x is derived from the evidence packet hash, t_vdf controls
-      the time parameter, and N is an RSA modulus from a trusted setup.
-      Verification uses Wesolowski's protocol in O(log t_vdf) time.</t>
+      the time parameter, and N is an RSA modulus from a trusted setup.</t>
     </section>
 
     <section anchor="sec-jitter-seal" title="Jitter Seal">
-      <t>The jitter seal binds evidence to physical timing characteristics:</t>
       <t>seal = HMAC-SHA-256(device_key, timing_vector || t_vdf || nonce)</t>
     </section>
 
     <section anchor="sec-continuation" title="Continuation Tokens">
       <t>Continuation tokens link evidence across sessions using HKDF-derived
-      session keys with per-session salt, enabling Verifiers to assess the
-      complete authorship timeline.</t>
+      session keys with per-session salt.</t>
     </section>
 
     <section anchor="sec-privacy" title="Privacy Considerations">
       <t>Evidence packets MUST be constructed using the principle of data
-      minimization per <xref target="RFC6973"/>. Keystroke timing MUST be
-      aggregated into statistical summaries. The Attester MUST NOT record
-      plaintext content.</t>
+      minimization per <xref target="RFC6973"/>.</t>
     </section>
 
     <section anchor="sec-security" title="Security Considerations">
       <t>See the companion appraisal document for detailed security analysis.
-      This section summarizes key protocol-level security properties:</t>
-      <t>
-        <list style="symbols">
-          <t>Attester compromise: mitigated by hardware-bound keys.</t>
-          <t>Replay attacks: prevented by VDF time-binding and session nonces.</t>
-          <t>Relay attacks: prevented by content-hash binding.</t>
-        </list>
-      </t>
+      Protocol-level security properties include resistance to replay,
+      relay, and retype attacks as described in
+      <xref target="sec-threat-model"/>.</t>
     </section>
 
     <section anchor="sec-iana" title="IANA Considerations">
