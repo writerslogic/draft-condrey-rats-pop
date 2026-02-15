@@ -18,7 +18,7 @@
   <!ENTITY RFC6973 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.6973.xml">
 ]>
 
-<rfc ipr="trust200902" docName="draft-condrey-rats-pop-appraisal-00" category="exp" consensus="false" submissionType="IETF">
+<rfc ipr="trust200902" docName="draft-condrey-rats-pop-appraisal-01" category="exp" consensus="false" submissionType="IETF">
   <front>
     <title abbrev="RATS PoP Appraisal">Proof of Process Appraisal: Forensic Assessment, Forgery Bounds, and Absence Proofs</title>
 
@@ -29,7 +29,7 @@
       </address>
     </author>
 
-    <date year="2026" month="February" day="14"/>
+    <date year="2026" month="February" day="15"/>
 
     <area>Security</area>
     <workgroup>Remote ATtestation procedureS</workgroup>
@@ -44,9 +44,7 @@
       Process (PoP) evidence. It specifies the forensic assessment
       mechanisms that evaluate behavioral authenticity, establishes
       quantified forgery cost bounds, and defines absence proof
-      constructions. The document complements the PoP protocol
-      specification (draft-condrey-rats-pop-protocol) by providing
-      the Verifier-side algorithms and trust evaluation framework.</t>
+      constructions.</t>
     </abstract>
   </front>
 
@@ -56,11 +54,6 @@
       defines how Attesters collect and seal behavioral evidence during
       content creation. This companion document specifies how Verifiers
       appraise that evidence to produce Attestation Results.</t>
-
-      <t>The appraisal process encompasses three capabilities: forensic
-      assessment of behavioral authenticity, quantified forgery cost
-      analysis, and absence proof construction for detecting fabricated
-      provenance claims.</t>
     </section>
 
     <section anchor="sec-conventions" title="Conventions and Definitions">
@@ -71,46 +64,102 @@
       only when, they appear in all capitals, as shown here.</t>
     </section>
 
-    <section anchor="sec-forensic" title="Forensic Assessment">
-      <t>The forensic assessment evaluates the behavioral characteristics
-      captured in evidence packets against models of human authorship
-      behavior.</t>
+    <section anchor="sec-verification" title="Verification Protocol">
+      <t>The Verifier MUST execute the following five-step verification
+      procedure on each evidence chain:</t>
 
-      <section anchor="sec-forensic-snr" title="Signal-to-Noise Ratio">
-        <t>The signal-to-noise ratio (SNR) measures the proportion of
-        meaningful editing activity versus noise (random pauses, cursor
-        movements without edits). A human authorship session exhibits
-        characteristic SNR patterns that differ from automated generation.</t>
+      <section anchor="sec-verify-chain" title="Step 1: Chain Integrity">
+        <t>The Verifier validates that each evidence packet's prev-hash
+        field matches the SHA-256 hash of the preceding packet. Any break
+        in the chain indicates tampering or data loss. The COSE_Sign1
+        signature on each packet MUST be verified against the Attester's
+        public key.</t>
       </section>
 
-      <section anchor="sec-forensic-entropy" title="Behavioral Entropy">
+      <section anchor="sec-verify-temporal" title="Step 2: Temporal Ordering">
+        <t>Timestamps MUST be monotonically increasing. The elapsed time
+        between consecutive packets MUST be consistent with the SWF
+        difficulty parameter (within 10% tolerance). For T3/T4 evidence,
+        hardware-anchored timestamps are cross-validated.</t>
+      </section>
+
+      <section anchor="sec-verify-entropy" title="Step 3: Entropy Assessment">
         <t>The Verifier computes Shannon entropy over the timing
-        distributions in each evidence window. Human typing exhibits
-        entropy in the range of 3.0-5.0 bits/sample, while automated
-        input typically shows lower entropy.</t>
+        distributions in each evidence window. Minimum thresholds are
+        tier-dependent: T1 requires 2.0 bits/sample, T2 requires 3.0,
+        T3 requires 3.5, and T4 requires 4.0.</t>
+      </section>
+
+      <section anchor="sec-verify-hmac" title="Step 4: Entanglement HMAC Verification">
+        <t>The jitter seal in each packet is verified by reconstructing
+        the HMAC from the timing vector, SWF difficulty parameter, and
+        session nonce. This confirms that the behavioral data was
+        captured by the claimed device.</t>
+      </section>
+
+      <section anchor="sec-verify-state" title="Step 5: State Matching">
+        <t>The final evidence packet's content-hash is compared against
+        the published document's hash. Additionally, the Verifier checks
+        that the content-hash progression across the chain is consistent
+        with incremental editing (not bulk replacement).</t>
+      </section>
+    </section>
+
+    <section anchor="sec-forensic" title="Forensic Assessment">
+      <t>Beyond the five-step verification, the forensic assessment
+      evaluates deeper behavioral characteristics.</t>
+
+      <section anchor="sec-forensic-snr" title="Signal-to-Noise Ratio">
+        <t>The SNR measures the proportion of productive editing activity
+        versus noise. Human authorship typically exhibits SNR between
+        0.3 and 0.7. Values above 0.9 suggest automated input; values
+        below 0.1 suggest an idle session with injected events.</t>
+      </section>
+
+      <section anchor="sec-forensic-clc" title="Compositional Lyapunov Coefficient">
+        <t>The CLC with Incremental Kolmogorov Information (IKI)
+        measures how writing complexity evolves over time. Human
+        authorship shows characteristic CLC patterns: initial rapid
+        composition followed by refinement phases. A monotonically
+        increasing CLC without refinement dips suggests retyping.</t>
+      </section>
+
+      <section anchor="sec-forensic-turk" title="Mechanical Turk Detection">
+        <t>This mechanism detects patterns consistent with copying
+        AI-generated content: large paste operations followed by
+        minimal editing, unusually consistent typing speed during
+        insertion phases, and absence of the characteristic
+        think-type-revise cycle.</t>
+      </section>
+
+      <section anchor="sec-forensic-errors" title="Error Topology">
+        <t>The error topology analyzes the graph of error and correction
+        patterns. Human writing exhibits complex error topologies with
+        multi-step corrections, while automated input shows simpler
+        patterns (single backspace corrections or no errors at all).</t>
+      </section>
+
+      <section anchor="sec-forensic-qr" title="QR Presence Challenge">
+        <t>For real-time verification, the Verifier MAY issue a QR
+        presence challenge that the Attester must scan and incorporate
+        into the current evidence window, proving physical presence
+        at the authoring device.</t>
       </section>
     </section>
 
     <section anchor="sec-forgery" title="Forgery Cost Bounds">
       <t>The total cost of forging an evidence chain is bounded by:</t>
       <t>C_total = C_swf + C_entropy + C_hardware</t>
-      <t>where C_swf is the irreducible sequential computation cost,
-      C_entropy is the cost of synthesizing realistic behavioral data,
-      and C_hardware is the cost of compromising hardware attestation.</t>
     </section>
 
     <section anchor="sec-absence" title="Absence Proofs">
-      <t>Three types of absence proofs are defined: computationally-bound
-      (VDF timing impossibility), monitoring-dependent (trusted service
-      attestation), and environmental (sensor-based context disproof).</t>
+      <t>Three types: computationally-bound, monitoring-dependent,
+      and environmental.</t>
     </section>
 
     <section anchor="sec-security" title="Security Considerations">
       <t>The appraisal mechanisms inherit the security properties of the
-      underlying protocol. Additional considerations include verifier
-      trust (the Verifier must be trusted not to fabricate Attestation
-      Results) and threshold selection (entropy and SNR thresholds
-      must be calibrated to avoid false positives and negatives).</t>
+      underlying protocol.</t>
     </section>
 
     <section anchor="sec-iana" title="IANA Considerations">
