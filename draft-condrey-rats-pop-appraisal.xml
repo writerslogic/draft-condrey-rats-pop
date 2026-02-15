@@ -18,7 +18,7 @@
   <!ENTITY RFC6973 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.6973.xml">
 ]>
 
-<rfc ipr="trust200902" docName="draft-condrey-rats-pop-appraisal-00" category="std" consensus="true" submissionType="IETF">
+<rfc ipr="trust200902" docName="draft-condrey-rats-pop-appraisal-00" category="exp" consensus="false" submissionType="IETF">
   <front>
     <title abbrev="RATS PoP Appraisal">Proof of Process Appraisal: Forensic Assessment, Forgery Bounds, and Absence Proofs</title>
 
