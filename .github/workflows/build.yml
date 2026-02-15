@@ -27,14 +27,14 @@ jobs:
 
       - name: Validate XML
         run: |
-          for f in draft-*.xml; do
+          for f in draft-condrey-rats-pop-protocol.xml draft-condrey-rats-pop-appraisal.xml; do
             echo "Validating $f..."
             xmllint --noout "$f" || exit 1
           done
 
       - name: Build text output
         run: |
-          for f in draft-*.xml; do
+          for f in draft-condrey-rats-pop-protocol.xml draft-condrey-rats-pop-appraisal.xml; do
             echo "Building ${f%.xml}.txt..."
             xml2rfc --text "$f" || echo "WARN: $f build failed"
           done
