@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="rfc2629.xslt" ?>
+
+<!DOCTYPE rfc [
+  <!ENTITY nbsp    "&#160;">
+  <!ENTITY zwsp   "&#8203;">
+  <!ENTITY nbhy   "&#8209;">
+  <!ENTITY wj     "&#8288;">
+
+  <!ENTITY RFC2119 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml">
+  <!ENTITY RFC8174 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8174.xml">
+  <!ENTITY RFC6234 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.6234.xml">
+  <!ENTITY RFC8610 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8610.xml">
+  <!ENTITY RFC8949 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8949.xml">
+  <!ENTITY RFC9052 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9052.xml">
+  <!ENTITY RFC9334 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9334.xml">
+  <!ENTITY RFC9711 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9711.xml">
+  <!ENTITY RFC6973 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.6973.xml">
+]>
+
+<rfc ipr="trust200902" docName="draft-condrey-rats-pop-appraisal-00" category="std" consensus="true" submissionType="IETF">
+  <front>
+    <title abbrev="RATS PoP Appraisal">Proof of Process Appraisal: Forensic Assessment, Forgery Bounds, and Absence Proofs</title>
+
+    <author initials="D." surname="Condrey" fullname="David Condrey">
+      <organization>Writerslogic Inc</organization>
+      <address>
+        <email>david@writerslogic.com</email>
+      </address>
+    </author>
+
+    <date year="2026" month="February" day="14"/>
+
+    <area>Security</area>
+    <workgroup>Remote ATtestation procedureS</workgroup>
+    <keyword>attestation</keyword>
+    <keyword>verification</keyword>
+    <keyword>forensic</keyword>
+    <keyword>forgery</keyword>
+    <keyword>absence proof</keyword>
+
+    <abstract>
+      <t>This document defines the appraisal procedures for Proof of
+      Process (PoP) evidence. It specifies the forensic assessment
+      mechanisms that evaluate behavioral authenticity, establishes
+      quantified forgery cost bounds, and defines absence proof
+      constructions. The document complements the PoP protocol
+      specification (draft-condrey-rats-pop-protocol) by providing
+      the Verifier-side algorithms and trust evaluation framework.</t>
+    </abstract>
+  </front>
+
+  <middle>
+    <section anchor="sec-introduction" title="Introduction">
+      <t>The Proof of Process protocol (draft-condrey-rats-pop-protocol)
+      defines how Attesters collect and seal behavioral evidence during
+      content creation. This companion document specifies how Verifiers
+      appraise that evidence to produce Attestation Results.</t>
+
+      <t>The appraisal process encompasses three capabilities: forensic
+      assessment of behavioral authenticity, quantified forgery cost
+      analysis, and absence proof construction for detecting fabricated
+      provenance claims.</t>
+    </section>
+
+    <section anchor="sec-conventions" title="Conventions and Definitions">
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+      "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+      "OPTIONAL" in this document are to be interpreted as described in
+      BCP 14 <xref target="RFC2119"/> <xref target="RFC8174"/> when, and
+      only when, they appear in all capitals, as shown here.</t>
+    </section>
+
+    <section anchor="sec-forensic" title="Forensic Assessment">
+      <t>The forensic assessment evaluates the behavioral characteristics
+      captured in evidence packets against models of human authorship
+      behavior.</t>
+
+      <section anchor="sec-forensic-snr" title="Signal-to-Noise Ratio">
+        <t>The signal-to-noise ratio (SNR) measures the proportion of
+        meaningful editing activity versus noise (random pauses, cursor
+        movements without edits). A human authorship session exhibits
+        characteristic SNR patterns that differ from automated generation.</t>
+      </section>
+
+      <section anchor="sec-forensic-entropy" title="Behavioral Entropy">
+        <t>The Verifier computes Shannon entropy over the timing
+        distributions in each evidence window. Human typing exhibits
+        entropy in the range of 3.0-5.0 bits/sample, while automated
+        input typically shows lower entropy.</t>
+      </section>
+    </section>
+
+    <section anchor="sec-forgery" title="Forgery Cost Bounds">
+      <t>The total cost of forging an evidence chain is bounded by:</t>
+      <t>C_total = C_swf + C_entropy + C_hardware</t>
+      <t>where C_swf is the irreducible sequential computation cost,
+      C_entropy is the cost of synthesizing realistic behavioral data,
+      and C_hardware is the cost of compromising hardware attestation.</t>
+    </section>
+
+    <section anchor="sec-absence" title="Absence Proofs">
+      <t>Three types of absence proofs are defined: computationally-bound
+      (VDF timing impossibility), monitoring-dependent (trusted service
+      attestation), and environmental (sensor-based context disproof).</t>
+    </section>
+
+    <section anchor="sec-security" title="Security Considerations">
+      <t>The appraisal mechanisms inherit the security properties of the
+      underlying protocol. Additional considerations include verifier
+      trust (the Verifier must be trusted not to fabricate Attestation
+      Results) and threshold selection (entropy and SNR thresholds
+      must be calibrated to avoid false positives and negatives).</t>
+    </section>
+
+    <section anchor="sec-iana" title="IANA Considerations">
+      <t>This document has no IANA actions.</t>
+    </section>
+  </middle>
+
+  <back>
+    <references title="References" anchor="sec-combined-references">
+      <references title="Normative References" anchor="sec-normative-references">
+        &RFC2119;
+        &RFC8174;
+        &RFC6234;
+        &RFC8610;
+        &RFC8949;
+        &RFC9052;
+        &RFC9334;
+        &RFC9711;
+      </references>
+
+      <references title="Informative References" anchor="sec-informative-references">
+        &RFC6973;
+      </references>
+    </references>
+  </back>
+</rfc>

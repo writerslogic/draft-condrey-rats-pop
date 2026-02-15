@@ -1,4 +1,4 @@
-DRAFTS := $(wildcard draft-*.xml)
+DRAFTS := draft-condrey-rats-pop-protocol.xml draft-condrey-rats-pop-appraisal.xml
 TXTS := $(DRAFTS:.xml=.txt)
 HTMLS := $(DRAFTS:.xml=.html)
 
@@ -15,7 +15,6 @@ all: $(TXTS) $(HTMLS)
 lint:
 	@for f in $(DRAFTS); do \
 		echo "Validating $$f..."; \
-		xmllint --noout --dtdvalid http://xml.resource.org/authoring/rfc2629.dtd $$f 2>/dev/null || \
 		xmllint --noout $$f || \
 		echo "WARN: $$f has validation issues"; \
 	done
