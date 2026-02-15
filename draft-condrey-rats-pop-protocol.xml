@@ -250,8 +250,8 @@
       <t>
         <list style="hanging">
           <t hangText="T1 Basic:">Software-only attestation with
-          behavioral entropy above minimum threshold. Maps to NIST AAL1
-          and ISO/IEC 29115 LoA 1.</t>
+          behavioral entropy above minimum threshold. Maps to NIST AAL1 (<xref target="NIST-SP-800-63"/>)
+          and ISO/IEC 29115 LoA 1 (<xref target="ISO-29115"/>).</t>
           <t hangText="T2 Standard:">T1 plus SWF time-binding proof.
           Maps to NIST AAL2 and ISO LoA 2.</t>
           <t hangText="T3 Enhanced:">T2 plus hardware-anchored timing
@@ -335,6 +335,28 @@
         &RFC5869;
         &RFC6973;
         &RFC9562;
+
+        <reference anchor="NIST-SP-800-63">
+          <front>
+            <title>Digital Identity Guidelines</title>
+            <author>
+              <organization>National Institute of Standards and Technology</organization>
+            </author>
+            <date year="2017" month="June"/>
+          </front>
+          <seriesInfo name="NIST Special Publication" value="800-63-3"/>
+        </reference>
+
+        <reference anchor="ISO-29115">
+          <front>
+            <title>Information technology - Security techniques - Entity authentication assurance framework</title>
+            <author>
+              <organization>International Organization for Standardization</organization>
+            </author>
+            <date year="2013"/>
+          </front>
+          <seriesInfo name="ISO/IEC" value="29115:2013"/>
+        </reference>
       </references>
     </references>
   </back>
