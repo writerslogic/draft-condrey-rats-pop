@@ -23,7 +23,7 @@
   <!ENTITY RFC3161 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.3161.xml">
 ]>
 
-<rfc ipr="trust200902" docName="draft-condrey-rats-pop-protocol-02" category="exp" consensus="false" submissionType="IETF">
+<rfc ipr="trust200902" docName="draft-condrey-rats-pop-protocol-03" category="exp" consensus="false" submissionType="IETF">
   <front>
     <title abbrev="RATS PoP Protocol">Proof of Process Protocol: State Machine, Semantic Events, and Cryptographic Parameters</title>
 
@@ -279,12 +279,56 @@
       </t>
     </section>
 
-    <section anchor="sec-vdf" title="Verifiable Delay Function Mechanisms">
-      <t>The framework employs Verifiable Delay Functions (VDFs) to bind
-      evidence to elapsed wall-clock time:</t>
+    <section anchor="sec-swf" title="Sequential Work Function">
+      <t>This document uses the term Sequential Work Function (SWF)
+      rather than Verifiable Delay Function (VDF) because the construction
+      does not satisfy the formal VDF definition requiring unique outputs.
+      The SWF provides a weaker but sufficient guarantee: computing the
+      output requires a minimum number of sequential steps, and the output
+      can be efficiently verified.</t>
+
+      <t>The SWF construction uses repeated squaring in an RSA group:</t>
       <t>y = x^(2^t_vdf) mod N</t>
       <t>where x is derived from the evidence packet hash, t_vdf controls
-      the time parameter, and N is an RSA modulus from a trusted setup.</t>
+      the time parameter, and N is an RSA modulus. Verification uses
+      Wesolowski's protocol in O(log t_vdf) time.</t>
+
+      <t>The difficulty parameter t_vdf MUST be calibrated to the
+      Attester's hardware during enrollment such that evaluation requires
+      approximately the same wall-clock time as the evidence window.</t>
+    </section>
+
+    <section anchor="sec-merkle-audit" title="Merkle-Sampled Audit Proofs">
+      <t>For long evidence chains, the Verifier MAY use Merkle-sampled
+      audit proofs instead of verifying every SWF proof. The Attester
+      constructs a Merkle tree over all SWF outputs and provides:</t>
+      <t>
+        <list style="numbers">
+          <t>The Merkle root of all SWF outputs.</t>
+          <t>A random sample of k SWF proofs (where k is determined by
+          the desired statistical confidence).</t>
+          <t>Merkle inclusion proofs for each sampled output.</t>
+        </list>
+      </t>
+      <t>This achieves O(k log n) verification cost instead of O(n),
+      with detection probability 1 - (1 - f/n)^k for a fraction f of
+      invalid proofs.</t>
+    </section>
+
+    <section anchor="sec-hat" title="Hardware-Anchored Time">
+      <t>For T3 and T4 assurance levels, the Attester MUST supplement
+      SWF proofs with hardware-anchored timestamps from a trusted
+      execution environment:</t>
+      <t>
+        <list style="symbols">
+          <t>TPM Clock: A monotonic counter from the TPM that cannot be
+          reset or rolled back by software.</t>
+          <t>Secure Enclave Counter: A platform-specific monotonic
+          counter from the Secure Enclave or TrustZone.</t>
+        </list>
+      </t>
+      <t>The Verifier validates that the HAT timestamps are consistent
+      with the SWF timing proofs within a 5% tolerance.</t>
     </section>
 
     <section anchor="sec-jitter-seal" title="Jitter Seal">
@@ -292,13 +336,30 @@
     </section>
 
     <section anchor="sec-continuation" title="Continuation Tokens">
-      <t>Continuation tokens link evidence across sessions using HKDF-derived
-      session keys with per-session salt.</t>
+      <t>Continuation tokens link evidence across sessions using
+      HKDF-derived session keys (<xref target="RFC5869"/>) with
+      per-session salt. Tokens MUST expire after 24 hours and MUST
+      be rotated at the start of each new session.</t>
     </section>
 
     <section anchor="sec-privacy" title="Privacy Considerations">
       <t>Evidence packets MUST be constructed using the principle of data
-      minimization per <xref target="RFC6973"/>.</t>
+      minimization per <xref target="RFC6973"/>. Specifically:</t>
+      <t>
+        <list style="symbols">
+          <t>The Attester MUST NOT record plaintext document content.
+          Only cryptographic hashes of content state are retained.</t>
+          <t>Keystroke timing MUST be aggregated into statistical
+          summaries (mean, variance, entropy) rather than stored as
+          raw event sequences.</t>
+          <t>Behavioral features MUST be quantized to prevent
+          de-anonymization through stylometric analysis. Quantization
+          bins MUST be at least 10ms wide for timing data.</t>
+          <t>Per-session key rotation MUST be used to prevent the
+          Verifier from correlating evidence across different documents
+          by the same author (unlinkability).</t>
+        </list>
+      </t>
     </section>
 
     <section anchor="sec-security" title="Security Considerations">
