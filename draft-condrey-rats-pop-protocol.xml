@@ -23,9 +23,9 @@
   <!ENTITY RFC3161 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.3161.xml">
 ]>
 
-<rfc ipr="trust200902" docName="draft-condrey-rats-pop-protocol-03" category="exp" consensus="false" submissionType="IETF">
+<rfc ipr="trust200902" docName="draft-condrey-rats-pop-protocol-04" category="exp" consensus="false" submissionType="IETF">
   <front>
-    <title abbrev="RATS PoP Protocol">Proof of Process Protocol: State Machine, Semantic Events, and Cryptographic Parameters</title>
+    <title abbrev="RATS PoP Protocol">Proof of Process Protocol: Evidence Collection, Sequential Work Functions, and Attestation Tiers</title>
 
     <author initials="D." surname="Condrey" fullname="David Condrey">
       <organization>Writerslogic Inc</organization>
@@ -34,7 +34,7 @@
       </address>
     </author>
 
-    <date year="2026" month="February" day="15"/>
+    <date year="2026" month="February" day="16"/>
 
     <area>Security</area>
     <workgroup>Remote ATtestation procedureS</workgroup>
@@ -43,336 +43,865 @@
     <keyword>authorship</keyword>
     <keyword>RATS</keyword>
     <keyword>protocol</keyword>
+    <keyword>state machine</keyword>
+    <keyword>sequential work function</keyword>
+    <keyword>proof of process</keyword>
 
     <abstract>
       <t>This document defines the Proof of Process (PoP) protocol for
-      digital authorship attestation. It specifies the evidence collection
-      state machine, semantic event definitions, cryptographic parameters,
-      and Verifiable Delay Function (VDF) mechanisms that bind behavioral
-      evidence to elapsed wall-clock time. The protocol builds on the IETF
-      RATS architecture (RFC 9334) and defines the Attester, Verifier, and
-      Relying Party roles for process-based attestation.</t>
+      digital authorship attestation within the IETF Remote ATtestation
+      procedureS (RATS) architecture. It specifies the evidence
+      collection state machine, semantic event definitions, evidence
+      content tiers, attestation assurance levels, Sequential Work
+      Function (SWF) time-binding, Merkle-sampled audit proofs,
+      hardware-anchored timing, and CBOR/COSE wire format for
+      tamper-evident behavioral evidence. The protocol maps RATS entity
+      roles to authorship attestation and defines four graduated
+      assurance levels aligned with NIST SP 800-63 and ISO/IEC 29115.
+      A companion document, draft-condrey-rats-pop-appraisal, defines
+      the verification procedures and forensic assessment mechanisms.</t>
     </abstract>
   </front>
 
   <middle>
+    <!-- ============================================================ -->
+    <!-- Section 1: Introduction                                       -->
+    <!-- ============================================================ -->
     <section anchor="sec-introduction" title="Introduction">
       <t>The proliferation of AI-generated content has created an urgent
       need for mechanisms that can attest to the human authorship process
-      of digital works. This document specifies the Proof of Process (PoP)
-      protocol, which captures tamper-evident behavioral evidence during
-      content creation and binds it to cryptographic time proofs.</t>
+      of digital works. Traditional digital signatures prove that a
+      particular key holder approved a document, but they provide no
+      evidence about how the document was created. The Proof of Process
+      (PoP) protocol addresses this gap by capturing tamper-evident
+      behavioral evidence during content creation and binding it to
+      cryptographic time proofs.</t>
 
-      <t>This document is the protocol specification. A companion document,
-      draft-condrey-rats-pop-appraisal, defines the verification procedures,
-      forensic assessment mechanisms, and forgery cost analysis.</t>
+      <t>This document is the protocol specification companion to
+      draft-condrey-rats-pop-appraisal, which defines the appraisal
+      policies, verification procedures, forensic assessment mechanisms,
+      and forgery cost analysis. Together, these two documents provide a
+      complete framework for process-based authorship attestation within
+      the IETF RATS architecture <xref target="RFC9334"/>.</t>
+
+      <t>The protocol operates on the principle that authentic human
+      authorship produces behavioral signals -- keystroke cadence,
+      revision patterns, pause distributions, and editing rhythms --
+      that are prohibitively expensive to forge when bound to
+      cryptographic time proofs. By collecting these signals in
+      real-time and sealing them with Sequential Work Functions, the
+      protocol creates evidence chains that a Verifier can appraise
+      with quantifiable confidence levels.</t>
+
+      <t>This document defines four evidence content tiers (CORE,
+      ENHANCED, MAXIMUM) and four attestation assurance levels (T1
+      through T4) that allow deployments to balance privacy, cost,
+      and assurance according to their requirements.</t>
     </section>
 
+    <!-- ============================================================ -->
+    <!-- Section 2: Conventions and Definitions                        -->
+    <!-- ============================================================ -->
     <section anchor="sec-conventions" title="Conventions and Definitions">
-      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
-      "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
-      "OPTIONAL" in this document are to be interpreted as described in
-      BCP 14 <xref target="RFC2119"/> <xref target="RFC8174"/> when, and
-      only when, they appear in all capitals, as shown here.</t>
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
+      NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED",
+      "MAY", and "OPTIONAL" in this document are to be interpreted as
+      described in BCP 14 <xref target="RFC2119"/>
+      <xref target="RFC8174"/> when, and only when, they appear in all
+      capitals, as shown here.</t>
+
+      <t>This document uses the following terms:</t>
+      <t>
+        <list style="hanging">
+          <t hangText="Evidence Packet:">A CBOR-encoded unit of
+          behavioral evidence covering one collection window, sealed
+          with a jitter seal and optionally bound to an SWF proof.</t>
+          <t hangText="Evidence Chain:">An ordered, hash-linked sequence
+          of evidence packets forming the complete attestation record
+          for one authorship session.</t>
+          <t hangText="Jitter Seal:">An HMAC binding evidence content
+          to device-specific timing characteristics.</t>
+          <t hangText="Sequential Work Function (SWF):">A computation
+          requiring sequential steps proportional to wall-clock time,
+          used to bind evidence to elapsed duration.</t>
+          <t hangText="Collection Window:">A fixed-duration interval
+          (default 30 seconds) during which behavioral events are
+          captured before sealing.</t>
+        </list>
+      </t>
     </section>
 
+    <!-- ============================================================ -->
+    <!-- Section 3: System Model                                       -->
+    <!-- ============================================================ -->
     <section anchor="sec-system-model" title="System Model">
-      <t>The Proof of Process protocol maps onto the RATS architecture
-      defined in <xref target="RFC9334"/>. The following entity roles
-      are defined:</t>
+      <t>The PoP protocol maps to the RATS architecture
+      <xref target="RFC9334"/> entity roles as follows:</t>
 
-      <section anchor="sec-system-attester" title="Attester">
-        <t>The Attester is the software component running on the author's
-        device that collects behavioral evidence during content creation.
-        It operates the evidence collection state machine, computes
-        cryptographic seals, and produces evidence packets. The Attester
-        corresponds to the RATS Attester role.</t>
-      </section>
+      <t>
+        <list style="hanging">
+          <t hangText="Attester:">The authorship software executing on
+          the author's device. The Attester collects behavioral evidence,
+          computes SWF proofs, and produces signed evidence chains. The
+          Attester operates in the Attesting Environment, which includes
+          the device hardware providing timing sources and, for T3/T4
+          tiers, hardware attestation capabilities (TPM, Secure
+          Enclave).</t>
 
-      <section anchor="sec-system-verifier" title="Verifier">
-        <t>The Verifier receives evidence chains and produces Attestation
-        Results. It implements the appraisal algorithms defined in the
-        companion document. The Verifier MUST be operated independently
-        of the Attester to prevent self-attestation.</t>
-      </section>
+          <t hangText="Verifier:">An entity that appraises evidence
+          chains against an appraisal policy. The Verifier checks SWF
+          proofs, validates Merkle audit paths, assesses behavioral
+          plausibility, and produces Attestation Results. The Verifier
+          does not need access to the original content, only to the
+          evidence chain and content hash.</t>
 
-      <section anchor="sec-system-rp" title="Relying Party">
-        <t>The Relying Party consumes Attestation Results to make trust
-        decisions about content provenance. Examples include publishers,
-        academic institutions, and content platforms.</t>
-      </section>
+          <t hangText="Relying Party:">An entity that consumes
+          Attestation Results to make trust decisions. Examples include
+          publishers, legal systems, content platforms, and archival
+          services. The Relying Party receives a structured Attestation
+          Result indicating the assurance level and confidence
+          scores.</t>
 
-      <section anchor="sec-system-endorser" title="Endorser">
-        <t>An Endorser provides supplementary attestations about the
-        Attester's environment, such as hardware attestation certificates
-        from platform vendors (e.g., TPM manufacturer certificates per
-        <xref target="RFC9711"/>).</t>
-      </section>
+          <t hangText="Endorser:">A manufacturer or platform vendor
+          that provides Endorsements for the Attesting Environment. For
+          T3/T4 tiers, this includes TPM manufacturers providing
+          endorsement certificates and platform vendors attesting to
+          firmware integrity. For T1/T2, no Endorser is required.</t>
+        </list>
+      </t>
 
-      <section anchor="sec-system-compat" title="RATS Compatibility">
-        <t>The protocol supports both the passport model (Attester sends
-        evidence to Verifier, which produces result for Relying Party)
-        and the background-check model (Relying Party forwards evidence
-        to Verifier) as defined in <xref target="RFC9334"/>.</t>
-      </section>
+      <t>The protocol supports both the passport model (Attester
+      produces Evidence, Verifier produces Attestation Results conveyed
+      to Relying Party) and the background-check model (Relying Party
+      forwards Evidence to Verifier) defined in
+      <xref target="RFC9334"/>.</t>
     </section>
 
+    <!-- ============================================================ -->
+    <!-- Section 4: Threat Model                                       -->
+    <!-- ============================================================ -->
     <section anchor="sec-threat-model" title="Threat Model">
-      <t>The following attack taxonomy identifies the threats that the
-      Proof of Process protocol is designed to resist:</t>
+      <t>The PoP protocol addresses a six-attack taxonomy specific to
+      process attestation. Each attack targets a different aspect of the
+      evidence chain.</t>
 
-      <section anchor="sec-threat-retype" title="Retype Attack">
-        <t>An adversary manually retypes AI-generated content to produce
-        fresh behavioral evidence. Defense: the protocol captures
-        fine-grained revision patterns (editing, restructuring, pausing
-        to think) that differ significantly from sequential retyping.
-        The forensic assessment in the companion document detects the
-        characteristic monotonic typing pattern of retyping.</t>
-      </section>
+      <t>
+        <list style="hanging">
+          <t hangText="Retype Attack:">An adversary retypes existing
+          content character-by-character to generate fresh behavioral
+          evidence. This attack produces genuine keystroke timing but
+          lacks authentic revision patterns, cognitive pauses, and
+          non-linear editing behavior. Defense: the Verifier appraises
+          behavioral entropy and revision complexity against baseline
+          distributions for the claimed authorship duration.</t>
 
-      <section anchor="sec-threat-replay" title="Replay Attack">
-        <t>An adversary captures evidence from a legitimate authorship
-        session and attempts to reuse it for different content. Defense:
-        each evidence packet includes a content-hash binding to the
-        specific document state, and session nonces prevent cross-session
-        replay.</t>
-      </section>
+          <t hangText="Replay Attack:">An adversary captures a
+          legitimate evidence chain and attempts to reuse it for
+          different content. Defense: each evidence packet includes a
+          rolling content hash that binds evidence to the specific
+          document state at each collection window. Replayed evidence
+          will fail content-hash verification.</t>
 
-      <section anchor="sec-threat-relay" title="Relay Attack">
-        <t>An adversary relays evidence from one authorship session to
-        claim credit for a different document. Defense: the content-hash
-        chain binds evidence to specific content transitions, making
-        relay detectable.</t>
-      </section>
+          <t hangText="Relay Attack:">An adversary takes evidence
+          generated during creation of document A and applies it to
+          document B. Defense: the content binding in each evidence
+          packet uses an incremental hash over the document content.
+          Additionally, SWF proofs incorporate the content hash as
+          input, making evidence non-transferable between
+          documents.</t>
 
-      <section anchor="sec-threat-swf" title="SWF Acceleration">
-        <t>An adversary uses specialized hardware (FPGAs, ASICs) to
-        accelerate VDF computation, enabling faster-than-real-time
-        evidence generation. Defense: the difficulty parameter is
-        calibrated per-device, and hardware attestation at T3/T4 tiers
-        binds computation to the enrolled device.</t>
-      </section>
+          <t hangText="SWF Acceleration Attack:">An adversary uses
+          specialized hardware (ASICs, FPGAs) to compute SWF proofs
+          faster than wall-clock time, enabling fabrication of
+          time-bound evidence. Defense: the SWF difficulty is calibrated
+          to commodity hardware performance. The maximum achievable
+          speedup with specialized hardware is bounded by the inherent
+          sequentiality of the repeated-squaring construction. See
+          <xref target="sec-swf"/> for acceleration bounds.</t>
 
-      <section anchor="sec-threat-ae" title="Attestation Environment Spoofing">
-        <t>An adversary spoofs the hardware attestation environment to
-        bypass device identity checks. Defense: hardware attestation
-        certificates are validated against manufacturer root certificates
-        per <xref target="RFC9711"/>.</t>
-      </section>
+          <t hangText="Attestation Environment Spoofing:">An adversary
+          fabricates or modifies the Attesting Environment to produce
+          false hardware attestation claims. Defense: T3/T4 tiers
+          require hardware-rooted attestation with manufacturer
+          Endorsements. The Verifier validates TPM/SE attestation
+          certificates against known Endorser roots.</t>
 
-      <section anchor="sec-threat-diversion" title="Evidence Diversion">
-        <t>An adversary redirects a legitimate evidence chain to claim
-        authorship of different content by modifying the final content
-        binding. Defense: the content-hash is included in every evidence
-        packet (not just the final one), creating an incremental binding
-        that cannot be diverted post-hoc.</t>
-      </section>
+          <t hangText="Evidence Diversion:">An adversary redirects an
+          active evidence chain to different content mid-session by
+          manipulating the content hash binding. Defense: the Merkle
+          chain construction ensures that any modification to an
+          intermediate packet invalidates all subsequent chain links.
+          Additionally, the jitter seal binds each packet to the
+          device's physical timing characteristics.</t>
+        </list>
+      </t>
     </section>
 
+    <!-- ============================================================ -->
+    <!-- Section 5: Security Goals                                     -->
+    <!-- ============================================================ -->
     <section anchor="sec-security-goals" title="Security Goals">
-      <t>The protocol aims to achieve the following security properties:</t>
+      <t>The PoP protocol provides the following security properties,
+      with strength varying by evidence tier:</t>
+
       <t>
         <list style="hanging">
           <t hangText="Temporal Authenticity:">Evidence is bound to
-          wall-clock time through Sequential Work Functions, preventing
-          after-the-fact fabrication.</t>
+          wall-clock time intervals through SWF proofs. A Verifier can
+          confirm that the claimed authorship duration is consistent
+          with the sequential computation performed. At CORE tier,
+          temporal authenticity relies on timestamps alone. At ENHANCED
+          tier, SWF proofs provide cryptographic time binding. At
+          MAXIMUM tier, hardware-anchored timestamps provide independent
+          confirmation.</t>
+
           <t hangText="Behavioral Authenticity:">Evidence captures
-          genuine human behavioral characteristics that are
-          computationally expensive to synthesize.</t>
+          statistical properties of the authorship process (cadence
+          distributions, entropy measurements, revision patterns) that
+          are consistent with human creative behavior. The Verifier
+          appraises these properties against baseline models.</t>
+
           <t hangText="Content Binding:">Evidence is cryptographically
-          bound to specific document content at each observation window.</t>
-          <t hangText="Non-Repudiation:">The Attester cannot deny having
-          produced a signed evidence chain, as the chain is bound to the
-          device identity key.</t>
+          bound to specific document content through rolling content
+          hashes included in each evidence packet. Evidence cannot be
+          transferred to a different document without detection.</t>
+
+          <t hangText="Non-Repudiation:">Once an evidence chain is
+          sealed and signed, the author cannot deny having produced
+          the attested behavioral evidence. At T3/T4 tiers, hardware-
+          bound keys provide device-level non-repudiation. COSE_Sign1
+          signatures over the complete chain enable third-party
+          verification.</t>
         </list>
       </t>
     </section>
 
+    <!-- ============================================================ -->
+    <!-- Section 6: Evidence Collection State Machine                  -->
+    <!-- ============================================================ -->
     <section anchor="sec-state-machine" title="Evidence Collection State Machine">
-      <t>The Attester operates a state machine with the following states:</t>
+      <t>The Attester operates a deterministic state machine governing
+      evidence collection. The state machine ensures that evidence is
+      collected, sealed, and chained in a well-defined order with no
+      gaps or ambiguities.</t>
+
+      <t>The states are:</t>
       <t>
         <list style="hanging">
-          <t hangText="IDLE:">No active evidence collection session.</t>
-          <t hangText="COLLECTING:">Actively capturing behavioral events
-          within an evidence window.</t>
-          <t hangText="SEALING:">Computing the jitter seal and VDF proof
-          for the current window.</t>
-          <t hangText="CHAINING:">Linking the sealed packet to the
-          evidence chain.</t>
-          <t hangText="SUSPENDED:">Session paused. A continuation token
-          is generated.</t>
+          <t hangText="IDLE:">No active evidence collection session.
+          The Attester is waiting for the author to begin or resume
+          a session. Transition to COLLECTING occurs upon receipt of
+          the first semantic event or resumption with a valid
+          continuation token.</t>
+
+          <t hangText="COLLECTING:">Actively capturing behavioral
+          events within a collection window. The Attester records
+          timestamped semantic events and maintains running statistics
+          (cadence mean, cadence variance, entropy accumulator). The
+          window duration is configurable with a default of 30
+          seconds. Transition to SEALING occurs on WINDOW_CLOSE.
+          Transition to SUSPENDED occurs on PAUSE exceeding the
+          suspension threshold (default: 300 seconds).</t>
+
+          <t hangText="SEALING:">Computing the jitter seal and, for
+          ENHANCED/MAXIMUM tiers, the SWF proof for the current
+          collection window. During SEALING, the Attester MUST NOT
+          accept new semantic events; they are buffered for the next
+          window. The jitter seal is computed as:
+          seal = HMAC-SHA-256(device_key, timing_vector || swf_output
+          || window_nonce) per <xref target="RFC2104"/>. Transition to
+          CHAINING occurs upon successful seal computation.</t>
+
+          <t hangText="CHAINING:">Linking the sealed evidence packet
+          to the evidence chain. The Attester computes the chain hash:
+          chain_hash[i] = SHA-256(chain_hash[i-1] || packet_hash[i])
+          per <xref target="RFC6234"/>. The evidence packet is
+          appended to persistent storage. Transition to COLLECTING
+          occurs immediately for the next window. Transition to IDLE
+          occurs on SESSION_END.</t>
+
+          <t hangText="SUSPENDED:">The session is paused due to
+          extended author inactivity. A continuation token is generated
+          per <xref target="sec-continuation"/>. The partial window
+          (if any) is sealed with a SUSPENDED flag. Transition to
+          COLLECTING occurs upon resumption with a valid continuation
+          token. Transition to IDLE occurs if the suspension exceeds
+          the maximum suspension duration (default: 24 hours).</t>
         </list>
       </t>
+
+      <t>An implementation MUST persist the current state and all
+      accumulated evidence to stable storage before any state
+      transition, ensuring crash recovery without evidence loss.</t>
     </section>
 
+    <!-- ============================================================ -->
+    <!-- Section 7: Semantic Event Definitions                         -->
+    <!-- ============================================================ -->
     <section anchor="sec-semantic-events" title="Semantic Event Definitions">
-      <t>The following semantic events drive the state machine:</t>
+      <t>The following semantic events drive the state machine and
+      form the atomic units of behavioral evidence. Each event is
+      recorded with a timestamp in microsecond resolution per
+      <xref target="RFC3339"/> extended with sub-second precision.</t>
+
       <t>
         <list style="hanging">
-          <t hangText="KEYSTROKE:">A character insertion or deletion.
-          Captured with microsecond-resolution timing.</t>
-          <t hangText="REVISION:">A multi-character edit operation
-          (cut, paste, undo, find-replace).</t>
-          <t hangText="PAUSE:">An inactivity period exceeding the
-          configured pause threshold (default: 5 seconds).</t>
-          <t hangText="WINDOW_CLOSE:">The evidence collection window
-          has elapsed (default: 30 seconds).</t>
-          <t hangText="SESSION_END:">The authorship session is
-          terminated.</t>
+          <t hangText="KEYSTROKE (0x01):">A single character insertion
+          or deletion. The Attester records the inter-keystroke interval
+          (IKI) in microseconds but MUST NOT record the character
+          value itself. Keystroke events are aggregated into cadence
+          statistics (mean, variance, entropy) at window boundaries.
+          This is the most frequent event type and the primary source
+          of behavioral signal.</t>
+
+          <t hangText="REVISION (0x02):">A multi-character edit
+          operation including cut, paste, undo, redo, find-replace,
+          and block move. The Attester records the operation type,
+          character count affected, and timestamp. Revision events
+          are significant indicators of authentic authorship because
+          they reflect non-linear editing behavior that is difficult
+          to simulate.</t>
+
+          <t hangText="PAUSE (0x03):">An inactivity period exceeding
+          the configured pause threshold (default: 5 seconds). The
+          Attester records the pause duration. Pause events capture
+          cognitive processing time characteristic of human creative
+          work. Pauses shorter than the threshold are implicitly
+          captured in inter-keystroke intervals.</t>
+
+          <t hangText="WINDOW_CLOSE (0x04):">The collection window
+          timer has elapsed (default: 30 seconds). This event triggers
+          the state transition from COLLECTING to SEALING. Window
+          close events are generated by the Attester's internal timer,
+          not by author action.</t>
+
+          <t hangText="SESSION_END (0x05):">The authorship session is
+          terminated by explicit author action or application closure.
+          This event triggers chain finalization: the current window
+          is sealed (even if incomplete), the chain is closed with a
+          terminal hash, and the final evidence packet includes the
+          complete document content hash.</t>
         </list>
       </t>
     </section>
 
-    <section anchor="sec-evidence-tiers" title="Evidence Content Tiers">
-      <t>Evidence packets are classified into three tiers of increasing
-      richness and assurance:</t>
+    <!-- ============================================================ -->
+    <!-- Section 8: Evidence Content Tiers                             -->
+    <!-- ============================================================ -->
+    <section anchor="sec-tiers" title="Evidence Content Tiers">
+      <t>The protocol defines three evidence content tiers that
+      determine the richness and strength of collected evidence.
+      Implementations MUST support the CORE tier and SHOULD support
+      ENHANCED. The MAXIMUM tier is OPTIONAL.</t>
+
       <t>
         <list style="hanging">
-          <t hangText="CORE:">Basic behavioral metrics including typing
-          cadence (mean and variance of inter-keystroke intervals),
-          Shannon entropy of timing distributions, and revision count.
-          Sufficient for T1 assurance.</t>
-          <t hangText="ENHANCED:">CORE metrics plus Sequential Work
-          Function time-binding, content-hash chain linking evidence to
-          document state, and continuation tokens for cross-session
-          linkage. Required for T2 assurance.</t>
-          <t hangText="MAXIMUM:">ENHANCED metrics plus hardware-anchored
-          timing (HAT) from a trusted execution environment, continuous
-          device attestation, and environmental sensor data. Required
-          for T3/T4 assurance.</t>
+          <t hangText="CORE Tier:">Basic behavioral metrics sufficient
+          for lightweight attestation. CORE evidence includes: cadence
+          statistics (mean and variance of inter-keystroke intervals),
+          Shannon entropy of the keystroke timing distribution, total
+          event count per window, pause count and total pause duration,
+          revision count, and a rolling SHA-256 content hash. CORE
+          evidence is sealed with a jitter seal but does not include
+          SWF time-binding. Suitable for T1 (Basic) assurance
+          level.</t>
+
+          <t hangText="ENHANCED Tier:">CORE metrics plus SWF
+          time-binding and content hash chain. In addition to all
+          CORE fields, ENHANCED evidence includes: SWF proof output
+          binding the evidence to elapsed wall-clock time, a Merkle
+          tree root over the collection window's events for audit
+          sampling, and a per-window content hash chain linking to
+          previous windows. ENHANCED evidence provides cryptographic
+          temporal authenticity. Suitable for T2 (Standard) and T3
+          (Enhanced) assurance levels.</t>
+
+          <t hangText="MAXIMUM Tier:">ENHANCED metrics plus hardware-
+          anchored timing and device attestation. In addition to all
+          ENHANCED fields, MAXIMUM evidence includes: Hardware-Anchored
+          Time (HAT) stamps from TPM or Secure Enclave monotonic
+          counters, a platform attestation quote binding the evidence
+          to the specific hardware environment, and device endorsement
+          chain linking to manufacturer root certificates. MAXIMUM
+          evidence provides the strongest available assurance. Required
+          for T4 (Maximum) assurance level.</t>
         </list>
       </t>
     </section>
 
+    <!-- ============================================================ -->
+    <!-- Section 9: Attestation Assurance Levels                       -->
+    <!-- ============================================================ -->
     <section anchor="sec-assurance-levels" title="Attestation Assurance Levels">
-      <t>Four assurance levels map evidence strength to established
-      frameworks:</t>
+      <t>The protocol defines four attestation assurance levels that
+      map to established identity assurance frameworks. Each level
+      specifies the minimum evidence tier, verification requirements,
+      and trust properties.</t>
+
       <t>
         <list style="hanging">
-          <t hangText="T1 Basic:">Software-only attestation with
-          behavioral entropy above minimum threshold. Maps to NIST AAL1 (<xref target="NIST-SP-800-63"/>)
-          and ISO/IEC 29115 LoA 1 (<xref target="ISO-29115"/>).</t>
-          <t hangText="T2 Standard:">T1 plus SWF time-binding proof.
-          Maps to NIST AAL2 and ISO LoA 2.</t>
-          <t hangText="T3 Enhanced:">T2 plus hardware-anchored timing
-          from TPM or Secure Enclave. Maps to NIST AAL3 and
-          ISO LoA 3.</t>
-          <t hangText="T4 Maximum:">T3 plus continuous device
-          attestation and environmental sensing. Exceeds NIST AAL3,
-          maps to ISO LoA 4.</t>
+          <t hangText="T1 Basic:">Minimum viable attestation using
+          CORE tier evidence. Provides behavioral plausibility
+          assessment based on cadence and entropy statistics.
+          Timestamps are self-reported and not cryptographically
+          bound. Maps to NIST SP 800-63 AAL1 and ISO/IEC 29115
+          Level of Assurance 1. Suitable for informal attribution
+          and low-stakes content.</t>
+
+          <t hangText="T2 Standard:">Standard attestation using
+          ENHANCED tier evidence. Provides cryptographic temporal
+          authenticity through SWF time-binding and content-hash
+          chain integrity. Merkle audit proofs enable probabilistic
+          verification. Maps to NIST SP 800-63 AAL2 and ISO/IEC
+          29115 Level of Assurance 2. Suitable for professional
+          publishing and content licensing.</t>
+
+          <t hangText="T3 Enhanced:">Enhanced attestation using
+          ENHANCED or MAXIMUM tier evidence with additional Verifier
+          requirements. Requires corroboration of SWF timing against
+          independent time sources. Behavioral analysis includes
+          advanced forensic metrics (Hurst exponent, perplexity
+          scoring). Maps to NIST SP 800-63 AAL3 and ISO/IEC 29115
+          Level of Assurance 3. Suitable for legal proceedings and
+          high-value intellectual property.</t>
+
+          <t hangText="T4 Maximum:">Maximum attestation requiring
+          MAXIMUM tier evidence with hardware attestation. Requires
+          Hardware-Anchored Time, TPM/SE platform attestation quotes,
+          and manufacturer Endorsement verification. Exceeds NIST
+          SP 800-63 AAL3 (which does not define hardware-bound
+          process attestation). Maps to ISO/IEC 29115 Level of
+          Assurance 4. Suitable for forensic-grade evidence and
+          regulatory compliance contexts.</t>
         </list>
       </t>
     </section>
 
+    <!-- ============================================================ -->
+    <!-- Section 10: Profile Architecture                              -->
+    <!-- ============================================================ -->
     <section anchor="sec-profiles" title="Profile Architecture">
-      <t>All implementations MUST support the following mandatory-to-implement
-      features:</t>
+      <t>A PoP profile defines a concrete set of algorithms, parameters,
+      and evidence requirements for interoperable deployment. This
+      section specifies the mandatory-to-implement baseline profile and
+      the extension points for specialized profiles.</t>
+
+      <t>The baseline profile specifies the following mandatory-to-
+      implement features:</t>
       <t>
         <list style="symbols">
-          <t>CBOR encoding per <xref target="RFC8949"/></t>
-          <t>COSE_Sign1 with ES256 per <xref target="RFC9052"/></t>
-          <t>SHA-256 for content and chain hashing</t>
-          <t>HMAC-SHA-256 for jitter seals</t>
-          <t>UUIDv7 session identifiers per <xref target="RFC9562"/></t>
-          <t>Evidence window duration: 15-60 seconds (default 30)</t>
+          <t>Evidence encoding: CBOR <xref target="RFC8949"/> with
+          the schema defined in <xref target="sec-appendix-cddl"/>.</t>
+          <t>Signature algorithm: COSE_Sign1 with ES256 (ECDSA
+          using P-256 and SHA-256) per <xref target="RFC9052"/>.</t>
+          <t>Hash algorithm: SHA-256 per
+          <xref target="RFC6234"/> for content hashing, chain
+          linking, and Merkle tree construction.</t>
+          <t>Jitter seal: HMAC-SHA-256 per
+          <xref target="RFC2104"/>.</t>
+          <t>Minimum evidence tier: CORE.</t>
+          <t>Minimum collection window: 10 seconds.</t>
+          <t>Maximum collection window: 120 seconds.</t>
+          <t>Timestamp format: RFC 3339 with microsecond precision
+          per <xref target="RFC3339"/>.</t>
+          <t>Session identifiers: UUIDv7 per
+          <xref target="RFC9562"/>.</t>
         </list>
       </t>
+
+      <t>Profiles MAY extend the baseline by specifying additional
+      SWF parameters, alternative signature algorithms, or domain-
+      specific semantic events. All profile extensions MUST be
+      backward compatible with the baseline wire format.</t>
     </section>
 
+    <!-- ============================================================ -->
+    <!-- Section 11: Sequential Work Function                          -->
+    <!-- ============================================================ -->
     <section anchor="sec-swf" title="Sequential Work Function">
       <t>This document uses the term Sequential Work Function (SWF)
-      rather than Verifiable Delay Function (VDF) because the construction
-      does not satisfy the formal VDF definition requiring unique outputs.
-      The SWF provides a weaker but sufficient guarantee: computing the
-      output requires a minimum number of sequential steps, and the output
-      can be efficiently verified.</t>
+      rather than Verifiable Delay Function (VDF) because the
+      construction does not satisfy the formal VDF definition requiring
+      unique outputs. Specifically, the repeated-squaring construction
+      in an RSA group with unknown factorization does not guarantee
+      output uniqueness without additional setup assumptions that this
+      protocol does not mandate.</t>
 
       <t>The SWF construction uses repeated squaring in an RSA group:</t>
-      <t>y = x^(2^t_vdf) mod N</t>
-      <t>where x is derived from the evidence packet hash, t_vdf controls
-      the time parameter, and N is an RSA modulus. Verification uses
-      Wesolowski's protocol in O(log t_vdf) time.</t>
 
-      <t>The difficulty parameter t_vdf MUST be calibrated to the
-      Attester's hardware during enrollment such that evaluation requires
-      approximately the same wall-clock time as the evidence window.</t>
+      <figure>
+        <artwork><![CDATA[
+  y = x^(2^T) mod N
+
+  where:
+    x = SHA-256(evidence_packet_hash || window_nonce)
+        mapped to Z*_N via rejection sampling
+    T = difficulty parameter (sequential steps)
+    N = RSA modulus from a trusted setup or published
+        RSA challenge number (minimum 2048 bits)
+        ]]></artwork>
+      </figure>
+
+      <t>The difficulty parameter T MUST be calibrated to the target
+      platform's computational capability such that computing the SWF
+      output requires approximately the same wall-clock time as the
+      collection window duration. Specifically:</t>
+
+      <t>
+        <list style="symbols">
+          <t>The Attester MUST perform a calibration step at
+          initialization to determine the number of squarings
+          achievable per second on the current hardware.</t>
+          <t>T MUST be set such that the SWF computation requires
+          at least 80% of the collection window duration on the
+          calibrated hardware.</t>
+          <t>The calibrated performance value MUST be included in
+          the evidence packet to enable the Verifier to assess
+          whether the SWF duration is plausible for the claimed
+          hardware class.</t>
+        </list>
+      </t>
+
+      <t>Verification of the SWF output uses Wesolowski's proof
+      protocol, which requires O(log T) group operations. The Verifier
+      checks:</t>
+
+      <figure>
+        <artwork><![CDATA[
+  Verification:
+    Given (x, y, T, pi):
+      l = HashToPrime(x || y)
+      r = 2^T mod l
+      Check: x^r * pi^l == y (mod N)
+        ]]></artwork>
+      </figure>
+
+      <t>Acceleration bounds: an adversary with k parallel processors
+      achieves at most O(sqrt(k)) speedup for the inherently sequential
+      repeated-squaring computation. An adversary with a custom ASIC
+      operating at frequency f_asic versus the reference frequency
+      f_ref achieves a speedup factor of at most f_asic / f_ref.
+      The Verifier SHOULD reject SWF proofs where the implied
+      computation rate exceeds 10x the reference platform rate,
+      accounting for known high-performance hardware.</t>
     </section>
 
+    <!-- ============================================================ -->
+    <!-- Section 12: Merkle-Sampled Audit Proofs                       -->
+    <!-- ============================================================ -->
     <section anchor="sec-merkle-audit" title="Merkle-Sampled Audit Proofs">
-      <t>For long evidence chains, the Verifier MAY use Merkle-sampled
-      audit proofs instead of verifying every SWF proof. The Attester
-      constructs a Merkle tree over all SWF outputs and provides:</t>
+      <t>For ENHANCED and MAXIMUM tier evidence, the Attester constructs
+      a Merkle tree over the semantic events within each collection
+      window. This enables probabilistic verification: the Verifier can
+      audit a random sample of events without requiring the complete
+      event set.</t>
+
+      <t>The Merkle tree is constructed as follows:</t>
       <t>
-        <list style="numbers">
-          <t>The Merkle root of all SWF outputs.</t>
-          <t>A random sample of k SWF proofs (where k is determined by
-          the desired statistical confidence).</t>
-          <t>Merkle inclusion proofs for each sampled output.</t>
+        <list style="symbols">
+          <t>Leaf nodes: SHA-256 hash of each serialized semantic event
+          (event_type || timestamp || event_data).</t>
+          <t>Internal nodes: SHA-256(left_child || right_child).</t>
+          <t>The tree is padded to the next power of two with
+          duplicate hashes of the last leaf.</t>
+          <t>The Merkle root is included in the evidence packet.</t>
         </list>
       </t>
-      <t>This achieves O(k log n) verification cost instead of O(n),
-      with detection probability 1 - (1 - f/n)^k for a fraction f of
-      invalid proofs.</t>
+
+      <t>The Attester MUST retain the complete Merkle tree for audit
+      purposes. When a Verifier requests an audit, the Attester
+      provides k randomly selected leaf nodes along with their Merkle
+      inclusion proofs (sibling hashes along the path to the root).</t>
+
+      <t>The verification cost for k sampled events from a window
+      containing n events is O(k log n). For a desired detection
+      probability p of tampered evidence, the required sample size is
+      k = ceil(log(1-p) / log(1 - f)), where f is the assumed fraction
+      of tampered events. With k = 20 and f = 0.05, the detection
+      probability exceeds 0.64. Verifiers requiring higher confidence
+      SHOULD increase k accordingly.</t>
     </section>
 
+    <!-- ============================================================ -->
+    <!-- Section 13: Hardware-Anchored Time                            -->
+    <!-- ============================================================ -->
     <section anchor="sec-hat" title="Hardware-Anchored Time">
-      <t>For T3 and T4 assurance levels, the Attester MUST supplement
-      SWF proofs with hardware-anchored timestamps from a trusted
-      execution environment:</t>
+      <t>For T3 and T4 attestation assurance levels, the Attester
+      SHOULD (T3) or MUST (T4) include Hardware-Anchored Time (HAT)
+      stamps derived from trusted hardware timing sources. HAT provides
+      an independent temporal reference that cannot be manipulated by
+      software-only adversaries.</t>
+
+      <t>Supported HAT sources:</t>
       <t>
-        <list style="symbols">
-          <t>TPM Clock: A monotonic counter from the TPM that cannot be
-          reset or rolled back by software.</t>
-          <t>Secure Enclave Counter: A platform-specific monotonic
-          counter from the Secure Enclave or TrustZone.</t>
+        <list style="hanging">
+          <t hangText="TPM Clock:">The TPM 2.0 clock value obtained
+          via TPM2_ReadClock. The Attester records the TPM clock value
+          at the start and end of each collection window. The
+          difference provides a hardware-attested duration measurement.
+          The TPM clock value is included in the TPM attestation quote
+          for the window.</t>
+
+          <t hangText="Secure Enclave Counter:">On platforms with a
+          Secure Enclave (e.g., Apple SEP), the monotonic counter
+          provides a tamper-resistant sequence number. While not
+          directly a time source, the counter advancement rate can be
+          correlated with wall-clock time over calibrated intervals.</t>
         </list>
       </t>
-      <t>The Verifier validates that the HAT timestamps are consistent
-      with the SWF timing proofs within a 5% tolerance.</t>
+
+      <t>HAT values are included in the evidence packet as a separate
+      field and are covered by both the jitter seal and the COSE_Sign1
+      signature. The Verifier validates HAT consistency by checking that
+      the hardware-reported duration is within an acceptable tolerance
+      (default: +/- 5%) of the SWF-implied duration and the claimed
+      wall-clock duration.</t>
     </section>
 
-    <section anchor="sec-jitter-seal" title="Jitter Seal">
-      <t>seal = HMAC-SHA-256(device_key, timing_vector || t_vdf || nonce)</t>
-    </section>
-
+    <!-- ============================================================ -->
+    <!-- Section 14: Continuation Tokens                               -->
+    <!-- ============================================================ -->
     <section anchor="sec-continuation" title="Continuation Tokens">
-      <t>Continuation tokens link evidence across sessions using
-      HKDF-derived session keys (<xref target="RFC5869"/>) with
-      per-session salt. Tokens MUST expire after 24 hours and MUST
-      be rotated at the start of each new session.</t>
+      <t>Continuation tokens enable cross-session linkage when an
+      authorship session is suspended and later resumed. This allows
+      the Verifier to assess the complete authorship timeline across
+      multiple editing sessions.</t>
+
+      <t>When the state machine enters SUSPENDED, the Attester generates
+      a continuation token using HKDF <xref target="RFC5869"/>:</t>
+
+      <figure>
+        <artwork><![CDATA[
+  continuation_token = HKDF-Expand(
+    PRK  = HKDF-Extract(salt=session_salt, IKM=chain_key),
+    info = "PoP-continuation" || session_id || suspension_timestamp,
+    L    = 32
+  )
+        ]]></artwork>
+      </figure>
+
+      <t>The continuation token is stored in the final evidence packet
+      of the suspended session. Upon resumption, the author presents
+      the continuation token, and the Attester validates it before
+      transitioning from SUSPENDED to COLLECTING. The new session's
+      first evidence packet includes the continuation token hash,
+      creating a cryptographic link between sessions.</t>
+
+      <t>A continuation token MUST expire after the maximum suspension
+      duration (default: 24 hours). Expired tokens MUST be rejected,
+      requiring the author to start a new evidence chain.</t>
     </section>
 
+    <!-- ============================================================ -->
+    <!-- Section 15: Privacy Considerations                            -->
+    <!-- ============================================================ -->
     <section anchor="sec-privacy" title="Privacy Considerations">
-      <t>Evidence packets MUST be constructed using the principle of data
-      minimization per <xref target="RFC6973"/>. Specifically:</t>
+      <t>Evidence packets MUST be constructed following the principle
+      of data minimization per <xref target="RFC6973"/>. The following
+      privacy requirements apply:</t>
+
       <t>
-        <list style="symbols">
-          <t>The Attester MUST NOT record plaintext document content.
-          Only cryptographic hashes of content state are retained.</t>
-          <t>Keystroke timing MUST be aggregated into statistical
-          summaries (mean, variance, entropy) rather than stored as
-          raw event sequences.</t>
-          <t>Behavioral features MUST be quantized to prevent
-          de-anonymization through stylometric analysis. Quantization
-          bins MUST be at least 10ms wide for timing data.</t>
-          <t>Per-session key rotation MUST be used to prevent the
-          Verifier from correlating evidence across different documents
-          by the same author (unlinkability).</t>
+        <list style="hanging">
+          <t hangText="Content Exclusion:">The Attester MUST NOT
+          record plaintext content in evidence packets. Only
+          cryptographic hashes of content (SHA-256) are included for
+          content binding. The Verifier can confirm content binding
+          without access to the original text.</t>
+
+          <t hangText="Keystroke Aggregation:">Individual keystroke
+          timings MUST be aggregated into statistical summaries (mean,
+          variance, entropy) at window boundaries. Raw inter-keystroke
+          intervals MUST NOT be included in evidence packets unless
+          the author explicitly opts in and the deployment profile
+          permits it.</t>
+
+          <t hangText="Behavioral Fingerprinting Prevention:">The
+          statistical summaries in evidence packets MUST be quantized
+          to prevent behavioral fingerprinting. Cadence values MUST
+          be rounded to the nearest millisecond. Entropy values MUST
+          be rounded to two decimal places. These quantization levels
+          are sufficient for attestation appraisal while preventing
+          cross-session author identification.</t>
+
+          <t hangText="Unlinkability:">Different evidence chains
+          produced by the same author on different documents MUST NOT
+          be linkable by the Verifier or Relying Party without
+          explicit author consent. Session identifiers MUST be
+          generated as random UUIDv7 values per
+          <xref target="RFC9562"/>. Device keys used for jitter
+          seals MUST be rotated per-session at T1/T2 tiers. At
+          T3/T4 tiers where hardware keys are used, the Attester
+          SHOULD use key attestation mechanisms that support
+          privacy-preserving proof of device class without revealing
+          device identity.</t>
         </list>
       </t>
     </section>
 
+    <!-- ============================================================ -->
+    <!-- Section 16: Security Considerations                           -->
+    <!-- ============================================================ -->
     <section anchor="sec-security" title="Security Considerations">
-      <t>See the companion appraisal document for detailed security analysis.
-      Protocol-level security properties include resistance to replay,
-      relay, and retype attacks as described in
+      <t>This section specifies the security properties of the PoP
+      protocol and the defenses against the threats identified in
       <xref target="sec-threat-model"/>.</t>
+
+      <section title="Retype Attack Defense">
+        <t>A retype attack produces genuine keystroke timing but
+        anomalous behavioral patterns: unusually consistent cadence
+        (low variance), absence of revision events, linear character
+        insertion without non-sequential edits, and unrealistically
+        uniform pause distributions. The Verifier appraises these
+        patterns against baseline models. At T2 and above, SWF
+        time-binding ensures the adversary must invest real wall-clock
+        time proportional to the original authorship duration.</t>
+      </section>
+
+      <section title="Replay and Relay Attack Defense">
+        <t>Replay attacks are prevented by the rolling content hash
+        included in each evidence packet. Relay attacks are prevented
+        by the SWF input derivation, which incorporates the content
+        hash: x = SHA-256(evidence_packet_hash || window_nonce), where
+        evidence_packet_hash covers the content hash. An adversary
+        cannot reuse an SWF proof for different content.</t>
+      </section>
+
+      <section title="SWF Acceleration Bounds">
+        <t>The sequential nature of repeated squaring limits the
+        parallelizability of SWF computation. An adversary investing
+        in custom hardware achieves a speedup bounded by the frequency
+        ratio of their hardware to the reference platform. Current
+        technology limits this ratio to approximately 10x-50x for
+        practical implementations.</t>
+      </section>
+
+      <section title="Forgery Cost Bounds">
+        <t>The total cost of forging an evidence chain that passes
+        Verifier appraisal is bounded by:</t>
+        <figure>
+          <artwork><![CDATA[
+  C_total = C_swf + C_entropy + C_hardware
+
+  where:
+    C_swf     = cost of computing SWF proofs for the claimed
+                duration (proportional to wall-clock time)
+    C_entropy = cost of generating behavioral evidence with
+                plausible statistical properties (cadence variance,
+                revision complexity, pause distribution)
+    C_hardware = cost of obtaining valid hardware attestation
+                 (zero at T1/T2; requires physical device access
+                 at T3/T4)
+          ]]></artwork>
+        </figure>
+        <t>At T2 level, C_total is dominated by C_swf, which is
+        at minimum equal to the claimed authorship duration. At T4
+        level, C_hardware additionally requires possession of a
+        genuine hardware attestation environment, raising the cost
+        to include physical device procurement and firmware
+        analysis.</t>
+      </section>
+
+      <section title="Trust Gradation by Tier">
+        <t>The protocol provides graduated trust through the evidence
+        tier system. CORE tier provides behavioral plausibility with
+        no cryptographic time-binding, suitable for low-stakes
+        contexts. ENHANCED tier adds SWF time-binding, making forgery
+        require real-time investment. MAXIMUM tier adds hardware
+        attestation, requiring physical access to genuine hardware.
+        Relying Parties SHOULD select the minimum tier appropriate for
+        their risk tolerance.</t>
+      </section>
     </section>
 
+    <!-- ============================================================ -->
+    <!-- Section 17: Wire Format                                       -->
+    <!-- ============================================================ -->
+    <section anchor="sec-wire-format" title="Wire Format">
+      <t>Evidence packets are encoded using CBOR
+      <xref target="RFC8949"/> and signed using COSE_Sign1
+      <xref target="RFC9052"/>. The wire format is designed for
+      compact representation and efficient parsing on resource-
+      constrained devices.</t>
+
+      <t>Each evidence packet is structured as a COSE_Sign1 message
+      with the following components:</t>
+      <t>
+        <list style="hanging">
+          <t hangText="Protected Header:">Contains the algorithm
+          identifier (ES256), content type
+          (application/pop-evidence+cbor), and the chain sequence
+          number.</t>
+
+          <t hangText="Unprotected Header:">Contains the
+          pop-chain-ref parameter linking to the previous packet's
+          hash, and optionally the continuation token hash.</t>
+
+          <t hangText="Payload:">The CBOR-encoded evidence packet
+          conforming to the CDDL schema in
+          <xref target="sec-appendix-cddl"/>. The payload structure
+          varies by evidence tier: CORE includes behavioral metrics,
+          ENHANCED adds SWF proof and Merkle root, MAXIMUM adds HAT
+          stamps and platform attestation.</t>
+        </list>
+      </t>
+
+      <t>The complete evidence chain is encoded as a CBOR array of
+      COSE_Sign1 messages, with each element linked to its predecessor
+      via the pop-chain-ref header parameter. The chain MUST be
+      serialized in chronological order.</t>
+
+      <t>Implementations MUST use CBOR deterministic encoding per
+      Section 4.2 of <xref target="RFC8949"/> to ensure that
+      hash computations over evidence packets are reproducible.</t>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- Section 18: IANA Considerations                               -->
+    <!-- ============================================================ -->
     <section anchor="sec-iana" title="IANA Considerations">
-      <t>This document requests registration of the media type
-      application/pop-evidence+cbor and COSE header parameter
-      pop-chain-ref.</t>
+      <t>This document requests the following IANA registrations:</t>
+
+      <section title="Media Type Registration">
+        <t>Type name: application</t>
+        <t>Subtype name: pop-evidence+cbor</t>
+        <t>Required parameters: N/A</t>
+        <t>Optional parameters: tier (CORE, ENHANCED, MAXIMUM)</t>
+        <t>Encoding considerations: binary (CBOR)</t>
+        <t>Security considerations: See <xref target="sec-security"/>
+        of this document.</t>
+        <t>Interoperability considerations: Implementations MUST
+        support CBOR deterministic encoding.</t>
+      </section>
+
+      <section title="COSE Header Parameter Registration">
+        <t>This document registers the following COSE header
+        parameter:</t>
+        <t>
+          <list style="hanging">
+            <t hangText="Name:">pop-chain-ref</t>
+            <t hangText="Label:">TBD1 (requested)</t>
+            <t hangText="Value Type:">bstr</t>
+            <t hangText="Description:">SHA-256 hash of the previous
+            evidence packet in the chain, used for chain linking.</t>
+          </list>
+        </t>
+      </section>
+
+      <section title="PoP Semantic Event Type Registry">
+        <t>This document establishes the "PoP Semantic Event Types"
+        registry with the following initial entries:</t>
+        <t>
+          <list style="symbols">
+            <t>0x01 - KEYSTROKE</t>
+            <t>0x02 - REVISION</t>
+            <t>0x03 - PAUSE</t>
+            <t>0x04 - WINDOW_CLOSE</t>
+            <t>0x05 - SESSION_END</t>
+          </list>
+        </t>
+        <t>New entries require Specification Required per
+        <xref target="RFC9711"/>.</t>
+      </section>
     </section>
   </middle>
 
@@ -410,7 +939,7 @@
 
         <reference anchor="ISO-29115">
           <front>
-            <title>Information technology - Security techniques - Entity authentication assurance framework</title>
+            <title>Information technology -- Security techniques -- Entity authentication assurance framework</title>
             <author>
               <organization>International Organization for Standardization</organization>
             </author>
@@ -420,5 +949,89 @@
         </reference>
       </references>
     </references>
+
+    <!-- ============================================================ -->
+    <!-- Appendix A: CDDL Schema                                      -->
+    <!-- ============================================================ -->
+    <section anchor="sec-appendix-cddl" title="CDDL Schema">
+      <t>This appendix defines the CDDL <xref target="RFC8610"/>
+      schema for PoP evidence packets. The schema supports all three
+      evidence tiers through optional fields.</t>
+
+      <figure>
+        <artwork type="cddl"><![CDATA[
+; PoP Evidence Packet - top level structure
+evidence-packet = {
+  version:          uint,              ; protocol version (4)
+  session-id:       bstr .size 16,     ; UUIDv7 session identifier
+  sequence:         uint,              ; window sequence number
+  tier:             tier-enum,         ; evidence content tier
+  timestamp-start:  tstr,              ; RFC 3339 window start
+  timestamp-end:    tstr,              ; RFC 3339 window end
+  content-hash:     bstr .size 32,     ; SHA-256 of document content
+  chain-hash:       bstr .size 32,     ; SHA-256 chain link
+  metrics:          process-metrics,   ; behavioral metrics
+  jitter-seal:      bstr .size 32,     ; HMAC-SHA-256 seal
+  ? swf:            swf-output,        ; ENHANCED/MAXIMUM only
+  ? merkle-root:    bstr .size 32,     ; ENHANCED/MAXIMUM only
+  ? hat:            hat-stamp,         ; MAXIMUM only
+  ? platform-quote: bstr,              ; MAXIMUM only
+  ? continuation:   bstr .size 32,     ; if SUSPENDED
+  state:            state-enum,        ; state machine state
+}
+
+tier-enum = &(
+  CORE:     1,
+  ENHANCED: 2,
+  MAXIMUM:  3,
+)
+
+state-enum = &(
+  COLLECTING: 1,
+  SEALING:    2,
+  CHAINING:   3,
+  SUSPENDED:  4,
+)
+
+; Behavioral process metrics
+process-metrics = {
+  event-count:       uint,       ; total events in window
+  keystroke-count:    uint,       ; KEYSTROKE events
+  revision-count:     uint,       ; REVISION events
+  pause-count:        uint,       ; PAUSE events
+  cadence-mean-us:    uint,       ; mean IKI in microseconds
+  cadence-variance:   float32,   ; IKI variance
+  entropy:            float32,   ; Shannon entropy (2 decimals)
+  pause-total-ms:     uint,       ; total pause duration (ms)
+  ? revision-types:   [* uint],  ; ENHANCED: revision op codes
+  ? hurst-exponent:   float32,   ; ENHANCED: long-range dependence
+  ? perplexity-score: float32,   ; ENHANCED: behavioral perplexity
+}
+
+; Sequential Work Function output
+swf-output = {
+  input-x:          bstr,        ; SWF input (derived from hash)
+  output-y:         bstr,        ; SWF output y = x^(2^T) mod N
+  difficulty-T:     uint,        ; sequential steps parameter
+  proof-pi:         bstr,        ; Wesolowski proof
+  modulus-ref:      tstr,        ; reference to RSA modulus used
+  calibration-rate: uint,        ; squarings per second on platform
+}
+
+; Hardware-Anchored Time stamp
+hat-stamp = {
+  source:        hat-source-enum,
+  value-start:   uint,           ; hardware counter at window start
+  value-end:     uint,           ; hardware counter at window end
+  ? attestation: bstr,           ; TPM quote or SE attestation blob
+}
+
+hat-source-enum = &(
+  TPM-CLOCK:  1,
+  SE-COUNTER: 2,
+)
+        ]]></artwork>
+      </figure>
+    </section>
   </back>
 </rfc>
