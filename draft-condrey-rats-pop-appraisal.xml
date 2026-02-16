@@ -18,7 +18,7 @@
   <!ENTITY RFC6973 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.6973.xml">
 ]>
 
-<rfc ipr="trust200902" docName="draft-condrey-rats-pop-appraisal-01" category="exp" consensus="false" submissionType="IETF">
+<rfc ipr="trust200902" docName="draft-condrey-rats-pop-appraisal-02" category="exp" consensus="false" submissionType="IETF">
   <front>
     <title abbrev="RATS PoP Appraisal">Proof of Process Appraisal: Forensic Assessment, Forgery Bounds, and Absence Proofs</title>
 
@@ -148,18 +148,99 @@
     </section>
 
     <section anchor="sec-forgery" title="Forgery Cost Bounds">
-      <t>The total cost of forging an evidence chain is bounded by:</t>
+      <t>The total cost of forging an evidence chain of n packets is:</t>
       <t>C_total = C_swf + C_entropy + C_hardware</t>
+      <t>where:</t>
+
+      <section anchor="sec-forgery-swf" title="Sequential Work Function Cost">
+        <t>C_swf >= n * t_vdf sequential computation steps. This cost is
+        irreducible because SWF evaluation is inherently sequential. Even
+        with sqrt(k) parallelism from k processors, the wall-clock time
+        cannot be reduced below n * t_vdf / sqrt(k).</t>
+      </section>
+
+      <section anchor="sec-forgery-entropy" title="Behavioral Synthesis Cost">
+        <t>C_entropy is proportional to the number of behavioral dimensions
+        that must be simultaneously forged. For a d-dimensional behavioral
+        feature space, the cost scales as O(2^d) due to the need for
+        cross-dimensional consistency.</t>
+      </section>
+
+      <section anchor="sec-forgery-hw" title="Hardware Attestation Cost">
+        <t>C_hardware represents the cost of compromising the hardware
+        attestation chain. For T1/T2 tiers, C_hardware = 0 (software-only).
+        For T3/T4 tiers, C_hardware includes the cost of obtaining a valid
+        TPM or Secure Enclave attestation certificate.</t>
+      </section>
     </section>
 
-    <section anchor="sec-absence" title="Absence Proofs">
-      <t>Three types: computationally-bound, monitoring-dependent,
-      and environmental.</t>
+    <section anchor="sec-absence" title="Absence Proof Taxonomy">
+      <t>Three types of absence proofs demonstrate that no valid evidence
+      exists for a claimed authorship period:</t>
+
+      <section anchor="sec-absence-computational" title="Computationally-Bound">
+        <t>Demonstrates that the minimum sequential computation time for
+        the claimed number of SWF proofs exceeds the claimed authorship
+        window. This is the strongest form of absence proof as it relies
+        only on mathematical bounds.</t>
+      </section>
+
+      <section anchor="sec-absence-monitoring" title="Monitoring-Dependent">
+        <t>A trusted monitoring service attests that no evidence was
+        submitted during the claimed period. The service MUST provide
+        a signed non-receipt attestation with a timestamp window.</t>
+      </section>
+
+      <section anchor="sec-absence-environmental" title="Environmental">
+        <t>Environmental signals (device sensors, network telemetry,
+        location data) demonstrate that the claimed authorship context
+        was not present. For example, device accelerometer data showing
+        the device was in transit contradicts a claim of stationary
+        desktop authorship.</t>
+      </section>
+    </section>
+
+    <section anchor="sec-tool-receipt" title="Tool Receipt Protocol">
+      <t>When AI tools are used as part of the authorship process, a
+      tool receipt documents the AI contribution while providing evidence
+      of human editorial oversight. The tool receipt contains:</t>
+      <t>
+        <list style="symbols">
+          <t>tool-id: Identifier of the AI tool used.</t>
+          <t>invocation-window: Time range of AI tool usage.</t>
+          <t>contribution-scope: Paragraph-level attribution of AI
+          contributions.</t>
+          <t>content-fraction: Percentage of final content attributable
+          to AI generation.</t>
+          <t>editorial-evidence: Evidence chain segments showing human
+          review and modification of AI-generated content.</t>
+        </list>
+      </t>
+    </section>
+
+    <section anchor="sec-adversary" title="Adversary Model">
+      <t>The adversary model defines four tiers of adversary capability,
+      referencing the threat model in draft-condrey-rats-pop-protocol:</t>
+      <t>
+        <list style="hanging">
+          <t hangText="Casual:">No specialized tools. Limited to retyping
+          or simple copy-paste. Defeated by T1 evidence.</t>
+          <t hangText="Motivated:">Access to scripting tools and basic
+          automation. Defeated by T2 evidence with SWF binding.</t>
+          <t hangText="Professional:">Access to custom hardware and
+          behavioral synthesis models. Requires T3 evidence with
+          hardware attestation.</t>
+          <t hangText="Nation-State:">Unlimited resources including
+          hardware supply chain compromise. Requires T4 evidence with
+          continuous device attestation.</t>
+        </list>
+      </t>
     </section>
 
     <section anchor="sec-security" title="Security Considerations">
       <t>The appraisal mechanisms inherit the security properties of the
-      underlying protocol.</t>
+      underlying protocol. Additional considerations include verifier
+      trust and threshold calibration.</t>
     </section>
 
     <section anchor="sec-iana" title="IANA Considerations">
