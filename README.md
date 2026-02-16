@@ -1,13 +1,13 @@
 # IETF RATS Proof of Process
 
-Internet-Drafts for Proof of Process (PoP), an evidence framework built on the RATS architecture (RFC 9334) for digital authorship attestation.
+Internet-Drafts for Proof of Process (PoP), an evidence framework built on the RATS architecture (RFC 9334) that enables tamper-evident, independently verifiable attestation of how digital content is produced.
 
 ## Documents
 
-| Document | Title |
-|----------|-------|
-| draft-condrey-rats-pop-protocol | Proof of Process Protocol: State Machine, Semantic Events, and Cryptographic Parameters |
-| draft-condrey-rats-pop-appraisal | Proof of Process Appraisal: Forensic Assessment, Forgery Bounds, and Absence Proofs |
+| Document | Version | Title |
+|----------|---------|-------|
+| [draft-condrey-rats-pop-protocol](https://datatracker.ietf.org/doc/draft-condrey-rats-pop-protocol/) | -04 | Proof of Process Protocol: State Machine, Semantic Events, and Cryptographic Parameters |
+| [draft-condrey-rats-pop-appraisal](https://datatracker.ietf.org/doc/draft-condrey-rats-pop-appraisal/) | -03 | Proof of Process Appraisal: Forensic Assessment, Forgery Bounds, and Absence Proofs |
 
 ## Building
 
