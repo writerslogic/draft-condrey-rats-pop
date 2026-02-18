@@ -1,1095 +1,978 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="rfc2629.xslt" ?>
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude"
+     version="3"
+     docName="draft-condrey-rats-pop-appraisal-03"
+     ipr="trust200902"
+     category="exp"
+     consensus="false"
+     submissionType="independent"
+     sortRefs="true"
+     symRefs="true"
+     tocInclude="true"
+     tocDepth="4">
 
-<!DOCTYPE rfc [
-  <!ENTITY nbsp    "&#160;">
-  <!ENTITY zwsp   "&#8203;">
-  <!ENTITY nbhy   "&#8209;">
-  <!ENTITY wj     "&#8288;">
-
-  <!ENTITY RFC2119 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml">
-  <!ENTITY RFC8174 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8174.xml">
-  <!ENTITY RFC6234 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.6234.xml">
-  <!ENTITY RFC8610 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8610.xml">
-  <!ENTITY RFC8949 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8949.xml">
-  <!ENTITY RFC9052 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9052.xml">
-  <!ENTITY RFC9334 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9334.xml">
-  <!ENTITY RFC9711 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9711.xml">
-  <!ENTITY RFC6973 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.6973.xml">
-]>
-
-<rfc ipr="trust200902" docName="draft-condrey-rats-pop-appraisal-03" category="exp" consensus="false" submissionType="IETF">
   <front>
-    <title abbrev="RATS PoP Appraisal">Proof of Process Appraisal: Verification, Forensic Assessment, Forgery Bounds, and Absence Proofs</title>
-
-    <author initials="D." surname="Condrey" fullname="David Condrey">
-      <organization>Writerslogic Inc</organization>
+    <title abbrev="PoP Appraisal">Proof of Process (PoP): Forensic Appraisal and Security Model</title>
+    <seriesInfo name="Internet-Draft" value="draft-condrey-rats-pop-appraisal-03"/>
+    <author fullname="David Condrey" initials="D." surname="Condrey">
+      <organization abbrev="WritersLogic">WritersLogic Inc</organization>
       <address>
+        <postal>
+          <city>San Diego</city>
+          <region>California</region>
+          <country>United States</country>
+        </postal>
         <email>david@writerslogic.com</email>
       </address>
     </author>
-
     <date year="2026" month="February" day="16"/>
 
     <area>Security</area>
-    <workgroup>Remote ATtestation procedureS</workgroup>
+    <workgroup>Individual Submission</workgroup>
+
     <keyword>attestation</keyword>
-    <keyword>verification</keyword>
-    <keyword>forensic</keyword>
-    <keyword>forgery</keyword>
-    <keyword>absence proof</keyword>
-    <keyword>appraisal</keyword>
-    <keyword>tool receipt</keyword>
+    <keyword>forensics</keyword>
+    <keyword>biometrics</keyword>
+    <keyword>security economics</keyword>
 
     <abstract>
-      <t>This document defines the appraisal procedures for Proof of
-      Process (PoP) evidence within the IETF Remote ATtestation
-      procedureS (RATS) architecture. It specifies a five-step
-      verification protocol for evidence chain validation, forensic
-      assessment mechanisms that evaluate behavioral authenticity
-      through signal analysis and complexity metrics, quantified
-      forgery cost bounds establishing minimum adversary expenditure,
-      an absence proof taxonomy for detecting fabricated provenance
-      claims, a tool receipt protocol for documenting AI-assisted
-      authorship, an adversary model defining capability tiers, and
-      assistive technology accommodations. The document complements
-      the PoP protocol specification (draft-condrey-rats-pop-protocol)
-      by providing the Verifier-side algorithms and trust evaluation
-      framework.</t>
+      <t>
+        This document specifies the forensic appraisal methodology and quantitative security model for the Proof of Process (PoP) framework. It defines how Verifiers evaluate behavioral entropy, perform liveness detection, and calculate forgery cost bounds. Additionally, it establishes the taxonomy for Absence Proofs and the Writers Authenticity Report (WAR) format, as well as the Tool Receipt protocol for artificial intelligence (AI) attribution within the linear human authoring process.
+      </t>
     </abstract>
   </front>
 
   <middle>
-    <!-- ============================================================ -->
-    <!-- Section 1: Introduction                                       -->
-    <!-- ============================================================ -->
-    <section anchor="sec-introduction" title="Introduction">
-      <t>The Proof of Process protocol (draft-condrey-rats-pop-protocol)
-      defines how Attesters collect and seal behavioral evidence during
-      content creation. This companion document specifies how Verifiers
-      appraise that evidence to produce Attestation Results within the
-      RATS architecture <xref target="RFC9334"/>.</t>
-
-      <t>The appraisal process encompasses five core capabilities:
-      (1) a structured verification protocol that validates evidence
-      chain integrity, temporal ordering, entropy characteristics,
-      entanglement binding, and state matching; (2) forensic assessment
-      of behavioral authenticity through signal-to-noise analysis,
-      compositional complexity metrics, mechanical turk detection, and
-      error topology analysis; (3) quantified forgery cost bounds
-      establishing the minimum resources an adversary must expend;
-      (4) an absence proof taxonomy for detecting fabricated provenance;
-      and (5) a tool receipt protocol for transparent attribution when
-      AI tools are used in the authorship process.</t>
-
-      <t>This document defines the Verifier-side algorithms. The
-      Verifier receives an evidence chain produced by an Attester
-      conforming to draft-condrey-rats-pop-protocol and applies the
-      procedures specified herein to produce an Attestation Result.
-      The Attestation Result includes a tier-specific confidence score,
-      forensic assessment indicators, and any detected anomalies.</t>
-
-      <t>The algorithms in this document operate on the CBOR-encoded
-      evidence packets <xref target="RFC8949"/> and COSE_Sign1
-      signatures <xref target="RFC9052"/> defined in the protocol
-      companion. Verifier implementations MUST support the baseline
-      profile defined in draft-condrey-rats-pop-protocol and SHOULD
-      support the extended forensic analysis specified in
-      <xref target="sec-forensic"/>.</t>
-    </section>
-
-    <!-- ============================================================ -->
-    <!-- Section 2: Conventions and Definitions                        -->
-    <!-- ============================================================ -->
-    <section anchor="sec-conventions" title="Conventions and Definitions">
-      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
-      NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED",
-      "MAY", and "OPTIONAL" in this document are to be interpreted as
-      described in BCP 14 <xref target="RFC2119"/>
-      <xref target="RFC8174"/> when, and only when, they appear in all
-      capitals, as shown here.</t>
-
-      <t>This document uses the following terms defined in
-      draft-condrey-rats-pop-protocol: Evidence Packet, Evidence Chain,
-      Jitter Seal, Sequential Work Function (SWF), Collection Window,
-      and Hardware-Anchored Time (HAT). Additional terms used in this
-      document:</t>
-
+    <section anchor="introduction">
+      <name>Introduction</name>
       <t>
-        <list style="hanging">
-          <t hangText="Appraisal Policy:">A set of rules and thresholds
-          that the Verifier applies to evidence chains to determine
-          Attestation Results. Policies are tier-specific and may be
-          customized for deployment contexts.</t>
-          <t hangText="Forensic Indicator:">A computed metric derived
-          from evidence chain analysis that provides information about
-          the authenticity or characteristics of the authorship
-          process.</t>
-          <t hangText="Absence Proof:">A demonstration that a claimed
-          provenance could not have occurred, based on computational,
-          monitoring, or environmental evidence.</t>
-          <t hangText="Tool Receipt:">A structured record documenting
-          the use of an AI tool during the authorship process, including
-          the scope of AI contribution and evidence of human editorial
-          oversight.</t>
-        </list>
+        The value of Proof of Process (PoP) evidence lies in the Verifier's ability to distinguish biological effort from algorithmic simulation. While traditional RATS <xref target="RFC9334"/> appraisals verify system state, PoP appraisal verifies a continuous physical process. This document provides the normative framework for forensic appraisal, defining the logic required to generate a Writers Authenticity Report (WAR).
+      </t>
+      <t>
+        This document is a companion to <xref target="PoP-Protocol"/>,
+        which defines the Evidence Packet wire format and Attester
+        procedures. The present document specifies the Verifier's appraisal
+        logic, Attestation Result (WAR) wire format, and forensic
+        methodology. Implementers of Verifier components require both
+        documents.
       </t>
     </section>
 
-    <!-- ============================================================ -->
-    <!-- Section 3: Verification Protocol                              -->
-    <!-- ============================================================ -->
-    <section anchor="sec-verification" title="Verification Protocol">
-      <t>The Verifier MUST execute the following five-step verification
-      protocol on every submitted evidence chain. Each step produces a
-      pass/fail result with an associated confidence value. If any step
-      fails, the Verifier MUST reject the evidence chain and SHOULD
-      include the specific failure reason in the Attestation Result.</t>
-
-      <section anchor="sec-verify-chain" title="Step 1: Chain Integrity">
-        <t>The Verifier validates the structural integrity of the
-        hash-linked evidence chain.</t>
-        <t>
-          <list style="symbols">
-            <t>For each evidence packet P[i] where i > 0, the Verifier
-            computes SHA-256(P[i-1]) per <xref target="RFC6234"/> and
-            confirms it matches the prev-hash field in P[i].</t>
-            <t>The chain MUST contain no gaps: the sequence numbers
-            MUST be monotonically increasing with no missing values.</t>
-            <t>The first packet P[0] MUST have a prev-hash of all
-            zeros (32 bytes) indicating chain genesis.</t>
-            <t>The COSE_Sign1 signature on each packet MUST verify
-            against the Attester's public key per
-            <xref target="RFC9052"/>.</t>
-            <t>If any packet hash linkage fails, the Verifier MUST
-            reject the entire chain. Partial chain acceptance is not
-            permitted.</t>
-          </list>
-        </t>
-      </section>
-
-      <section anchor="sec-verify-temporal" title="Step 2: Temporal Ordering">
-        <t>The Verifier validates that timestamps across the evidence
-        chain are temporally consistent.</t>
-        <t>
-          <list style="symbols">
-            <t>Timestamps MUST be monotonically non-decreasing: for
-            each consecutive pair P[i] and P[i+1], the timestamp-start
-            of P[i+1] MUST be greater than or equal to the
-            timestamp-end of P[i].</t>
-            <t>The duration of each collection window (timestamp-end
-            minus timestamp-start) MUST fall within the configured
-            bounds (default: 10 to 120 seconds).</t>
-            <t>For ENHANCED and MAXIMUM tier evidence, the SWF proof
-            duration MUST be consistent with the claimed window
-            duration. Specifically, the SWF difficulty parameter T
-            divided by the calibration rate MUST yield a duration
-            within 20% of the claimed window duration.</t>
-            <t>For MAXIMUM tier, HAT stamp deltas MUST agree with
-            SWF-implied durations within a tolerance of 5%.</t>
-            <t>Gaps between consecutive windows (time between
-            timestamp-end of P[i] and timestamp-start of P[i+1])
-            exceeding the suspension threshold MUST be accompanied
-            by a valid continuation token.</t>
-          </list>
-        </t>
-      </section>
-
-      <section anchor="sec-verify-entropy" title="Step 3: Entropy Assessment">
-        <t>The Verifier evaluates the Shannon entropy of behavioral
-        timing distributions within each evidence window to confirm
-        human-characteristic randomness.</t>
-        <t>
-          <list style="symbols">
-            <t>The Verifier computes or verifies the Shannon entropy
-            H = -sum(p_i * log2(p_i)) over the reported timing
-            distribution for each window.</t>
-            <t>T1 Basic: entropy MUST exceed 2.0 bits/sample.
-            Evidence below this threshold indicates deterministic
-            input inconsistent with human behavior.</t>
-            <t>T2 Standard: entropy MUST fall within 2.5 to 6.0
-            bits/sample. Values below 2.5 suggest mechanical
-            generation; values above 6.0 suggest injected
-            randomness.</t>
-            <t>T3 Enhanced: entropy MUST fall within 3.0 to 5.5
-            bits/sample, reflecting tighter calibration against
-            verified human authorship baselines.</t>
-            <t>T4 Maximum: entropy MUST fall within 3.0 to 5.0
-            bits/sample, and the entropy trajectory across the
-            session MUST exhibit natural variation (standard
-            deviation of per-window entropy values MUST exceed
-            0.1 bits).</t>
-          </list>
-        </t>
-        <t>A constant-entropy session (where every window reports
-        identical entropy) is a strong indicator of synthetic
-        generation and MUST be flagged.</t>
-      </section>
-
-      <section anchor="sec-verify-entanglement" title="Step 4: Entanglement HMAC Verification">
-        <t>The Verifier validates the jitter seal binding each evidence
-        packet to the device's physical timing characteristics.</t>
-        <t>
-          <list style="symbols">
-            <t>For T1/T2 tiers, the Verifier checks that the jitter
-            seal is structurally present and that its length matches
-            the expected HMAC-SHA-256 output (32 bytes). The Verifier
-            cannot directly verify the HMAC without the device key
-            but MUST confirm the seal is non-trivial (not all zeros,
-            not a known constant).</t>
-            <t>For T3/T4 tiers, the Verifier requests the device
-            attestation certificate chain and validates it against
-            known Endorser roots. If the device key is available
-            through the attestation mechanism, the Verifier SHOULD
-            recompute and verify the jitter seal HMAC directly.</t>
-            <t>The Verifier MUST confirm that the timing vector
-            component of the jitter seal input is consistent with
-            the reported cadence statistics. Specifically, the
-            timing vector entropy MUST not contradict the reported
-            Shannon entropy by more than 0.5 bits.</t>
-          </list>
-        </t>
-      </section>
-
-      <section anchor="sec-verify-state" title="Step 5: State Matching">
-        <t>The Verifier confirms that the evidence chain corresponds
-        to the claimed document.</t>
-        <t>
-          <list style="symbols">
-            <t>The final evidence packet's content-hash field MUST
-            match the SHA-256 hash of the published document content
-            per <xref target="RFC6234"/>.</t>
-            <t>If intermediate content hashes are available (ENHANCED
-            and MAXIMUM tiers), the Verifier SHOULD confirm that the
-            content hash progression is monotonically evolving,
-            reflecting incremental document growth.</t>
-            <t>A content hash that changes non-monotonically (e.g.,
-            document size decreasing by more than 50% between
-            consecutive windows) MUST be flagged for manual review
-            unless a REVISION event of type "major restructure" is
-            recorded in the corresponding window.</t>
-          </list>
-        </t>
-      </section>
+    <section anchor="terminology">
+      <name>Terminology</name>
+      <t>
+        This document uses the following terms in addition to those defined
+        in <xref target="RFC9334"/> and <xref target="PoP-Protocol"/>:
+      </t>
+      <dl>
+        <dt>Synthetic Authoring:</dt>
+        <dd>Content generated by AI or automated tools that is subsequently attributed to a human author.</dd>
+        <dt>Evidence Quantization:</dt>
+        <dd>The process of reducing timing resolution in behavioral data to protect author privacy while maintaining forensic utility.</dd>
+        <dt>IKI (Inter-Keystroke Interval):</dt>
+        <dd>The time elapsed between consecutive keystrokes, measured in milliseconds.</dd>
+        <dt>C_intra:</dt>
+        <dd>Pearson correlation between pause duration and subsequent edit complexity within a single checkpoint interval. Values near 0.0 indicate robotic pacing; values above 0.3 indicate human-like variable effort.</dd>
+        <dt>CLC (Cognitive Load Correlation):</dt>
+        <dd>Statistical correlation between content semantic complexity and typing cadence, used to distinguish original composition from retyping.</dd>
+        <dt>SNR (Signal-to-Noise Ratio) Analysis:</dt>
+        <dd>Spectral analysis of jitter intervals to distinguish biological motor noise patterns from synthetic injection.</dd>
+      </dl>
     </section>
 
-    <!-- ============================================================ -->
-    <!-- Section 4: Forensic Assessment                                -->
-    <!-- ============================================================ -->
-    <section anchor="sec-forensic" title="Forensic Assessment">
-      <t>The forensic assessment evaluates the behavioral
-      characteristics captured in evidence packets against models of
-      human authorship behavior. These mechanisms operate on the
-      validated evidence chain (after the five-step verification
-      protocol passes) and produce forensic indicators that inform
-      the Attestation Result confidence score.</t>
+    <section anchor="requirements-language">
+      <name>Requirements Language</name>
+      <t>
+        The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+        "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+        "OPTIONAL" in this document are to be interpreted as described in
+        BCP 14 <xref target="RFC2119"/> <xref target="RFC8174"/> when, and
+        only when, they appear in all capitals, as shown here.
+      </t>
+    </section>
 
-      <section anchor="sec-forensic-snr" title="Signal-to-Noise Ratio">
-        <t>The signal-to-noise ratio (SNR) measures the proportion of
-        productive editing activity versus idle or mechanical noise
-        within each evidence window.</t>
-        <t>SNR is computed as:</t>
-        <figure>
-          <artwork><![CDATA[
+    <section anchor="verification-procedure">
+      <name>Step-by-Step Verification Procedure</name>
+      <t>
+        A Verifier MUST perform the following procedure to appraise a PoP Evidence Packet:
+      </t>
+      <ol>
+        <li><em>Structural Validation:</em> The Verifier MUST reject with verdict invalid (4) any Evidence Packet that: (a) fails CBOR decoding, (b) lacks CBOR tag 1347571280, (c) has version != 1, (d) is missing mandatory fields (keys 1-6 in evidence-packet, keys 1-9 in each checkpoint), or (e) contains CBOR types that do not match the CDDL schema.</li>
+        <li><em>Chain Integrity:</em> Verify the SHA-256 hash link between all checkpoints. Any break invalidates the entire Evidence Packet. The Verifier MUST set the verdict to invalid (4). The warnings field SHOULD include the checkpoint sequence number where the break was detected.</li>
+        <li><em>Temporal Order:</em> For each process-proof, recompute Argon2id from the declared seed to obtain state_0, then verify sampled Merkle proofs against the committed root (process-proof key 4, merkle-root). Verify that claimed-duration is within [0.5x, 3.0x] of the expected wall-clock time for the declared proof-params on reference hardware (defined as a system with DDR4 memory providing approximately 25 GB/s sustained bandwidth). Expected times are defined in <xref target="PoP-Protocol"/>, Mandatory SWF Parameters section.</li>
+        <li><em>Entropy Threshold:</em> Independently estimate entropy from the jitter-binding intervals array using a standard entropy estimator (e.g., NIST SP 800-90B most common value estimator). Verify the independent estimate meets or exceeds 3.0 bits per inter-keystroke interval. The Attester's self-reported entropy-estimate field MUST NOT be relied upon. Low-entropy segments (below threshold) MUST be flagged as "Non-Biological."</li>
+        <li><em>Entanglement:</em> Verify the HMAC value (entangled-mac) over the combined document, jitter, and physical state.</li>
+        <li><em>State Matching:</em> Verify that the final checkpoint's content-hash matches the document-ref content-hash. Verify that the cumulative char-count from edit-deltas is consistent with the document-ref char-count.</li>
+        <li><em>Channel Binding:</em> If the Evidence Packet contains a channel-binding field and was received over TLS, verify that the binding-value matches the locally-computed TLS Exported Keying Material. Reject the Evidence Packet on mismatch.</li>
+      </ol>
+      <t>
+        Steps 4 and 5 apply only when jitter-binding and entangled-mac fields
+        are present (ENHANCED and MAXIMUM profiles). For CORE Evidence Packets
+        lacking these fields, the Verifier MUST skip Steps 4 and 5 and note
+        in the WAR warnings that behavioral analysis was not performed.
+      </t>
+    </section>
+
+    <section anchor="forensic-assessment">
+      <name>Forensic Assessment Mechanisms</name>
+      <t>
+        The appraisal logic is designed to detect "Synthetic Authoring" -- content generated by AI and subsequently "back-filled" with timing and hardware attestation.
+      </t>
+      <dl spacing="normal">
+        <dt>SNR (Signal-to-Noise Ratio) Analysis:</dt>
+        <dd>Verifiers MUST compute the power spectral density of jitter intervals. Human motor signals exhibit characteristic noise patterns consistent with biological motor control <xref target="Monrose2000"/>. Evidence exhibiting spectral flatness greater than 0.9 (indicating white noise rather than biological 1/f-like noise) MUST be flagged as potentially synthetic.</dd>
+
+        <dt>Cognitive Load Correlation (CLC):</dt>
+        <dd>Verifiers MUST correlate timing patterns with semantic complexity. Human authors exhibit increased inter-keystroke intervals (IKI) and pause frequency during composition of semantically complex segments compared to simple connective text. Verifiers MUST compute the Pearson correlation between segment semantic complexity and mean IKI. Evidence with r &lt; 0.2 (or r &lt; 0.1 in assistive mode) MUST be flagged as a Semantic Mismatch.</dd>
+
+        <dt>Mechanical Turk Detection:</dt>
+        <dd>Verifiers MUST compute C_intra (Pearson correlation between pause duration and subsequent edit complexity within each checkpoint). C_intra values below 0.15 MUST be flagged as indicating robotic pacing, where an automated system maintains a machine-clocked editing rate independent of content demands.</dd>
+
+        <dt>Error Topology Analysis:</dt>
+        <dd>Verifiers SHOULD analyze error patterns for consistency with human cognitive processing <xref target="Salthouse1986"/>: localized corrections near recent insertions, fractal self-similarity in revision patterns, and deletion-to-insertion ratios consistent with natural composition. Evidence exhibiting unnaturally low error rates (below 1 correction per 500 characters) or randomly distributed errors lacking positional correlation SHOULD be flagged.</dd>
+
+        <dt>QR Presence Challenge (OOB-PC):</dt>
+        <dd>When presence-challenge structures are present in the Evidence Packet, Verifiers MUST verify that the response-time is within the corresponding checkpoint's time window and MUST validate the device-signature. NOTE: The Attester-side procedure for issuing presence challenges is specified in <xref target="PoP-Protocol"/>.</dd>
+
+        <dt>Session Consistency Analysis:</dt>
+        <dd>Verifiers MUST analyze cross-checkpoint behavioral trends. IKI distributions should exhibit gradual drift consistent with fatigue effects. An abrupt change is defined as a shift in mean IKI between consecutive checkpoints exceeding 2 standard deviations of the session-wide IKI distribution. Verifiers MUST flag transitions exceeding this threshold as potential data source switching. Jitter-binding intervals across consecutive checkpoints MUST be checked for statistical independence (cross-checkpoint correlation below 0.3). Edit-delta patterns SHOULD be checked for non-stationarity consistent with human creative flow.</dd>
+      </dl>
+      <t>
+        A conforming Verifier MUST evaluate all forensic mechanisms for
+        which the Evidence Packet contains sufficient data. Any single
+        triggered flag is sufficient to assign the suspicious verdict.
+        Verifiers MAY implement additional analysis mechanisms beyond
+        those defined in this specification.
+      </t>
+
+      <section anchor="snr-computation">
+        <name>SNR Computation (Informative)</name>
+        <t>
+          The signal-to-noise ratio measures productive editing activity versus
+          idle or mechanical noise within each evidence window:
+        </t>
+        <artwork><![CDATA[
   SNR = 10 * log10(P_signal / P_noise)
 
   where:
     P_signal = (keystroke_count + revision_count) / window_duration
     P_noise  = (pause_total_ms + idle_intervals) / window_duration
-          ]]></artwork>
-        </figure>
+        ]]></artwork>
         <t>
-          <list style="symbols">
-            <t>Human authorship sessions typically exhibit SNR in the
-            range of -3 dB to +12 dB, with significant variation
-            reflecting cognitive processing cycles.</t>
-            <t>Automated input (copy-paste, script-driven typing)
-            produces SNR consistently above +15 dB due to minimal
-            pause behavior.</t>
-            <t>A session with SNR above +20 dB across all windows
-            SHOULD be flagged as potentially non-human.</t>
-            <t>A session with SNR below -10 dB across all windows
-            indicates predominantly idle behavior and SHOULD be
-            flagged as potentially fabricated padding.</t>
-          </list>
+          Typical ranges observed in human authorship:
         </t>
-        <t>The Verifier MUST compute per-window SNR and session-wide
-        SNR statistics (mean, variance, trend) as forensic
-        indicators.</t>
+        <ul>
+          <li>Human sessions: -3 dB to +12 dB, with variation reflecting
+            cognitive processing cycles.</li>
+          <li>Automated input (copy-paste, scripted typing): consistently
+            above +15 dB due to minimal pause behavior.</li>
+          <li>Sessions above +20 dB across all windows SHOULD be flagged
+            as potentially non-human.</li>
+          <li>Sessions below -10 dB across all windows indicate predominantly
+            idle behavior and SHOULD be flagged as potentially fabricated
+            padding.</li>
+        </ul>
+        <t>
+          The Verifier SHOULD compute per-window SNR and session-wide SNR
+          statistics (mean, variance, trend) as forensic indicators.
+        </t>
       </section>
 
-      <section anchor="sec-forensic-clc" title="Compositional Lyapunov Coefficient and Incremental Kolmogorov Information">
-        <t>The Compositional Lyapunov Coefficient (CLC) measures the
-        rate at which writing complexity evolves over the session. It
-        captures the divergence of compositional trajectories,
-        analogous to Lyapunov exponents in dynamical systems.</t>
-        <figure>
-          <artwork><![CDATA[
+      <section anchor="clc-computation">
+        <name>CLC and IKI Computation (Informative)</name>
+        <t>
+          The Compositional Lyapunov Coefficient (CLC) measures the rate at
+          which writing complexity evolves over the session, analogous to
+          Lyapunov exponents in dynamical systems:
+        </t>
+        <artwork><![CDATA[
   CLC = (1/n) * sum_{i=1}^{n} ln(|delta_IKI[i]| / |delta_IKI[i-1]|)
 
   where:
     delta_IKI[i] = IKI_mean[i] - IKI_mean[i-1]
     n = number of consecutive window pairs
-          ]]></artwork>
-        </figure>
-        <t>The Incremental Kolmogorov Information (IKI) complements the
-        CLC by measuring the informational complexity added per
-        window:</t>
-        <figure>
-          <artwork><![CDATA[
-  IKI[i] = K(content_hash[i]) - K(content_hash[i-1])
-
-  approximated as:
+        ]]></artwork>
+        <t>
+          The Incremental Kolmogorov Information (IKI) measures informational
+          complexity added per window:
+        </t>
+        <artwork><![CDATA[
   IKI[i] ~= compressed_size(delta_content[i]) / raw_size(delta_content[i])
-          ]]></artwork>
-        </figure>
+        ]]></artwork>
         <t>
-          <list style="symbols">
-            <t>Human authorship exhibits positive CLC values (0.01 to
-            0.5) reflecting the natural divergence of creative
-            processes. CLC near zero indicates mechanical regularity.</t>
-            <t>IKI values for human writing typically range from 0.3
-            to 0.8, reflecting a mix of novel composition and
-            structural editing. Values consistently near 1.0 suggest
-            random content insertion; values near 0.0 suggest
-            verbatim copying.</t>
-            <t>The CLC and IKI are computed for T2 and above. At T1,
-            these metrics are OPTIONAL.</t>
-          </list>
+          Typical ranges: human authorship exhibits positive CLC values
+          (0.01 to 0.5) reflecting natural creative divergence. CLC near
+          zero indicates mechanical regularity. IKI values for human writing
+          typically range from 0.3 to 0.8; values consistently near 1.0
+          suggest random content insertion, values near 0.0 suggest verbatim
+          copying.
         </t>
       </section>
 
-      <section anchor="sec-forensic-turk" title="Mechanical Turk Detection">
-        <t>Mechanical turk detection identifies patterns consistent
-        with an author copying content from an external AI-generated
-        source (e.g., copy-paste from a large language model output)
-        rather than composing original text.</t>
-        <t>Indicators of mechanical turk behavior:</t>
+      <section anchor="turk-scoring">
+        <name>Mechanical Turk Scoring (Informative)</name>
         <t>
-          <list style="symbols">
-            <t>High ratio of REVISION (paste) events to KEYSTROKE
-            events: a paste-to-keystroke ratio exceeding 0.7 across
-            a session is flagged.</t>
-            <t>Burst insertion patterns: large content additions
-            (more than 200 characters) appearing in under 2 seconds,
-            characteristic of clipboard paste operations.</t>
-            <t>Low IKI variance: when pasted content has uniformly
-            high compressibility (IKI below 0.2), consistent with
-            LLM-generated prose that lacks the structural variation
-            of human composition.</t>
-            <t>Absence of cognitive pause patterns: human authors
-            exhibit characteristic pause clusters before and after
-            complex sentences. Copy-paste workflows lack these
-            patterns.</t>
-            <t>Temporal clustering: paste events concentrated in
-            regular intervals suggest a workflow of "prompt AI,
-            copy result, paste into editor, repeat."</t>
-          </list>
+          Indicators of mechanical turk behavior include:
         </t>
-        <t>The Verifier computes a mechanical turk probability score
-        from 0.0 (no indicators) to 1.0 (all indicators present).
-        A score exceeding 0.6 SHOULD trigger a recommendation for
-        tool receipt documentation per <xref target="sec-tool-receipt"/>.</t>
-      </section>
-
-      <section anchor="sec-forensic-error" title="Error Topology">
-        <t>Error topology analysis constructs a directed graph of
-        error and correction patterns within the evidence chain.
-        Human writing exhibits characteristic error-correction
-        structures that are difficult to simulate.</t>
+        <ul>
+          <li>Paste-to-keystroke ratio exceeding 0.7 across a session.</li>
+          <li>Burst insertion: more than 200 characters appearing in under
+            2 seconds, characteristic of clipboard paste operations.</li>
+          <li>Low IKI variance: pasted content with uniformly high
+            compressibility (IKI below 0.2), consistent with LLM-generated
+            prose.</li>
+          <li>Absence of cognitive pause patterns before and after complex
+            sentences.</li>
+          <li>Temporal clustering: paste events at regular intervals suggesting
+            a prompt-copy-paste workflow.</li>
+        </ul>
         <t>
-          <list style="symbols">
-            <t>The error graph G = (V, E) has vertices V representing
-            edit operations and edges E representing temporal
-            succession. Error vertices are identified by backspace
-            sequences, undo operations, and find-replace actions.</t>
-            <t>Human error topology exhibits: (a) power-law
-            distribution of error cluster sizes, (b) short-range
-            temporal locality (errors corrected within 5 seconds),
-            and (c) increasing error rates at cognitive load
-            boundaries (end of paragraphs, section transitions).</t>
-            <t>Simulated error injection produces: (a) uniform
-            error distribution, (b) regular correction intervals,
-            and (c) no correlation between error rates and
-            structural boundaries.</t>
-            <t>The Verifier computes the graph clustering coefficient
-            and the error-correction latency distribution. A
-            clustering coefficient below 0.1 combined with uniform
-            correction latency is flagged as potentially
-            synthetic.</t>
-          </list>
+          Verifiers SHOULD compute a mechanical turk probability score
+          from 0.0 (no indicators) to 1.0 (all indicators present). A
+          score exceeding 0.6 SHOULD trigger a recommendation for tool
+          receipt documentation.
         </t>
       </section>
 
-      <section anchor="sec-forensic-qr" title="QR Presence Challenge">
-        <t>The QR presence challenge is an OPTIONAL real-time
-        verification mechanism for high-assurance contexts (T3/T4).
-        The Verifier issues a challenge by requesting the Attester
-        to photograph a dynamically generated QR code displayed on
-        a separate trusted device.</t>
+      <section anchor="error-topology-model">
+        <name>Error Topology Model (Informative)</name>
         <t>
-          <list style="symbols">
-            <t>The Verifier generates a random nonce and encodes it
-            as a QR code with a validity window of 60 seconds.</t>
-            <t>The Attester captures the QR code using the device
-            camera and submits the decoded nonce alongside the
-            current evidence packet.</t>
-            <t>The Verifier confirms the nonce matches and was
-            submitted within the validity window.</t>
-            <t>This mechanism provides liveness proof that the
-            Attester's device is physically present and operated
-            by a human during the claimed authorship session.</t>
-            <t>QR presence challenges MUST NOT interrupt the
-            authorship workflow more than once per 30 minutes.
-            The challenge is always initiated by the Verifier
-            and is OPTIONAL at all tiers.</t>
-          </list>
+          Error topology analysis constructs a directed graph of error and
+          correction patterns. The error graph G = (V, E) has vertices V
+          representing edit operations and edges E representing temporal
+          succession. Human error topology exhibits:
+        </t>
+        <ul>
+          <li>Power-law distribution of error cluster sizes.</li>
+          <li>Short-range temporal locality (errors corrected within 5
+            seconds).</li>
+          <li>Increasing error rates at cognitive load boundaries (end of
+            paragraphs, section transitions).</li>
+          <li>Fractal self-similarity in revision patterns.</li>
+        </ul>
+        <t>
+          Simulated error injection produces uniform error distribution,
+          regular correction intervals, and no correlation between error
+          rates and structural boundaries. A graph clustering coefficient
+          below 0.1 combined with uniform correction latency is flagged
+          as potentially synthetic.
         </t>
       </section>
     </section>
 
-    <!-- ============================================================ -->
-    <!-- Section 5: Forgery Cost Bounds                                -->
-    <!-- ============================================================ -->
-    <section anchor="sec-forgery" title="Forgery Cost Bounds">
-      <t>The total cost of forging an evidence chain that passes
-      Verifier appraisal is bounded below by the sum of three
-      independent cost components:</t>
-
-      <figure>
-        <artwork><![CDATA[
+    <section anchor="economic-model">
+      <name>Forgery Cost Bounds (Quantified Security)</name>
+      <t>
+        Forgery cost bounds provide a Verifier with a lower bound on the computational resources required to forge an Evidence Packet. The cost (<em>C_total</em>) is computed as:
+      </t>
+      <artwork><![CDATA[
   C_total = C_swf + C_entropy + C_hardware
+      ]]></artwork>
+      <section anchor="cost-swf">
+        <name>Sequential Work Function Cost (C_swf)</name>
+        <t>
+          The SWF cost component provides a lower bound on the computational
+          time an adversary must expend:
+        </t>
+        <artwork><![CDATA[
+  C_swf >= n * t_checkpoint
 
   where:
-    C_total    = minimum total cost to forge evidence for duration D
-    C_swf      = Sequential Work Function computation cost
-    C_entropy  = behavioral evidence synthesis cost
-    C_hardware = hardware attestation compromise cost
+    n = number of checkpoints in the Evidence chain
+    t_checkpoint = wall-clock time for one SWF computation
         ]]></artwork>
-      </figure>
-
-      <section anchor="sec-forgery-swf" title="Sequential Work Function Cost">
-        <t>The SWF cost component is bounded by:</t>
-        <figure>
-          <artwork><![CDATA[
-  C_swf >= n * t_vdf
-
-  where:
-    n     = number of evidence windows in the chain
-    t_vdf = minimum sequential computation time per window
-          ]]></artwork>
-        </figure>
-        <t>Because the repeated-squaring SWF construction is
-        inherently sequential, C_swf cannot be reduced through
-        parallelization. An adversary with k parallel processors
-        achieves at most O(sqrt(k)) speedup. For a session of
-        claimed duration D with window size w, the adversary MUST
-        invest at least D * 0.8 seconds of sequential computation
-        (given the 80% calibration requirement from the protocol
-        specification).</t>
-        <t>At T1 tier, C_swf = 0 because SWF proofs are not required.
-        At T2 and above, C_swf dominates the forgery cost for
-        sessions longer than approximately 10 minutes.</t>
+        <t>
+          The memory-hard nature of Argon2id ensures that an adversary with
+          k parallel processors achieves at most O(sqrt(k)) speedup due to
+          memory bandwidth constraints. The minimum forgery time equals the
+          sum of SWF claimed-durations across all checkpoints. At T1 tier
+          without hardware binding, C_swf represents an economic cost only
+          (the adversary must spend real time, but has no hardware constraint).
+        </t>
       </section>
 
-      <section anchor="sec-forgery-entropy" title="Behavioral Evidence Synthesis Cost">
-        <t>The behavioral evidence synthesis cost is proportional to
-        the dimensionality of the behavioral model:</t>
-        <figure>
-          <artwork><![CDATA[
+      <section anchor="cost-entropy">
+        <name>Behavioral Evidence Synthesis Cost (C_entropy)</name>
+        <t>
+          The entropy cost component estimates the resources required to
+          synthesize behavioral noise satisfying all forensic constraints:
+        </t>
+        <artwork><![CDATA[
   C_entropy = O(d * n * log(1/epsilon))
 
   where:
-    d       = number of behavioral dimensions (cadence, entropy,
-              revision rate, pause distribution, error topology)
-    n       = number of evidence windows
-    epsilon = target distance from human behavioral distribution
-          ]]></artwork>
-        </figure>
-        <t>For T1, only basic cadence and entropy statistics are
-        checked (d = 2). For T3/T4, the full forensic assessment
-        applies (d >= 7, including CLC, IKI, error topology, and
-        SNR dynamics), making synthesis exponentially more
-        expensive in the number of correlated dimensions the
-        adversary must simultaneously satisfy.</t>
-      </section>
-
-      <section anchor="sec-forgery-hardware" title="Hardware Attestation Cost">
-        <t>The hardware attestation cost applies only to T3/T4 tiers:</t>
+    d = number of independent forensic dimensions
+    n = number of checkpoints
+    epsilon = target false-negative rate
+        ]]></artwork>
         <t>
-          <list style="symbols">
-            <t>T1/T2: C_hardware = 0 (no hardware attestation
-            required).</t>
-            <t>T3: C_hardware includes the cost of obtaining a device
-            with valid TPM/SE attestation capabilities and extracting
-            or spoofing attestation keys. Current estimates place this
-            cost at USD 10,000-100,000 per device class, assuming no
-            known firmware vulnerabilities.</t>
-            <t>T4: C_hardware additionally requires the attestation
-            quote to reference a specific hardware configuration
-            endorsed by a recognized manufacturer. Compromising the
-            endorsement chain requires either manufacturer collusion
-            or firmware-level exploits, estimated at USD 100,000 or
-            more.</t>
-          </list>
+          At T1/T2, only basic entropy and timing are checked (d = 2). For
+          T3/T4, the full forensic assessment applies (d >= 7, including CLC,
+          IKI, error topology, SNR dynamics, session consistency, and
+          cross-checkpoint correlation), making synthesis exponentially more
+          expensive in the number of correlated dimensions the adversary must
+          simultaneously satisfy.
         </t>
-      </section>
-    </section>
-
-    <!-- ============================================================ -->
-    <!-- Section 6: Absence Proof Taxonomy                             -->
-    <!-- ============================================================ -->
-    <section anchor="sec-absence" title="Absence Proof Taxonomy">
-      <t>An absence proof demonstrates that a claimed provenance
-      could not have occurred. Three categories of absence proof
-      are defined, providing complementary evidence against
-      fabricated authorship claims.</t>
-
-      <section anchor="sec-absence-computational" title="Computationally-Bound Absence">
-        <t>A computationally-bound absence proof demonstrates that
-        the claimed SWF timing is impossible given known
-        computational limits.</t>
         <t>
-          <list style="symbols">
-            <t>If the SWF proof for a window implies a computation
-            rate exceeding 10x the fastest known hardware for the
-            claimed platform class, the evidence is computationally
-            impossible.</t>
-            <t>If the total SWF computation time across all windows
-            exceeds the wall-clock time between the first and last
-            timestamps (accounting for suspension gaps), the claimed
-            timeline is self-contradictory.</t>
-            <t>The Verifier produces a computationally-bound absence
-            proof by demonstrating that no sequential computation
-            schedule can satisfy the timing constraints in the
-            evidence chain.</t>
-          </list>
+          The cost of synthesizing behavioral noise that satisfies all
+          forensic constraints is inherently uncertain and depends on
+          adversary capability. Verifiers SHOULD set C_entropy conservatively.
+          When the Verifier cannot independently assess AI synthesis costs,
+          C_entropy SHOULD be set to 0 and the WAR warnings field SHOULD
+          note that entropy cost was not estimated.
         </t>
       </section>
 
-      <section anchor="sec-absence-monitoring" title="Monitoring-Dependent Absence">
-        <t>A monitoring-dependent absence proof relies on a trusted
-        monitoring service that can attest to the non-receipt of
-        expected evidence.</t>
-        <t>
-          <list style="symbols">
-            <t>If the Attester was configured to submit checkpoint
-            evidence to a trusted monitoring service at regular
-            intervals, the monitoring service can attest that no
-            evidence was received during the claimed authorship
-            period.</t>
-            <t>The monitoring service signs a non-receipt attestation
-            covering a specific time window. This attestation is
-            itself an Attestation Result per
-            <xref target="RFC9334"/>.</t>
-            <t>Monitoring-dependent absence proofs require prior
-            enrollment of the Attester with the monitoring service.
-            The proof is only valid for the enrolled monitoring
-            relationship.</t>
-          </list>
-        </t>
+      <section anchor="cost-hardware">
+        <name>Hardware Attestation Cost (C_hardware)</name>
+        <ul>
+          <li><em>T1/T2:</em> C_hardware = 0. No hardware root of trust;
+            keys are software-managed.</li>
+          <li><em>T3 (Hardware-Bound):</em> Requires compromise of TPM or
+            platform Secure Element. Estimated cost: USD 10,000-100,000
+            per device class, depending on the specific hardware and
+            attack methodology.</li>
+          <li><em>T4 (Hardware-Hardened):</em> Requires invasive hardware
+            attacks, manufacturer collusion, or firmware exploits targeting
+            PUF-bound keys. Estimated cost: USD 100,000 or more.</li>
+        </ul>
       </section>
-
-      <section anchor="sec-absence-environmental" title="Environmental Absence">
-        <t>An environmental absence proof demonstrates that the
-        claimed authorship context is contradicted by sensor or
-        environmental evidence.</t>
-        <t>
-          <list style="symbols">
-            <t>If the evidence chain claims authorship during a time
-            period when independent sensor data (GPS, accelerometer,
-            ambient light) indicates the device was in transit, in a
-            location incompatible with typing, or powered off, the
-            environmental context contradicts the claim.</t>
-            <t>If HAT stamps indicate the device was in a suspended
-            (sleep) state during the claimed collection windows, the
-            hardware counters provide environmental absence proof.</t>
-            <t>Environmental absence proofs are the weakest category
-            because environmental data may be spoofable. They are
-            useful as corroborating evidence alongside computational
-            or monitoring-dependent proofs.</t>
-          </list>
-        </t>
-      </section>
-    </section>
-
-    <!-- ============================================================ -->
-    <!-- Section 7: Tool Receipt Protocol                              -->
-    <!-- ============================================================ -->
-    <section anchor="sec-tool-receipt" title="Tool Receipt Protocol">
-      <t>When AI tools ARE used during the authorship process, the
-      tool receipt protocol provides a structured mechanism for
-      documenting the AI contribution while preserving evidence of
-      human editorial oversight. The tool receipt complements rather
-      than replaces the PoP evidence chain: it attaches attribution
-      metadata to specific segments of the evidence timeline.</t>
-
-      <t>A tool receipt contains the following fields:</t>
       <t>
-        <list style="hanging">
-          <t hangText="tool-id:">Identifier for the AI tool used
-          (e.g., model name, API endpoint, version). Encoded as a
-          URI.</t>
-          <t hangText="invocation-window:">The evidence chain window
-          range (start-sequence, end-sequence) during which the tool
-          was invoked.</t>
-          <t hangText="contribution-scope:">The nature of the AI
-          contribution: "generation" (new text produced by AI),
-          "suggestion" (AI proposed, human selected), "editing"
-          (AI modified existing human text), or "research" (AI
-          provided information that human incorporated).</t>
-          <t hangText="content-fraction:">An estimate of the
-          fraction of final content attributable to the AI tool,
-          expressed as a value between 0.0 and 1.0.</t>
-          <t hangText="editorial-evidence:">Reference to evidence
-          windows demonstrating human editorial activity following
-          the AI tool invocation. This field links to windows where
-          KEYSTROKE and REVISION events indicate the human author
-          reviewed, modified, or integrated the AI-generated
-          content.</t>
-          <t hangText="receipt-signature:">COSE_Sign1 signature
-          over the tool receipt fields, using the same Attester key
-          as the evidence chain, per <xref target="RFC9052"/>.</t>
-        </list>
+        Verifiers MUST include these estimates in the WAR to allow Relying Parties to set trust thresholds based on objective economic risk.
       </t>
-
-      <t>The Verifier evaluates tool receipts by confirming that:
-      (a) the editorial-evidence windows contain genuine behavioral
-      signals (passing the forensic assessment), (b) the
-      content-fraction is consistent with the proportion of
-      evidence windows showing AI-tool patterns versus human
-      authorship patterns, and (c) the receipt-signature chains to
-      the same key as the evidence chain.</t>
-
-      <t>A document with tool receipts receives a modified
-      Attestation Result that includes both the human authorship
-      confidence and the documented AI contribution. Relying
-      Parties can then make informed decisions based on the
-      transparency of the attribution.</t>
-    </section>
-
-    <!-- ============================================================ -->
-    <!-- Section 8: Adversary Model                                    -->
-    <!-- ============================================================ -->
-    <section anchor="sec-adversary" title="Adversary Model">
-      <t>This section defines the adversary capabilities assumed at
-      each attestation tier, complementing the threat model in
-      draft-condrey-rats-pop-protocol. The adversary's goal is to
-      produce an evidence chain that passes Verifier appraisal for
-      content that was not authentically authored through the
-      claimed process.</t>
-
       <t>
-        <list style="hanging">
-          <t hangText="Tier 1 Adversary (Casual):">Can execute
-          arbitrary software on a commodity device. Can manipulate
-          system clocks and intercept local IPC. Cannot perform
-          real-time behavioral simulation exceeding basic cadence
-          matching. The T1 appraisal policy assumes this adversary
-          and accepts the risk that basic retype attacks may evade
-          detection.</t>
-
-          <t hangText="Tier 2 Adversary (Motivated):">Has all Tier 1
-          capabilities plus: can develop custom software to simulate
-          behavioral patterns, can invest computational resources up
-          to the cost of a high-end workstation, and can study the
-          verification algorithm to craft evidence targeting specific
-          thresholds. The T2 appraisal policy defends against this
-          adversary through SWF time-binding and multi-dimensional
-          behavioral analysis.</t>
-
-          <t hangText="Tier 3 Adversary (Professional):">Has all
-          Tier 2 capabilities plus: can invest in custom hardware
-          (FPGAs, specialized ASICs) for SWF acceleration, can
-          develop sophisticated behavioral models trained on human
-          authorship data, and can obtain legitimate hardware
-          devices for attestation. The T3 appraisal policy defends
-          against this adversary through HAT cross-validation and
-          advanced forensic metrics (CLC, error topology).</t>
-
-          <t hangText="Tier 4 Adversary (Nation-State):">Has all
-          Tier 3 capabilities plus: can potentially compromise
-          hardware manufacturer endorsement chains, can deploy
-          large-scale parallel computation, and can employ teams
-          of human operators for sophisticated retype attacks. The
-          T4 appraisal policy defends against this adversary through
-          the combined cost of SWF sequentiality, multi-dimensional
-          behavioral evidence synthesis, and hardware attestation
-          integrity. Even a Tier 4 adversary faces a minimum forgery
-          cost equal to the claimed authorship duration plus the
-          hardware compromise cost.</t>
-        </list>
+        The c-total field in the forgery-cost-estimate MUST equal the sum
+        of c-swf, c-entropy, and c-hardware. All component costs within a
+        single forgery-cost-estimate MUST be expressed in the same
+        cost-unit.
       </t>
     </section>
 
-    <!-- ============================================================ -->
-    <!-- Section 9: Privacy Considerations                             -->
-    <!-- ============================================================ -->
-    <section anchor="sec-privacy-appraisal" title="Privacy Considerations">
-      <t>The appraisal procedures in this document process behavioral
-      evidence that may reveal private information about authors.
-      This section specifies the privacy protections that Verifiers
-      MUST implement, complementing the Attester-side protections
-      in draft-condrey-rats-pop-protocol per
-      <xref target="RFC6973"/>.</t>
+    <section anchor="absence-proofs">
+      <name>Absence Proofs: Negative Evidence Taxonomy</name>
+      <t>
+        Absence proofs assert that certain events did NOT occur during the monitored session. They are divided into categories based on verifiability:
+      </t>
+      <dl>
+        <dt>Type 1: Computationally-Bound Claims</dt>
+        <dd>Verifiable from the Evidence Packet alone (e.g., "Max single delta size &lt; 500 bytes" or "No checkpoint timestamps out of order").</dd>
+        <dt>Type 2: Monitoring-Dependent Claims</dt>
+        <dd>Require trust in the AE's event monitoring (e.g., "No paste from unauthorized AI tool" or "No clipboard activity detected"). Trust in these claims MUST be weighted by the declared Attestation Tier (T1-T4).</dd>
+        <dt>Type 3: Environmental Claims</dt>
+        <dd>Assertions about the execution environment (e.g., "No debugger attached" or "Hardware temperature remained within stable physical bounds").</dd>
+      </dl>
+      <t>
+        Type 1 (Computationally-Bound) claims MUST be verified computationally
+        by the Verifier from the Evidence Packet data alone. Type 3
+        (Environmental) claims SHOULD be evaluated against physical-state
+        markers when present, and MUST be treated as unverifiable when
+        physical-state is absent.
+      </t>
+    </section>
 
-      <section title="Evidence Quantization">
-        <t>Behavioral metrics in evidence packets are quantized to
-        prevent de-anonymization through high-precision behavioral
-        fingerprinting.</t>
+    <section anchor="war-wire-format">
+      <name>Attestation Result Wire Format</name>
+      <t>
+        The Writers Authenticity Report (WAR) is a CBOR-encoded
+        <xref target="RFC8949"/> Attestation Result identified by semantic
+        tag 1463894560 (encoding ASCII "WAR "). The CDDL notation
+        <xref target="RFC8610"/> defines the wire format:
+      </t>
+      <artwork type="cddl"><![CDATA[
+pop-war = #6.1463894560(attestation-result)
+
+attestation-result = {
+    1 => uint,                    ; version (MUST be 1)
+    2 => hash-value,              ; evidence-ref
+    3 => verdict,                 ; appraisal verdict
+    4 => attestation-tier,        ; assessed assurance level
+    5 => uint,                    ; chain-length
+    6 => uint,                    ; chain-duration (seconds)
+    ? 7 => entropy-report,        ; entropy assessment (omit for CORE)
+    ? 8 => forgery-cost-estimate, ; quantified forgery cost
+    ? 9 => [+ absence-claim],     ; absence claims (1+ when present)
+    ? 10 => [* tstr],             ; warnings
+    11 => bstr,                   ; verifier-signature (COSE_Sign1)
+    12 => pop-timestamp,           ; created (appraisal timestamp)
+    * int => any,                 ; extension fields
+}
+
+verdict = &(
+    authentic: 1,                 ; consistent with human authorship
+    inconclusive: 2,              ; insufficient evidence
+    suspicious: 3,                ; anomalies detected
+    invalid: 4,                   ; chain broken or forged
+)
+
+entropy-report = {
+    1 => float32,                 ; timing-entropy (bits/sample)
+    2 => float32,                 ; revision-entropy (bits)
+    3 => float32,                 ; pause-entropy (bits)
+    4 => bool,                    ; meets-threshold
+}
+
+forgery-cost-estimate = {
+    1 => float32,                 ; c-swf
+    2 => float32,                 ; c-entropy
+    3 => float32,                 ; c-hardware
+    4 => float32,                 ; c-total
+    5 => cost-unit,               ; currency
+}
+
+cost-unit = &(
+    usd: 1,
+    cpu-hours: 2,
+)
+
+absence-claim = {
+    1 => absence-type,            ; proof category
+    2 => time-window,             ; claimed window
+    3 => tstr,                    ; claim-id
+    ? 4 => any,                   ; threshold/parameter
+    5 => bool,                    ; assertion
+}
+
+absence-type = &(
+    computationally-bound: 1,     ; verifiable from Evidence alone
+    monitoring-dependent: 2,      ; requires trust in AE monitoring
+    environmental: 3,             ; environmental assertions
+)
+
+time-window = {
+    1 => pop-timestamp,           ; start
+    2 => pop-timestamp,           ; end
+}
+
+; Shared type definitions reproduced from [PoP-Protocol] for reader
+; convenience. In case of conflict, [PoP-Protocol] is authoritative.
+pop-timestamp = #6.1(float32)      ; CBOR tag 1 (epoch-based, float32)
+hash-value = {
+    1 => hash-algorithm,
+    2 => bstr,
+}
+hash-algorithm = &(
+    sha256: 1,
+    sha384: 2,
+    sha512: 3,
+)
+attestation-tier = &(
+    software-only: 1,             ; T1: AAL1
+    attested-software: 2,         ; T2: AAL2
+    hardware-bound: 3,            ; T3: AAL3
+    hardware-hardened: 4,         ; T4: LoA4
+)
+      ]]></artwork>
+      <t>
+        The evidence-ref field MUST contain a hash-value computed as
+        SHA-256 over the CBOR-encoded evidence-packet structure
+        (including CBOR tag 1347571280), excluding any COSE_Sign1
+        wrapper. This binds the Attestation Result to a specific
+        Evidence Packet.
+      </t>
+      <t>
+        In the absence-claim structure, claim-id is a unique textual
+        identifier for the claim (e.g., "no-paste-event",
+        "max-delta-below-500"). The assertion field is true if the claim
+        holds and false if the Verifier determined it does not hold. The
+        time-window specifies the temporal scope of the claim within the
+        Evidence Packet's session.
+      </t>
+      <t>
+        When appraising CORE Evidence Packets that lack jitter-binding data,
+        the Verifier SHOULD omit the entropy-report field from the
+        Attestation Result and include a warning indicating that behavioral
+        entropy analysis was not performed.
+      </t>
+      <t>
+        The created field (key 12) MUST contain the timestamp at which the
+        Verifier completed the appraisal. Relying Parties use this field
+        to evaluate the freshness of the Attestation Result.
+      </t>
+
+      <section anchor="entropy-report-computation">
+        <name>Entropy Report Computation</name>
         <t>
-          <list style="symbols">
-            <t>Cadence statistics (mean, variance) MUST be quantized
-            to millisecond resolution. The Verifier MUST NOT request
-            or store sub-millisecond timing data.</t>
-            <t>Entropy values MUST be quantized to two decimal places
-            (0.01 bit resolution). This resolution is sufficient for
-            all forensic assessments defined in this document.</t>
-            <t>SNR values MUST be quantized to 0.5 dB resolution.</t>
-            <t>CLC and IKI values MUST be quantized to two decimal
-            places.</t>
-          </list>
+          The Verifier MUST compute entropy-report fields as follows:
         </t>
-        <t>These quantization levels are calibrated to preserve the
-        discriminative power of the forensic assessment while reducing
-        the uniqueness of behavioral profiles below the threshold
-        for reliable cross-session identification.</t>
+        <dl>
+          <dt>timing-entropy:</dt>
+          <dd>Shannon entropy of quantized jitter intervals across all
+            checkpoints, expressed in bits per sample.</dd>
+          <dt>revision-entropy:</dt>
+          <dd>Shannon entropy of edit-delta sizes (chars-added values)
+            across all checkpoints, expressed in bits.</dd>
+          <dt>pause-entropy:</dt>
+          <dd>Shannon entropy of inter-checkpoint pause durations,
+            expressed in bits.</dd>
+          <dt>meets-threshold:</dt>
+          <dd>True if and only if timing-entropy is at or above the
+            minimum threshold (3.0 bits per sample) AND revision-entropy
+            is at or above 3.0 bits AND pause-entropy is at or above 2.0
+            bits. These thresholds are calibrated for the NIST SP 800-90B
+            most common value estimator. Implementations using alternative
+            entropy estimators MUST provide equivalent assurance levels.</dd>
+        </dl>
       </section>
 
-      <section title="Behavioral Fingerprint Mitigation">
-        <t>The Verifier MUST implement the following protections
-        against behavioral fingerprinting:</t>
+      <section anchor="verdict-assignment">
+        <name>Verdict Assignment</name>
         <t>
-          <list style="symbols">
-            <t>The Verifier MUST NOT maintain a database of
-            per-author behavioral profiles. Appraisal MUST be
-            performed against population-level baseline models,
-            not individual author models.</t>
-            <t>Attestation Results MUST NOT include raw forensic
-            indicator values. Only tier-level pass/fail determinations
-            and aggregate confidence scores are included in
-            Attestation Results conveyed to Relying Parties.</t>
-            <t>If the Verifier retains evidence chains for audit
-            purposes, the retention period MUST NOT exceed the
-            validity period of the Attestation Result (default:
-            90 days) unless required by applicable law.</t>
-            <t>The Verifier SHOULD support anonymous submission of
-            evidence chains, where the author's identity is not
-            disclosed to the Verifier. The appraisal procedures in
-            this document do not require author identification.</t>
-          </list>
+          The Verifier MUST assign the verdict based on the appraisal
+          outcome:
+        </t>
+        <dl>
+          <dt>authentic (1):</dt>
+          <dd>All verification steps passed. Evidence is consistent with
+            human authorship. No forensic flags triggered.</dd>
+          <dt>inconclusive (2):</dt>
+          <dd>Verification steps passed but insufficient behavioral data
+            available for forensic assessment (e.g., CORE profile without
+            jitter-binding).</dd>
+          <dt>suspicious (3):</dt>
+          <dd>One or more forensic flags triggered (low entropy, failed
+            CLC correlation, mechanical pacing detected) but chain integrity
+            is intact. When multiple forensic checks produce contradictory
+            results, the Verifier MUST assign the more conservative verdict
+            (suspicious over authentic).</dd>
+          <dt>invalid (4):</dt>
+          <dd>Chain integrity broken, SWF verification failed, or
+            structural validation error. Evidence cannot be trusted.</dd>
+        </dl>
+      </section>
+    </section>
+
+    <section anchor="tool-receipt-protocol">
+      <name>Tool Receipt Protocol (AI Attribution)</name>
+      <t>
+        NOTE: This section is informational. The complete CDDL wire format for
+        Tool Receipts, including signature algorithms and binding mechanisms,
+        will be specified in a future revision. Implementations SHOULD treat
+        this section as guidance only.
+      </t>
+      <t>
+        When external tools (LLMs) contribute content, the framework enables a "compositional provenance" model:
+      </t>
+      <ol>
+        <li>Receipt Signing: The Tool signs a "Receipt" containing its tool_id, an output_commit (SHA-256 hash of generated text), and an optional input_ref (SHA-256 hash of the prompt).</li>
+        <li>Binding: The human Attester records a PASTE event in the transcript referencing the Tool Receipt's output_commit.</li>
+        <li>Countersigning: The Attester binds the Receipt into the next human-driven checkpoint, anchoring the automated work into the linear human effort.</li>
+      </ol>
+      <t>
+        Verifiers appraise the ratio of human-to-machine effort based on these receipts and the intervening SWF-proved intervals.
+      </t>
+    </section>
+
+    <section anchor="adversary-model">
+      <name>Adversary Model</name>
+      <t>
+        This document inherits the adversary model defined in the Threat Model section of <xref target="PoP-Protocol"/>. The appraisal procedures defined herein assume the adversarial Attester capabilities and constraints specified there. The primary threat is an adversarial Attester -- an author who controls the Attesting Environment and seeks to generate Evidence for content they did not authentically author.
+      </t>
+      <t>
+        The following adversary tiers characterize the appraisal-specific
+        threat landscape. Each tier defines the adversary capabilities that
+        the corresponding Attestation Tier is designed to resist:
+      </t>
+      <dl>
+        <dt>Tier 1 Adversary (Casual):</dt>
+        <dd>Can manipulate system clocks and intercept local IPC. Cannot
+          perform real-time behavioral simulation exceeding basic cadence
+          matching. The T1 appraisal policy accepts the risk of basic
+          retype attacks; SWF time-binding provides the primary defense.</dd>
+        <dt>Tier 2 Adversary (Motivated):</dt>
+        <dd>Can invest computational resources up to the cost of a
+          high-end workstation and study the verification algorithm to
+          craft evidence targeting specific thresholds. The T2 appraisal
+          policy defends through multi-dimensional behavioral analysis
+          (SNR + CLC + mechanical turk detection).</dd>
+        <dt>Tier 3 Adversary (Professional):</dt>
+        <dd>Has access to custom hardware (FPGAs, specialized ASICs) for
+          SWF acceleration and sophisticated behavioral models trained on
+          human authorship data. The T3 appraisal policy defends through
+          HAT cross-validation and advanced forensic metrics (CLC, IKI,
+          error topology, and SNR dynamics).</dd>
+        <dt>Tier 4 Adversary (Nation-State):</dt>
+        <dd>Has all Tier 3 capabilities plus: can potentially compromise
+          hardware manufacturer endorsement chains, deploy large-scale
+          parallel computation, and employ teams of human operators for
+          sophisticated retype attacks. The T4 appraisal policy defends
+          through the combined cost of SWF sequentiality,
+          multi-dimensional behavioral evidence synthesis (d >= 7
+          correlated dimensions), and hardware attestation integrity.
+          Even a Tier 4 adversary faces a minimum forgery cost equal to
+          the claimed authorship duration plus the hardware compromise
+          cost.</dd>
+      </dl>
+    </section>
+
+    <section anchor="privacy-considerations">
+      <name>Privacy Considerations</name>
+      <section anchor="privacy">
+        <name>Evidence and Attestation Result Privacy</name>
+        <t>
+          High-resolution behavioral data poses a stylometric de-anonymization
+          risk <xref target="Goodman2007"/>. Implementations SHOULD support
+          Evidence Quantization, reducing timing resolution to a level that
+          maintains forensic confidence while breaking unique author fingerprints.
+        </t>
+        <t>
+          The entropy-report in Attestation Results (timing-entropy,
+          revision-entropy, pause-entropy) may enable cross-document author
+          identification by Relying Parties. Verifiers SHOULD quantize
+          entropy-report values to reduce fingerprinting precision while
+          preserving forensic utility. Relying Parties MUST NOT correlate
+          entropy reports across multiple Attestation Results to identify
+          or track authors.
+        </t>
+      </section>
+      <section anchor="privacy-quantization">
+        <name>Evidence Quantization Requirements</name>
+        <t>
+          Attestation Results MUST quantize forensic indicator values to
+          the following resolutions:
+        </t>
+        <ul>
+          <li>Cadence (IKI) values: millisecond resolution. Sub-millisecond
+            data MUST NOT be included.</li>
+          <li>Entropy values: 0.01 bit resolution (two decimal places).</li>
+          <li>SNR values: 0.5 dB resolution.</li>
+          <li>CLC and IKI metric values: two decimal places.</li>
+        </ul>
+        <t>
+          These quantization levels are calibrated to preserve the
+          forensic utility of all assessment mechanisms defined in
+          <xref target="forensic-assessment"/> while limiting the
+          precision available for stylometric fingerprinting.
+        </t>
+      </section>
+      <section anchor="privacy-retention">
+        <name>Data Retention and Behavioral Profiles</name>
+        <t>
+          Verifiers MUST NOT maintain per-author behavioral profile
+          databases. Attestation Results SHOULD NOT include raw forensic
+          indicator values; tier-level pass/fail determinations are
+          sufficient for Relying Parties. Evidence retention SHOULD NOT
+          exceed 90 days (the default validity period). Implementations
+          SHOULD support anonymous Evidence submission to prevent
+          linking authorship sessions to real-world identities.
         </t>
       </section>
     </section>
 
-    <!-- ============================================================ -->
-    <!-- Section 10: Assistive Technology Modes                        -->
-    <!-- ============================================================ -->
-    <section anchor="sec-assistive" title="Assistive Technology Modes">
-      <t>Authors using assistive technologies produce behavioral
-      evidence with different statistical characteristics than
-      keyboard-based authorship. The appraisal procedures MUST
-      accommodate these differences to avoid false rejections of
-      legitimate evidence from authors with disabilities.</t>
-
-      <section title="Eye-Tracking Mode">
-        <t>When the Attester indicates eye-tracking input in the
-        evidence packet metadata, the Verifier MUST apply adjusted
-        thresholds:</t>
+    <section anchor="accessibility">
+      <name>Accessibility and Assistive Modes</name>
+      <t>
+        Verifiers MUST NOT automatically reject evidence based solely on atypical timing patterns. Implementations MUST support "Assistive Modes" that adjust SNR and CLC thresholds for authors with motor disabilities or those using assistive technologies (eye-tracking, dictation).
+      </t>
+      <t>
+        To signal assistive mode usage, the Attester SHOULD include an assistive-mode indicator in the profile-declaration structure of the Evidence Packet. When this indicator is present, Verifiers MUST apply adjusted thresholds as follows:
+      </t>
+      <section anchor="assistive-eye-tracking">
+        <name>Eye-Tracking Mode</name>
         <t>
-          <list style="symbols">
-            <t>Cadence mean: eye-tracking typically produces longer
-            inter-event intervals (500-3000 ms versus 100-300 ms for
-            keyboard). The Verifier MUST NOT flag high cadence mean
-            as anomalous when eye-tracking mode is declared.</t>
-            <t>Entropy range: eye-tracking entropy is typically lower
-            (2.0-4.0 bits/sample) due to the dwell-time selection
-            mechanism. Adjusted entropy thresholds MUST be used.</t>
-            <t>SNR: eye-tracking sessions exhibit lower SNR
-            (-5 dB to +5 dB) due to the inherent pause time in
-            gaze-based selection. The SNR anomaly threshold MUST be
-            adjusted to +15 dB for eye-tracking mode.</t>
-            <t>Error topology: eye-tracking produces different
-            error-correction patterns (selection overshoot, gaze
-            drift corrections). The Verifier MUST use eye-tracking-
-            specific error topology baselines.</t>
-          </list>
+          Eye-tracking input produces IKI ranges of 500-3000 ms (versus
+          100-300 ms for keyboard). Adjusted thresholds:
         </t>
+        <ul>
+          <li>Entropy: 2.0 to 4.0 bits/sample (reduced from 3.0 minimum)</li>
+          <li>SNR: -5 dB to +5 dB (narrower than keyboard range). SNR
+            anomaly threshold: +15 dB.</li>
+          <li>CLC correlation: r &gt; 0.1 (reduced from r &gt; 0.2)</li>
+          <li>Error topology: Adjusted for gaze drift corrections, which
+            produce characteristic error patterns distinct from keyboard
+            errors.</li>
+        </ul>
       </section>
 
-      <section title="Dictation Mode">
-        <t>When the Attester indicates dictation (speech-to-text)
-        input, the Verifier MUST apply adjusted thresholds:</t>
+      <section anchor="assistive-dictation">
+        <name>Dictation Mode</name>
         <t>
-          <list style="symbols">
-            <t>Cadence: dictation produces burst patterns with
-            high-speed character insertion (as the speech recognizer
-            outputs text) followed by correction pauses. The
-            cadence variance is typically higher than keyboard
-            input.</t>
-            <t>SNR: dictation sessions exhibit characteristic
-            burst-pause cycles with SNR ranging from -8 dB to
-            +8 dB. The Verifier MUST adjust the SNR thresholds
-            accordingly.</t>
-            <t>CLC: dictation-mode CLC values are typically higher
-            (0.1 to 0.8) due to the speech recognizer's correction
-            behavior creating divergent edit trajectories.</t>
-            <t>Mechanical turk indicators: dictation naturally
-            produces burst-insertion patterns similar to paste
-            operations. The Verifier MUST NOT flag these as
-            mechanical turk indicators when dictation mode is
-            declared. The paste-to-keystroke ratio threshold is
-            disabled in dictation mode.</t>
-          </list>
+          Dictation input produces burst patterns with higher cadence
+          variance than keyboard. Adjusted thresholds:
         </t>
+        <ul>
+          <li>SNR: -8 dB to +8 dB (wider range reflecting speech pauses)</li>
+          <li>CLC correlation: r &gt; 0.1 (range 0.1 to 0.8)</li>
+          <li>Paste-to-keystroke ratio threshold: disabled (dictation
+            engines produce burst insertions by design)</li>
+          <li>Error topology: waived (dictation corrections follow
+            speech-recognition patterns, not typing patterns)</li>
+        </ul>
       </section>
 
-      <section title="Accessibility Accommodations">
-        <t>The Verifier MUST support the following additional
-        accommodations:</t>
-        <t>
-          <list style="symbols">
-            <t>Switch-access input: single-switch or multi-switch
-            scanning input methods produce very low event rates
-            with high pause durations. The minimum event count per
-            window MUST be reduced to 1 (from the default of 5)
-            for switch-access mode.</t>
-            <t>Head-tracking and mouth-stick input: these methods
-            produce cadence and entropy profiles similar to
-            eye-tracking mode. The Verifier SHOULD apply
-            eye-tracking thresholds.</t>
-            <t>Assistive technology mode declarations are included
-            in the evidence packet metadata by the Attester. The
-            Verifier MUST NOT reject evidence solely because an
-            assistive technology mode is declared. If the
-            behavioral evidence is inconsistent with the declared
-            mode (e.g., keyboard-like cadence with eye-tracking
-            declared), the Verifier SHOULD flag this
-            inconsistency rather than reject the evidence.</t>
-          </list>
-        </t>
+      <section anchor="assistive-accommodations">
+        <name>Additional Accommodations</name>
+        <ul>
+          <li>Switch-access input: minimum event count per checkpoint
+            reduced to 1 (from default of 5).</li>
+          <li>Head-tracking and mouth-stick input: apply eye-tracking
+            thresholds.</li>
+          <li>When assistive mode thresholds produce anomalous results,
+            the Verifier SHOULD flag the inconsistency in the WAR
+            warnings rather than reject the Evidence.</li>
+        </ul>
       </section>
+
+      <t>
+        The WAR MUST indicate when assistive mode thresholds were applied.
+        Assistive mode is signaled through the profile-declaration
+        structure in the Evidence Packet. Implementations MAY include
+        an assistive-mode feature flag (value 60) in the feature-flags
+        array. The following values are defined: 0 (none), 1
+        (motor-disability), 2 (eye-tracking), 3 (dictation). A future
+        revision of <xref target="PoP-Protocol"/> will formalize this
+        signaling mechanism.
+      </t>
     </section>
 
-    <!-- ============================================================ -->
-    <!-- Section 11: Security Considerations                           -->
-    <!-- ============================================================ -->
-    <section anchor="sec-security" title="Security Considerations">
-      <t>This section addresses security considerations specific to
-      the appraisal procedures defined in this document.</t>
-
-      <section title="Entropy Manipulation Attacks">
-        <t>An adversary may attempt to inject artificial entropy into
-        evidence to pass the entropy assessment (Step 3 of the
-        verification protocol). Defenses include:</t>
-        <t>
-          <list style="symbols">
-            <t>The entropy upper bound (6.0 bits for T2, 5.5 bits
-            for T3, 5.0 bits for T4) rejects artificially inflated
-            entropy. Injecting random timing noise pushes entropy
-            above the human-characteristic range.</t>
-            <t>The entropy trajectory constraint (T4: standard
-            deviation must exceed 0.1 bits) rejects constant
-            entropy profiles that would result from steady-state
-            random injection.</t>
-            <t>Cross-correlation between entropy and SNR provides
-            a secondary check: human sessions show negative
-            correlation (higher entropy correlates with lower SNR
-            during cognitive processing). Synthetic entropy
-            injection typically produces zero or positive
-            correlation.</t>
-          </list>
-        </t>
-      </section>
-
-      <section title="Verifier Trust Assumptions">
-        <t>The appraisal framework assumes the Verifier is trusted to
-        correctly execute the verification protocol and honestly
-        report Attestation Results. The following considerations
-        apply:</t>
-        <t>
-          <list style="symbols">
-            <t>A malicious Verifier could fabricate positive
-            Attestation Results for forged evidence. Mitigation:
-            Relying Parties SHOULD require Attestation Results from
-            multiple independent Verifiers for high-stakes
-            contexts.</t>
-            <t>A compromised Verifier could extract behavioral
-            fingerprints from evidence chains. Mitigation: the
-            evidence quantization requirements in
-            <xref target="sec-privacy-appraisal"/> apply to
-            Verifier storage, and authors MAY use anonymous
-            submission.</t>
-            <t>The Verifier's appraisal policy (thresholds,
-            baselines) SHOULD be published and auditable to enable
-            transparency in the trust model.</t>
-          </list>
-        </t>
-      </section>
-
-      <section title="Stylometric Privacy Risk">
-        <t>Even with the quantization protections specified in
-        <xref target="sec-privacy-appraisal"/>, the combination of
-        multiple forensic indicators could potentially enable
-        stylometric identification. Mitigations include:</t>
-        <t>
-          <list style="symbols">
-            <t>The Verifier MUST NOT perform or enable stylometric
-            analysis that links evidence chains to author
-            identities beyond the scope of the current
-            attestation.</t>
-            <t>Attestation Results MUST use differential privacy
-            techniques when aggregating forensic indicators across
-            multiple sessions by the same author, with a minimum
-            epsilon of 1.0.</t>
-            <t>Authors SHOULD be informed that behavioral evidence,
-            even when quantized, carries residual identification
-            risk proportional to the number of sessions
-            submitted.</t>
-          </list>
-        </t>
-      </section>
+    <section anchor="iana-considerations">
+      <name>IANA Considerations</name>
+      <t>
+        This document has no IANA actions. All IANA registrations for the PoP framework are defined in <xref target="PoP-Protocol"/>.
+      </t>
     </section>
 
-    <!-- ============================================================ -->
-    <!-- Section 12: IANA Considerations                               -->
-    <!-- ============================================================ -->
-    <section anchor="sec-iana" title="IANA Considerations">
-      <t>This document has no IANA actions.</t>
+    <section anchor="security-considerations">
+      <name>Security Considerations</name>
+      <t>
+        This document defines forensic appraisal procedures that inherit and extend the security model from <xref target="PoP-Protocol"/>. The broader RATS security considerations <xref target="Sardar-RATS"/> also apply. Implementers should consider the following security aspects:
+      </t>
+      <section anchor="sec-entropy-manipulation">
+        <name>Entropy Manipulation Attacks</name>
+        <t>
+          An adversary may attempt to inject synthetic jitter patterns that satisfy entropy thresholds while lacking biological origin. The use of multi-dimensional analysis (SNR, CLC, Error Topology) rather than single metrics provides defense-in-depth against high-fidelity simulation.
+        </t>
+      </section>
+      <section anchor="sec-verifier-trust">
+        <name>Verifier Trust Model</name>
+        <t>
+          The forensic assessments defined in this document produce probabilistic confidence scores, not binary determinations. Relying Parties MUST understand that forgery cost bounds represent economic estimates, not cryptographic guarantees. Trust decisions SHOULD incorporate the declared Attestation Tier (T1-T4) and the specific absence proof types claimed.
+        </t>
+      </section>
+      <section anchor="sec-stylometric-risk">
+        <name>Stylometric De-anonymization</name>
+        <t>
+          High-resolution behavioral data (keystroke timing, pause patterns) can enable author identification even when document content is not disclosed. Implementations SHOULD support Evidence Quantization to reduce timing resolution while maintaining forensic utility. The trade-off between forensic confidence and privacy should be documented for Relying Parties.
+        </t>
+      </section>
+      <section anchor="sec-assistive-bypass">
+        <name>Assistive Mode Abuse</name>
+        <t>
+          Adversaries may falsely claim assistive technology usage to bypass behavioral entropy checks. Verifiers SHOULD require consistent assistive mode declarations across sessions and MAY request additional out-of-band verification for mode changes. The WAR should indicate when assistive modes were active, as specified in the accessibility section above.
+        </t>
+      </section>
     </section>
   </middle>
 
   <back>
-    <references title="References" anchor="sec-combined-references">
-      <references title="Normative References" anchor="sec-normative-references">
-        &RFC2119;
-        &RFC8174;
-        &RFC6234;
-        &RFC8610;
-        &RFC8949;
-        &RFC9052;
-        &RFC9334;
-        &RFC9711;
-      </references>
-
-      <references title="Informative References" anchor="sec-informative-references">
-        &RFC6973;
-
-        <reference anchor="NIST-SP-800-63">
+    <references>
+      <name>References</name>
+      <references>
+        <name>Normative References</name>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml"/>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8174.xml"/>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8610.xml"/>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8949.xml"/>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9334.xml"/>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.5869.xml"/>
+        <reference anchor="PoP-Protocol">
           <front>
-            <title>Digital Identity Guidelines</title>
-            <author>
-              <organization>National Institute of Standards and Technology</organization>
-            </author>
-            <date year="2017" month="June"/>
+            <title>Proof of Process (PoP): Architecture and Evidence Format</title>
+            <author fullname="David Condrey" initials="D." surname="Condrey"/>
+            <date year="2026" month="February"/>
           </front>
-          <seriesInfo name="NIST Special Publication" value="800-63-3"/>
+          <seriesInfo name="Internet-Draft" value="draft-condrey-rats-pop-protocol-04"/>
+        </reference>
+      </references>
+      <references>
+        <name>Informative References</name>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9052.xml"/>
+        <reference anchor="Monrose2000" target="https://doi.org/10.1145/351427.351438">
+          <front>
+            <title>Keystroke dynamics as a biometric for authentication</title>
+            <author fullname="F. Monrose" initials="F." surname="Monrose"/>
+            <author fullname="A. Rubin" initials="A." surname="Rubin"/>
+            <date year="2000"/>
+          </front>
+        </reference>
+        <reference anchor="Goodman2007" target="https://doi.org/10.1007/978-3-540-77343-6_14">
+          <front>
+            <title>Using Stylometry for Biometric Keystroke Dynamics</title>
+            <author fullname="A. Goodman" initials="A." surname="Goodman"/>
+            <author fullname="V. Zabala" initials="V." surname="Zabala"/>
+            <date year="2007"/>
+          </front>
+        </reference>
+        <reference anchor="Salthouse1986" target="https://doi.org/10.1037/0033-295X.93.3.303">
+          <front>
+            <title>Perceptual, Cognitive, and Motoric Aspects of Transcription Typing</title>
+            <author fullname="Timothy A. Salthouse" initials="T.A." surname="Salthouse"/>
+            <date year="1986"/>
+          </front>
+          <seriesInfo name="Psychological Review" value="93(3), 303-319"/>
+        </reference>
+        <reference anchor="Sardar-RATS" target="https://datatracker.ietf.org/doc/html/draft-sardar-rats-sec-cons-02">
+          <front>
+            <title>Security Considerations for Remote ATtestation procedureS (RATS)</title>
+            <author fullname="Muhammad Usama Sardar" initials="M.U." surname="Sardar"/>
+            <date year="2026" month="February"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-sardar-rats-sec-cons-02"/>
         </reference>
       </references>
     </references>
 
-    <!-- ============================================================ -->
-    <!-- Appendix A: Verification Constraint Summary                   -->
-    <!-- ============================================================ -->
-    <section anchor="sec-appendix-constraints" title="Verification Constraint Summary">
-      <t>This appendix summarizes the verification thresholds and
-      constraints for each attestation tier. These values are the
-      normative defaults; deployment profiles MAY adjust them within
-      the ranges specified.</t>
-
-      <section anchor="sec-constraints-t1" title="Tier 1 (Basic) Constraints">
-        <t>
-          <list style="symbols">
-            <t>Chain integrity: prev-hash linkage required, COSE_Sign1
-            signature verification required.</t>
-            <t>Temporal ordering: monotonic timestamps required; no SWF
-            consistency check.</t>
-            <t>Entropy: minimum 2.0 bits/sample; no upper bound
-            enforced.</t>
-            <t>Entanglement: jitter seal presence required; HMAC
-            verification not required (device key not available).</t>
-            <t>State matching: final content hash match required.</t>
-            <t>Forensic assessment: SNR computation OPTIONAL; CLC, IKI,
-            error topology, and mechanical turk detection not
-            required.</t>
-            <t>Forgery cost bound: C_total = C_entropy only (no SWF,
-            no hardware component).</t>
-          </list>
-        </t>
+    <section anchor="verification-checklist" numbered="false">
+      <name>Verification Constraint Summary</name>
+      <t>
+        The following constraints summarize the verification requirements defined in the preceding sections:
+      </t>
+      <section anchor="structural-checks" numbered="false">
+        <name>Structural Integrity</name>
+        <ol>
+          <li>Chain Integrity: SHA-256 hash chain is unbroken from genesis to final checkpoint.</li>
+          <li>Temporal Monotonicity: All checkpoint timestamps strictly exceed their predecessors.</li>
+          <li>SWF Continuity: Recompute Argon2id from seed; verify sampled Merkle proofs.</li>
+          <li>Content Binding: Final document hash matches document-ref in Evidence Packet.</li>
+        </ol>
       </section>
-
-      <section anchor="sec-constraints-t2" title="Tier 2 (Standard) Constraints">
-        <t>
-          <list style="symbols">
-            <t>Chain integrity: all T1 requirements.</t>
-            <t>Temporal ordering: monotonic timestamps required; SWF
-            duration within 20% of claimed window duration.</t>
-            <t>Entropy: 2.5 to 6.0 bits/sample per window.</t>
-            <t>Entanglement: jitter seal presence and non-triviality
-            required.</t>
-            <t>State matching: final content hash match required;
-            intermediate content hash progression SHOULD be
-            verified.</t>
-            <t>Forensic assessment: SNR, CLC, and IKI computation
-            required. Mechanical turk detection required. Error
-            topology OPTIONAL.</t>
-            <t>Forgery cost bound: C_total = C_swf + C_entropy.
-            Minimum forgery time equals 80% of claimed
-            duration.</t>
-          </list>
-        </t>
+      <section anchor="behavioral-checks" numbered="false">
+        <name>Behavioral Analysis (ENHANCED/MAXIMUM profiles)</name>
+        <ol>
+          <li>Entropy Threshold: Independent entropy estimate >= 3.0 bits per inter-keystroke interval per checkpoint.</li>
+          <li>SNR Analysis: Jitter exhibits characteristic biological noise patterns, not periodic or spectrally flat patterns.</li>
+          <li>CLC Correlation: Semantic complexity correlates with timing (r > 0.2, or r > 0.1 for assistive mode).</li>
+          <li>Error Topology: Correction patterns consistent with human cognitive processing.</li>
+          <li>Mechanical Turk Detection: No robotic pacing (machine-clocked editing rate).</li>
+        </ol>
       </section>
-
-      <section anchor="sec-constraints-t3" title="Tier 3 (Enhanced) Constraints">
-        <t>
-          <list style="symbols">
-            <t>Chain integrity: all T2 requirements.</t>
-            <t>Temporal ordering: all T2 requirements; HAT delta
-            cross-validation SHOULD be performed when available.</t>
-            <t>Entropy: 3.0 to 5.5 bits/sample per window.</t>
-            <t>Entanglement: device attestation certificate chain
-            validation required. Direct HMAC verification SHOULD
-            be performed when device key is available through
-            attestation.</t>
-            <t>State matching: all T2 requirements; intermediate
-            content hash progression MUST be verified.</t>
-            <t>Forensic assessment: all T2 requirements plus error
-            topology analysis required. QR presence challenge
-            OPTIONAL.</t>
-            <t>Forgery cost bound: C_total = C_swf + C_entropy +
-            C_hardware. Hardware compromise cost estimated at
-            USD 10,000-100,000.</t>
-          </list>
-        </t>
+      <section anchor="absence-checks" numbered="false">
+        <name>Absence Proof Validation</name>
+        <ol>
+          <li>Type 1 Claims: Verify computationally from Evidence Packet (delta sizes, timestamp ordering).</li>
+          <li>Type 2 Claims: Weight by Attestation Tier (T1-T4).</li>
+          <li>Type 3 Claims: Evaluate environmental assertions against physical-state markers.</li>
+        </ol>
       </section>
-
-      <section anchor="sec-constraints-t4" title="Tier 4 (Maximum) Constraints">
-        <t>
-          <list style="symbols">
-            <t>Chain integrity: all T3 requirements.</t>
-            <t>Temporal ordering: all T3 requirements; HAT delta
-            cross-validation MUST be performed; HAT-SWF agreement
-            within 5% tolerance required.</t>
-            <t>Entropy: 3.0 to 5.0 bits/sample per window; entropy
-            trajectory standard deviation MUST exceed 0.1 bits
-            across the session.</t>
-            <t>Entanglement: all T3 requirements; direct HMAC
-            verification MUST be performed. Timing vector entropy
-            consistency check required (within 0.5 bits of reported
-            entropy).</t>
-            <t>State matching: all T3 requirements; non-monotonic
-            content hash changes MUST be flagged unless accompanied
-            by major restructure revision events.</t>
-            <t>Forensic assessment: all T3 requirements; cross-
-            correlation analysis between entropy and SNR required.
-            QR presence challenge RECOMMENDED.</t>
-            <t>Forgery cost bound: C_total = C_swf + C_entropy +
-            C_hardware. Hardware compromise cost estimated at
-            USD 100,000 or more. Total minimum forgery cost exceeds
-            claimed duration plus hardware procurement.</t>
-          </list>
-        </t>
+      <section anchor="tool-receipt-checks" numbered="false">
+        <name>Tool Receipt Validation (when present)</name>
+        <ol>
+          <li>Verify Tool signature over Receipt.</li>
+          <li>Verify PASTE event references correct output_commit.</li>
+          <li>Calculate human-to-machine effort ratio from SWF-proved intervals.</li>
+        </ol>
       </section>
+    </section>
+
+    <section anchor="per-tier-constraints" numbered="false">
+      <name>Per-Tier Verification Constraints</name>
+      <t>
+        This appendix summarizes the verification thresholds and
+        constraints for each Attestation Tier. These values are the
+        normative defaults; deployment profiles MAY adjust them within
+        the ranges specified.
+      </t>
+      <section anchor="constraints-t1" numbered="false">
+        <name>T1 (Software-Only) Constraints</name>
+        <ul>
+          <li>Chain integrity: prev-hash linkage required.</li>
+          <li>Temporal ordering: monotonic timestamps required; SWF
+          claimed-duration within [0.5x, 3.0x] of expected time.</li>
+          <li>Entropy: minimum 3.0 bits/sample when jitter-binding is
+          present. No upper bound enforced.</li>
+          <li>Entanglement: jitter seal presence required when
+          jitter-binding is present; HMAC verification SHOULD be
+          performed (MAC key derivable from public merkle-root).</li>
+          <li>State matching: final content hash match required.</li>
+          <li>Forensic assessment: SNR computation OPTIONAL; CLC, error
+          topology, and mechanical turk detection RECOMMENDED for
+          ENHANCED+ profiles.</li>
+          <li>Forgery cost bound: C_total = C_swf + C_entropy (no
+          hardware component). Physical-state fields are self-reported
+          and provide no additional assurance.</li>
+        </ul>
+      </section>
+      <section anchor="constraints-t2" numbered="false">
+        <name>T2 (Attested Software) Constraints</name>
+        <ul>
+          <li>Chain integrity: all T1 requirements.</li>
+          <li>Temporal ordering: all T1 requirements; SWF
+          claimed-duration within [0.5x, 3.0x] of expected time on
+          reference hardware.</li>
+          <li>Entropy: 3.0 to 6.0 bits/sample per checkpoint.
+          Values above 6.0 suggest injected randomness and SHOULD
+          be flagged.</li>
+          <li>Entanglement: jitter seal and entangled-mac presence
+          required for ENHANCED+ profiles. HMAC verification
+          SHOULD be performed.</li>
+          <li>State matching: final content hash match required;
+          intermediate content hash progression SHOULD be
+          verified for monotonic growth.</li>
+          <li>Forensic assessment: SNR, CLC, and mechanical turk
+          detection required. Error topology OPTIONAL.</li>
+          <li>Forgery cost bound: C_total = C_swf + C_entropy.
+          Minimum forgery time equals the sum of SWF
+          claimed-durations.</li>
+        </ul>
+      </section>
+      <section anchor="constraints-t3" numbered="false">
+        <name>T3 (Hardware-Bound) Constraints</name>
+        <ul>
+          <li>Chain integrity: all T2 requirements. COSE_Sign1
+          signature MUST verify against hardware-bound key.</li>
+          <li>Temporal ordering: all T2 requirements; HAT delta
+          cross-validation SHOULD be performed when TPM monotonic
+          counter data is available.</li>
+          <li>Entropy: 3.0 to 5.5 bits/sample, reflecting tighter
+          calibration against verified human authorship baselines.</li>
+          <li>Entanglement: HMAC verification MUST be performed.
+          Device attestation certificate chain SHOULD be validated
+          against known Endorser roots.</li>
+          <li>State matching: all T2 requirements; intermediate
+          content hash progression MUST be verified for monotonic
+          growth. Non-monotonic changes (document size decreasing
+          by more than 50% between consecutive checkpoints) MUST
+          be flagged.</li>
+          <li>Forensic assessment: all T2 requirements plus error
+          topology analysis required. QR presence challenge
+          OPTIONAL.</li>
+          <li>Forgery cost bound: C_total = C_swf + C_entropy +
+          C_hardware. Hardware compromise cost estimated at
+          USD 10,000-100,000.</li>
+        </ul>
+      </section>
+      <section anchor="constraints-t4" numbered="false">
+        <name>T4 (Hardware-Hardened) Constraints</name>
+        <ul>
+          <li>Chain integrity: all T3 requirements.</li>
+          <li>Temporal ordering: all T3 requirements; HAT delta
+          cross-validation MUST be performed; HAT-SWF agreement
+          within 5% tolerance required.</li>
+          <li>Entropy: 3.0 to 5.0 bits/sample; entropy trajectory
+          standard deviation MUST exceed 0.1 bits across the
+          session. A constant-entropy session is a strong indicator
+          of synthetic generation.</li>
+          <li>Entanglement: all T3 requirements; timing vector
+          entropy consistency check required (within 0.5 bits of
+          reported entropy-estimate).</li>
+          <li>State matching: all T3 requirements.</li>
+          <li>Forensic assessment: all T3 requirements;
+          cross-correlation analysis between entropy and SNR
+          required. QR presence challenge RECOMMENDED.</li>
+          <li>Forgery cost bound: C_total = C_swf + C_entropy +
+          C_hardware. Hardware compromise cost estimated at
+          USD 100,000 or more. Total minimum forgery cost exceeds
+          sum of claimed-durations plus hardware procurement.</li>
+        </ul>
+      </section>
+    </section>
+
+    <section anchor="acknowledgements" numbered="false">
+      <name>Acknowledgements</name>
+      <t>
+        The author thanks the participants of the RATS working group for
+        their ongoing work on remote attestation architecture and security
+        considerations that informed this specification.
+      </t>
     </section>
   </back>
 </rfc>

@@ -1,4 +1,4 @@
-; Proof of Process (PoP) Evidence Schema
+; Proof of Process (PoP) Evidence and Attestation Result Schema
 ; draft-condrey-rats-pop-protocol-04 / draft-condrey-rats-pop-appraisal-03
 ;
 ; This schema defines the CBOR-encoded data structures for the
@@ -7,24 +7,37 @@
 ; CBOR tag 1463894560 ("WAR ").
 ;
 ; All map keys use integer encoding per IETF CBOR conventions.
+; All floating-point fields MUST use 32-bit IEEE 754 binary32.
+; pop-timestamp values MUST use floating-point encoding with
+; at least millisecond precision.
+
+; ============================================================
+; CBOR Tag Wrappers
+; ============================================================
+
+pop-evidence = #6.1347571280(evidence-packet)
+pop-war = #6.1463894560(attestation-result)
 
 ; ============================================================
 ; Evidence Packet (Protocol)
 ; ============================================================
 
-; Top-level Evidence Packet (CBOR tag 1347571280)
 evidence-packet = {
     1 => uint,                    ; version (MUST be 1)
     2 => tstr,                    ; profile-uri
     3 => uuid,                    ; packet-id
     4 => pop-timestamp,           ; created
     5 => document-ref,            ; document
-    6 => [+ checkpoint],          ; checkpoints
+    6 => [3* checkpoint],         ; checkpoints (min 3)
     ? 7 => attestation-tier,      ; T1-T4
     ? 8 => [* tstr],              ; limitations
     ? 9 => profile-declaration,   ; profile
     ? 10 => [+ presence-challenge], ; QR/OOB proofs
-    ? 18 => physical-liveness,    ; CDCE markers
+    ? 11 => channel-binding,      ; TLS EKM binding
+    ; keys 14-17 reserved for future use
+    ? 13 => content-tier,         ; Evidence Content Tier
+    ? 18 => physical-liveness,    ; physical-liveness markers
+    * int => any,                 ; extension fields
 }
 
 checkpoint = {
@@ -37,9 +50,10 @@ checkpoint = {
     7 => hash-value,              ; prev-hash
     8 => hash-value,              ; checkpoint-hash
     9 => process-proof,           ; SWF proof
-    10 => jitter-binding,         ; behavioral-entropy
-    11 => physical-state,         ; CDCE Weave
-    12 => bstr .size 32,          ; entangled-mac
+    ? 10 => jitter-binding,       ; behavioral-entropy (ENHANCED+)
+    ? 11 => physical-state,       ; CDCE Weave (ENHANCED+)
+    ? 12 => bstr .size 32,        ; entangled-mac (ENHANCED+)
+    * int => any,                 ; extension fields
 }
 
 document-ref = {
@@ -48,7 +62,7 @@ document-ref = {
     3 => uint,                    ; byte-length
     4 => uint,                    ; char-count
     ? 5 => hash-salt-mode,        ; salting mode
-    ? 6 => bstr,                  ; salt-commitment
+    ? 6 => bstr .size 32,         ; salt-commitment
 }
 
 ; ============================================================
@@ -58,10 +72,10 @@ document-ref = {
 process-proof = {
     1 => proof-algorithm,         ; algorithm id
     2 => proof-params,            ; SWF params
-    3 => bstr,                    ; input (seed)
-    4 => bstr,                    ; output (root)
+    3 => bstr .size 32,           ; input (seed)
+    4 => bstr .size 32,           ; merkle-root
     5 => [+ merkle-proof],        ; sampled proofs
-    6 => float32,                 ; claimed-duration
+    6 => float32,                 ; claimed-duration (seconds)
 }
 
 proof-params = {
@@ -88,20 +102,20 @@ jitter-binding = {
 }
 
 edit-delta = {
-    1 => int,                     ; chars-added
-    2 => int,                     ; chars-deleted
+    1 => uint,                    ; chars-added
+    2 => uint,                    ; chars-deleted
     3 => uint,                    ; op-count
     ? 4 => [* edit-position],     ; positions
 }
 
 edit-position = [
     uint,                         ; offset
-    int,                          ; change (+/-)
+    int,                          ; change (+/-), MUST be non-zero
 ]
 
 physical-state = {
     1 => [+ float32],             ; thermal (relative)
-    2 => uint,                    ; entropy-delta
+    2 => int,                     ; entropy-delta (signed)
     ? 3 => bstr .size 32,         ; kernel-commitment
 }
 
@@ -120,14 +134,23 @@ thermal-sample = [
 ; ============================================================
 
 presence-challenge = {
-    1 => bstr,                    ; challenge-nonce
-    2 => bstr,                    ; device-signature
+    1 => bstr .size (16..256),    ; challenge-nonce (128+ bits)
+    2 => bstr,                    ; device-signature (MUST be COSE_Sign1)
     3 => pop-timestamp,           ; response-time
 }
 
 profile-declaration = {
     1 => tstr,                    ; profile-id
     2 => [+ uint],                ; feature-flags
+}
+
+binding-type = &(
+    tls-exporter: 1,
+)
+
+channel-binding = {
+    1 => binding-type,            ; binding-type
+    2 => bstr .size 32,           ; binding-value (EKM output)
 }
 
 ; NOTE: Cross-session linking (continuation tokens) is deferred
@@ -140,16 +163,18 @@ profile-declaration = {
 
 attestation-result = {
     1 => uint,                    ; version (MUST be 1)
-    2 => bstr .size 32,           ; evidence-ref (hash of packet chain)
+    2 => hash-value,              ; evidence-ref
     3 => verdict,                 ; appraisal verdict
     4 => attestation-tier,        ; assessed assurance level
     5 => uint,                    ; chain-length
     6 => uint,                    ; chain-duration (seconds)
-    7 => entropy-report,          ; entropy assessment
+    ? 7 => entropy-report,        ; entropy assessment (omit for CORE)
     ? 8 => forgery-cost-estimate, ; quantified forgery cost
-    ? 9 => [* absence-proof],     ; absence claims
+    ? 9 => [+ absence-claim],     ; absence claims (1+ when present)
     ? 10 => [* tstr],             ; warnings
     11 => bstr,                   ; verifier-signature (COSE_Sign1)
+    12 => pop-timestamp,          ; created (appraisal timestamp)
+    * int => any,                 ; extension fields
 }
 
 verdict = &(
@@ -161,8 +186,8 @@ verdict = &(
 
 entropy-report = {
     1 => float32,                 ; timing-entropy (bits/sample)
-    2 => float32,                 ; revision-entropy
-    3 => float32,                 ; pause-entropy
+    2 => float32,                 ; revision-entropy (bits)
+    3 => float32,                 ; pause-entropy (bits)
     4 => bool,                    ; meets-threshold
 }
 
@@ -175,17 +200,24 @@ forgery-cost-estimate = {
     2 => float32,                 ; c-entropy
     3 => float32,                 ; c-hardware
     4 => float32,                 ; c-total
-    5 => tstr,                    ; currency ("USD" / "CPU-hours")
+    5 => cost-unit,               ; currency
 }
 
+cost-unit = &(
+    usd: 1,
+    cpu-hours: 2,
+)
+
 ; ============================================================
-; Absence Proofs (Appraisal)
+; Absence Claims (Appraisal)
 ; ============================================================
 
-absence-proof = {
+absence-claim = {
     1 => absence-type,            ; proof category
     2 => time-window,             ; claimed window
-    3 => bstr,                    ; type-specific proof data
+    3 => tstr,                    ; claim-id
+    ? 4 => any,                   ; threshold/parameter
+    5 => bool,                    ; assertion
 }
 
 absence-type = &(
@@ -210,8 +242,14 @@ attestation-tier = &(
     hardware-hardened: 4,         ; T4: LoA4
 )
 
+content-tier = &(
+    core: 1,
+    enhanced: 2,
+    maximum: 3,
+)
+
 proof-algorithm = &(
-    sha256-chain: 1,
+    ; 1 is reserved for future use
     pobst-argon2id: 20,
 )
 
@@ -231,7 +269,7 @@ hash-algorithm = &(
 ; ============================================================
 
 uuid = bstr .size 16
-pop-timestamp = #6.1(number)      ; CBOR tag 1 (epoch-based date/time)
+pop-timestamp = #6.1(float32)      ; CBOR tag 1 (epoch-based, float32)
 hash-value = {
     1 => hash-algorithm,
     2 => bstr,
