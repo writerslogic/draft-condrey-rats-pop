@@ -10,6 +10,9 @@
 .vscode/
 .idea/
 
+# Working notes
+issues.md
+
 # OS files
 .DS_Store
 Thumbs.db
