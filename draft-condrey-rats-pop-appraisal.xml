@@ -1,10 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <rfc xmlns:xi="http://www.w3.org/2001/XInclude"
      version="3"
-     docName="draft-condrey-rats-pop-appraisal-03"
+     docName="draft-condrey-rats-pop-appraisal-04"
      ipr="trust200902"
      category="exp"
-     consensus="false"
      submissionType="independent"
      sortRefs="true"
      symRefs="true"
@@ -13,7 +12,7 @@
 
   <front>
     <title abbrev="PoP Appraisal">Proof of Process (PoP): Forensic Appraisal and Security Model</title>
-    <seriesInfo name="Internet-Draft" value="draft-condrey-rats-pop-appraisal-03"/>
+    <seriesInfo name="Internet-Draft" value="draft-condrey-rats-pop-appraisal-04"/>
     <author fullname="David Condrey" initials="D." surname="Condrey">
       <organization abbrev="WritersLogic">WritersLogic Inc</organization>
       <address>
@@ -25,7 +24,7 @@
         <email>david@writerslogic.com</email>
       </address>
     </author>
-    <date year="2026" month="February" day="16"/>
+    <date year="2026" month="February" day="18"/>
 
     <area>Security</area>
     <workgroup>Individual Submission</workgroup>
@@ -40,6 +39,12 @@
         This document specifies the forensic appraisal methodology and quantitative security model for the Proof of Process (PoP) framework. It defines how Verifiers evaluate behavioral entropy, perform liveness detection, and calculate forgery cost bounds. Additionally, it establishes the taxonomy for Absence Proofs and the Writers Authenticity Report (WAR) format, as well as the Tool Receipt protocol for artificial intelligence (AI) attribution within the linear human authoring process.
       </t>
     </abstract>
+
+    <note removeInRFC="true">
+      <name>Discussion Venues</name>
+      <t>Source for this draft and an issue tracker can be found at
+        <eref target="https://github.com/writerslogic/draft-condrey-rats-pop"/>.</t>
+    </note>
   </front>
 
   <middle>
@@ -55,6 +60,9 @@
         logic, Attestation Result (WAR) wire format, and forensic
         methodology. Implementers of Verifier components require both
         documents.
+      </t>
+      <t>
+        At T3/T4 attestation tiers, platform integrity verification as described in the SEAT use cases <xref target="SEAT-UseCases"/> provides the trust anchor for PoP's hardware-bound claims. When PoP Evidence is delivered over an attested TLS channel <xref target="SEAT-EXPAT"/>, the Verifier gains assurance that the Attesting Environment's platform was trustworthy during evidence generation.
       </t>
     </section>
 
@@ -336,16 +344,16 @@
             attacks, manufacturer collusion, or firmware exploits targeting
             PUF-bound keys. Estimated cost: USD 100,000 or more.</li>
         </ul>
+        <t>
+          Verifiers MUST include these estimates in the WAR to allow Relying Parties to set trust thresholds based on objective economic risk.
+        </t>
+        <t>
+          The c-total field in the forgery-cost-estimate MUST equal the sum
+          of c-swf, c-entropy, and c-hardware. All component costs within a
+          single forgery-cost-estimate MUST be expressed in the same
+          cost-unit.
+        </t>
       </section>
-      <t>
-        Verifiers MUST include these estimates in the WAR to allow Relying Parties to set trust thresholds based on objective economic risk.
-      </t>
-      <t>
-        The c-total field in the forgery-cost-estimate MUST equal the sum
-        of c-swf, c-entropy, and c-hardware. All component costs within a
-        single forgery-cost-estimate MUST be expressed in the same
-        cost-unit.
-      </t>
     </section>
 
     <section anchor="absence-proofs">
@@ -710,18 +718,17 @@ attestation-tier = &(
             the Verifier SHOULD flag the inconsistency in the WAR
             warnings rather than reject the Evidence.</li>
         </ul>
+        <t>
+          The WAR MUST indicate when assistive mode thresholds were applied.
+          Assistive mode is signaled through the profile-declaration
+          structure in the Evidence Packet. Implementations MAY include
+          an assistive-mode feature flag (value 60) in the feature-flags
+          array. The following values are defined: 0 (none), 1
+          (motor-disability), 2 (eye-tracking), 3 (dictation). A future
+          revision of <xref target="PoP-Protocol"/> will formalize this
+          signaling mechanism.
+        </t>
       </section>
-
-      <t>
-        The WAR MUST indicate when assistive mode thresholds were applied.
-        Assistive mode is signaled through the profile-declaration
-        structure in the Evidence Packet. Implementations MAY include
-        an assistive-mode feature flag (value 60) in the feature-flags
-        array. The following values are defined: 0 (none), 1
-        (motor-disability), 2 (eye-tracking), 3 (dictation). A future
-        revision of <xref target="PoP-Protocol"/> will formalize this
-        signaling mechanism.
-      </t>
     </section>
 
     <section anchor="iana-considerations">
@@ -780,7 +787,7 @@ attestation-tier = &(
             <author fullname="David Condrey" initials="D." surname="Condrey"/>
             <date year="2026" month="February"/>
           </front>
-          <seriesInfo name="Internet-Draft" value="draft-condrey-rats-pop-protocol-04"/>
+          <seriesInfo name="Internet-Draft" value="draft-condrey-rats-pop-protocol-05"/>
         </reference>
       </references>
       <references>
@@ -817,6 +824,32 @@ attestation-tier = &(
             <date year="2026" month="February"/>
           </front>
           <seriesInfo name="Internet-Draft" value="draft-sardar-rats-sec-cons-02"/>
+        </reference>
+        <reference anchor="SEAT-EXPAT" target="https://datatracker.ietf.org/doc/html/draft-fossati-seat-expat-01">
+          <front>
+            <title>Remote Attestation with Exported Authenticators</title>
+            <author fullname="Muhammad Usama Sardar" initials="M.U." surname="Sardar"/>
+            <author fullname="Thomas Fossati" initials="T." surname="Fossati"/>
+            <author fullname="Tirumaleswar Reddy" initials="T." surname="Reddy"/>
+            <author fullname="Yaron Sheffer" initials="Y." surname="Sheffer"/>
+            <author fullname="Hannes Tschofenig" initials="H." surname="Tschofenig"/>
+            <author fullname="Ionut Mihalcea" initials="I." surname="Mihalcea"/>
+            <date year="2026" month="January"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-fossati-seat-expat-01"/>
+        </reference>
+        <reference anchor="SEAT-UseCases" target="https://datatracker.ietf.org/doc/html/draft-mihalcea-seat-use-cases-01">
+          <front>
+            <title>Use Cases and Properties for Integrating Remote Attestation with Secure Channel Protocols</title>
+            <author fullname="Ionut Mihalcea" initials="I." surname="Mihalcea"/>
+            <author fullname="Muhammad Usama Sardar" initials="M.U." surname="Sardar"/>
+            <author fullname="Thomas Fossati" initials="T." surname="Fossati"/>
+            <author fullname="Tirumaleswar Reddy" initials="T." surname="Reddy"/>
+            <author fullname="Yuning Jiang" initials="Y." surname="Jiang"/>
+            <author fullname="Meiling Chen" initials="M." surname="Chen"/>
+            <date year="2026" month="January"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-mihalcea-seat-use-cases-01"/>
         </reference>
       </references>
     </references>
