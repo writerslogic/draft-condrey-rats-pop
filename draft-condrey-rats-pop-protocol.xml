@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <rfc xmlns:xi="http://www.w3.org/2001/XInclude"
      version="3"
-     docName="draft-condrey-rats-pop-protocol-05"
+     docName="draft-condrey-rats-pop-protocol-06"
      ipr="trust200902"
      category="exp"
      submissionType="independent"
@@ -12,7 +12,7 @@
 
   <front>
     <title abbrev="PoP Protocol">Proof of Process (PoP): Architecture and Evidence Format</title>
-    <seriesInfo name="Internet-Draft" value="draft-condrey-rats-pop-protocol-05"/>
+    <seriesInfo name="Internet-Draft" value="draft-condrey-rats-pop-protocol-06"/>
     <author fullname="David Condrey" initials="D." surname="Condrey">
       <organization abbrev="WritersLogic">WritersLogic Inc</organization>
       <address>
@@ -61,7 +61,7 @@
         Unlike traditional attestation which captures static system state, PoP attests to a continuous physical process. It introduces Proof of Biological Space-Time (PoBST) to enforce temporal monotonicity and Cross-Domain Constraint Entanglement (CDCE) to bind behavioral entropy (human jitter) and physical state (thermodynamics) to the document's evolution.
       </t>
       <t>
-        By entangling content hashes with these physical constraints, this protocol enables an Attester to generate an Evidence Packet (.pop) that imposes quantifiable cost on forgery of authorship claims, preserving privacy by design without disclosing document content.
+        By entangling content hashes with these physical constraints, this protocol enables an Attester to generate an Evidence Packet (.cpop) that imposes quantifiable cost on forgery of authorship claims, preserving privacy by design without disclosing document content.
       </t>
     </section>
 
@@ -74,6 +74,199 @@
         BCP 14 <xref target="RFC2119"/> <xref target="RFC8174"/> when, and
         only when, they appear in all capitals, as shown here.
       </t>
+    </section>
+
+    <section anchor="use-cases">
+      <name>Use Cases</name>
+      <t>
+        Stakeholders across creative industries, education, law, and
+        commerce increasingly need to determine how content was produced,
+        not merely what it contains. Post-hoc detection techniques
+        (stylometric classifiers, watermark detectors) are demonstrably
+        insufficient for this purpose: they degrade as generative models
+        improve, are defeated by paraphrasing, and exhibit systematic
+        bias against non-native language speakers, with one study
+        finding that detectors misclassified over 61% of essays by
+        non-native English writers as AI-generated
+        <xref target="Liang2023"/>. Institutions relying on these
+        detectors face significant litigation risk, as courts have begun
+        ruling that sanctions based solely on AI detection scores lack
+        valid evidentiary basis.
+      </t>
+      <t>
+        PoP addresses this gap through process attestation: capturing
+        tamper-evident evidence of how content is created, rather than
+        making probabilistic inferences about finished output. This
+        approach complements existing media provenance standards such as
+        C2PA <xref target="C2PA"/>, which tracks the custody and
+        transformation of digital assets after creation. Where C2PA
+        attests to what happened to content, PoP attests to how content
+        came into existence.
+      </t>
+      <t>
+        Importantly, PoP does not assert that human-authored content is
+        inherently superior to AI-generated content. The value of
+        process attestation lies in transparency: enabling Relying
+        Parties to make informed trust decisions appropriate to their
+        context. In some contexts, AI-generated content is entirely
+        acceptable or even preferred; in others, stakeholders require
+        assurance about the nature and extent of human involvement.
+        PoP provides the evidentiary basis for these decisions without
+        imposing a policy preference.
+      </t>
+
+      <section anchor="uc-creative-industries">
+        <name>Creative Industries and Labor Rights</name>
+        <t>
+          Professional guilds and labor organizations in the creative
+          industries have established contractual frameworks governing
+          AI use in content production. The Writers Guild of America's
+          2023 Minimum Basic Agreement provides that AI-generated
+          material cannot be credited as "literary material" and
+          requires studios to disclose when materials provided to
+          writers incorporate AI-generated content. Similar provisions
+          exist in SAG-AFTRA agreements for digital replicas and
+          synthetic performers, and the Authors Guild has published
+          model contract clauses addressing AI use.
+        </t>
+        <t>
+          These contractual obligations currently lack a standardized
+          technical enforcement mechanism. A screenwriter's authoring
+          application acts as the Attester, producing an Evidence
+          Packet (.cpop) that documents the writing process. When the
+          writer uses AI tools for research or drafting, the Tool
+          Receipt Protocol defined in <xref target="PoP-Appraisal"/>
+          records each AI contribution with a signed receipt binding
+          the tool's output to the evidence chain. The studio or guild
+          acts as the Relying Party, consuming the Attestation Result
+          (.cwar) to verify compliance with contractual AI disclosure
+          requirements. The Attestation Result includes the
+          human-to-machine effort ratio, providing quantified
+          attribution rather than a binary human-or-AI determination.
+        </t>
+      </section>
+
+      <section anchor="uc-academic-integrity">
+        <name>Academic Integrity</name>
+        <t>
+          Educational institutions face a dilemma: post-hoc AI
+          detectors produce probabilistic scores that cannot
+          reliably distinguish AI-generated text from the writing of
+          non-native speakers, students with certain disabilities,
+          or those with concise writing styles
+          <xref target="Liang2023"/>. Sanctions based on detector
+          output alone have been overturned by courts as lacking valid
+          evidentiary basis, with affected families incurring
+          substantial legal costs. Institutions that rely on these
+          tools expose themselves to litigation under due process and
+          civil rights frameworks.
+        </t>
+        <t>
+          PoP inverts this model. Rather than accusing students based
+          on statistical analysis of their output, it enables students
+          to voluntarily submit affirmative evidence of their authorship
+          process. The student's writing environment acts as the
+          Attester, producing an Evidence Packet over the course of
+          the assignment. The institution's learning management system
+          acts as the Relying Party, evaluating whether the submitted
+          evidence is consistent with the claimed authorship timeline
+          and effort. Participation is opt-in: PoP serves as a
+          provenance tool that rewards transparency, not a surveillance
+          mechanism that presumes guilt.
+        </t>
+        <t>
+          This use case requires particular attention to privacy.
+          Behavioral telemetry constitutes biometric data; the privacy
+          protections defined in
+          <xref target="privacy-considerations"/> (jitter
+          quantization, data minimization, and Verifier data
+          retention limits) are essential safeguards. Institutions
+          deploying PoP SHOULD establish clear data governance policies
+          and ensure students retain control over their Evidence
+          Packets.
+        </t>
+      </section>
+
+      <section anchor="uc-journalism">
+        <name>Journalism and News Provenance</name>
+        <t>
+          Major news organizations including the Associated Press and
+          BBC have adopted editorial policies requiring human oversight
+          of AI-assisted content production, and several have
+          co-founded initiatives to combat AI-generated disinformation.
+          These policies require reporters to disclose AI tool use but
+          lack a machine-verifiable mechanism for enforcement.
+        </t>
+        <t>
+          A reporter's authoring application acts as the Attester,
+          producing Evidence Packets during article composition. The
+          news organization's editorial system acts as the Verifier,
+          appraising the evidence before publication. The resulting
+          Attestation Result can be embedded in the article's metadata
+          for downstream consumers (fact-checkers, aggregators, and
+          readers) who act as secondary Relying Parties. When reporters
+          use AI tools for research or drafting, Tool Receipts document
+          each contribution, preserving an auditable record of the
+          human editorial process that complements C2PA media
+          provenance for any associated images or video.
+        </t>
+      </section>
+
+      <section anchor="uc-legal-evidentiary">
+        <name>Legal and Evidentiary Standards</name>
+        <t>
+          PoP Evidence Packets are designed to align with existing
+          legal standards for digital evidence authentication. The
+          U.S. Federal Rules of Evidence already provide a framework:
+          Rule 901(b)(9) admits evidence about "a process or system,
+          showing it produces an accurate result," and Rules 902(13)
+          and 902(14) (amended 2017) establish that hash-authenticated
+          electronic records and certified process outputs are
+          self-authenticating. PoP's hash-chained evidence structure,
+          cryptographic signatures, and deterministic verification
+          procedures map naturally to these evidentiary requirements.
+        </t>
+        <t>
+          Regulatory frameworks are also converging on mandatory AI
+          content disclosure. The EU AI Act (Article 50) requires
+          disclosure of AI-generated content published on matters of
+          public interest, with enforcement beginning August 2026.
+          These obligations create demand for a standardized technical
+          mechanism that can produce verifiable, machine-readable
+          attestation of how content was produced.
+        </t>
+        <t>
+          In this use case, a filer's authoring environment acts as the
+          Attester, producing Evidence Packets bound to a hardware
+          Secure Element (T3 or T4 tier) for non-repudiation. The
+          regulatory body or court acts as the Relying Party, consuming
+          Attestation Results that include forgery cost estimates to
+          quantify the economic assurance of the evidence.
+        </t>
+      </section>
+
+      <section anchor="uc-content-marketplace">
+        <name>Content Platforms and Marketplaces</name>
+        <t>
+          Content platforms may distinguish between human-authored and
+          AI-generated submissions for editorial placement, pricing,
+          or labeling purposes. Authors act as Attesters, submitting
+          Evidence Packets alongside their content. The platform's
+          Verifier produces Attestation Results that inform trust
+          decisions.
+        </t>
+        <t>
+          Absence Proofs as defined in <xref target="PoP-Appraisal"/>
+          enable the platform to identify submissions that lack
+          process evidence, indicating unknown provenance rather
+          than necessarily AI generation. The forgery cost bounds
+          in the Attestation Result provide a quantitative basis for
+          graduated trust: platforms can distinguish between content
+          with strong process evidence, content with partial evidence,
+          and content with no provenance at all, rather than relying
+          on a binary authentic-or-not classification.
+        </t>
+      </section>
     </section>
 
     <section anchor="system-model">
@@ -89,7 +282,7 @@
         </t>
         <dl>
           <dt>Attester:</dt>
-          <dd>The authoring application and its host platform. The Attester generates Evidence Packets (.pop) containing behavioral entropy, physical state markers, and SWF proofs. Unlike traditional RATS deployments, the Attester in PoP is operated by the entity whose claims are being verified (the author).</dd>
+          <dd>The authoring application and its host platform. The Attester generates Evidence Packets (.cpop) containing behavioral entropy, physical state markers, and SWF proofs. Unlike traditional RATS deployments, the Attester in PoP is operated by the entity whose claims are being verified (the author).</dd>
           <dt>Attesting Environment (AE):</dt>
           <dd>The software and hardware components that collect telemetry and generate cryptographic bindings. This includes the authoring application, operating system interfaces for entropy collection, and hardware Secure Elements (TPM/SE) when available.</dd>
           <dt>Verifier:</dt>
@@ -125,20 +318,38 @@
       <section anchor="rats-applicability">
         <name>Applicability to RATS Architecture</name>
         <t>
-          PoP extends the RATS framework beyond traditional device state attestation
-          to process attestation — verifying that a physical process (human authorship)
-          occurred as claimed. This extension is justified because the fundamental
-          problem structure is identical: an Attester generates Evidence, conveys it
-          to a Verifier, and the Verifier produces Attestation Results for Relying
-          Parties. The RATS entity roles, message flows, and data format conventions
-          apply directly.
+          PoP extends the RATS framework beyond traditional device state
+          attestation to process attestation, verifying that a physical
+          process (human authorship) occurred as claimed. This extension
+          is justified because the fundamental problem structure is
+          identical: an Attester generates Evidence, conveys it to a
+          Verifier, and the Verifier produces Attestation Results for
+          Relying Parties. The RATS entity roles, message flows, and
+          data format conventions apply directly.
         </t>
         <t>
-          The adversarial Attester model (see <xref target="adversarial-attester"/>)
-          inverts the standard RATS trust assumption. The RATS architecture
-          accommodates this through its layered trust model and configurable
-          Appraisal Policies (<xref target="RFC9334"/>, Section 8). The Experimental
-          category is appropriate for exploring this novel application of RATS.
+          The adversarial Attester model
+          (see <xref target="adversarial-attester"/>) inverts the
+          standard RATS trust assumption. The RATS architecture
+          accommodates this through its layered trust model and
+          configurable Appraisal Policies
+          (<xref target="RFC9334"/>, Section 8). The Experimental
+          category is appropriate for exploring this novel application
+          of RATS.
+        </t>
+        <t>
+          The protocol document defines Evidence format, collection,
+          and conveyance, topics that
+          align with the RATS charter. The companion appraisal document
+          (<xref target="PoP-Appraisal"/>) defines domain-specific
+          verification procedures for PoP Evidence; while the RATS
+          charter scopes out general appraisal policy formats, every
+          RATS deployment requires domain-specific appraisal criteria
+          to produce meaningful Attestation Results. The emerging SEAT
+          working group (<xref target="SEAT-EXPAT"/>), which addresses
+          integration of remote attestation with secure channel
+          protocols, represents a complementary venue for the transport
+          and channel-binding aspects of this work.
         </t>
       </section>
     </section>
@@ -166,7 +377,7 @@
                                    | (TPM/SE certs,
                                    |  T3/T4 only)
                                    v
- +----------+  .pop file  +-------+-------+  .war file  +-----------+
+ +----------+  .cpop file +-------+-------+  .cwar file +-----------+
  |          |  Evidence   |               |  Attestation|           |
  | Attester +------------>+   Verifier    +------------>+  Relying  |
  | (Author  |             |               |  Results    |   Party   |
@@ -188,9 +399,9 @@
           In this model:
         </t>
         <ol>
-          <li>The Attester (authoring application running in the Attesting Environment) collects behavioral telemetry during content creation and generates an Evidence Packet (.pop) containing SWF proofs, jitter bindings, and physical state markers.</li>
+          <li>The Attester (authoring application running in the Attesting Environment) collects behavioral telemetry during content creation and generates an Evidence Packet (.cpop) containing SWF proofs, jitter bindings, and physical state markers.</li>
           <li>The Evidence Packet is conveyed to a Verifier, which appraises chain integrity, temporal ordering, behavioral entropy, and content binding per the procedures defined in <xref target="PoP-Appraisal"/>.</li>
-          <li>The Verifier produces a Writers Authenticity Report (.war) containing EAT claims, forensic assessment scores, and forgery cost estimates.</li>
+          <li>The Verifier produces a Writers Authenticity Report (.cwar) containing EAT claims, forensic assessment scores, and forgery cost estimates.</li>
           <li>The Relying Party (publisher, reader, or automated platform) consumes the WAR to make trust decisions about the claimed authorship provenance.</li>
         </ol>
         <t>
@@ -234,15 +445,15 @@
     |                |                     |                  |
     | end session    |                     |                  |
     +--------------->| SEAL: sign chain,   |                  |
-    |                | emit .pop file      |                  |
+    |                | emit .cpop file     |                  |
     |                |                     |                  |
-    |                | .pop (Evidence)     |                  |
+    |                | .cpop (Evidence)    |                  |
     |                +-------------------->|                  |
     |                |                     | appraise:        |
     |                |                     | chain, SWF,      |
     |                |                     | entropy, CDCE    |
     |                |                     |                  |
-    |                |                     | .war (Result)    |
+    |                |                     | .cwar (Result)   |
     |                |                     +----------------->|
     |                |                     |                  | trust
     |                |                     |                  | decision
@@ -250,7 +461,7 @@
 ]]></artwork>
         </figure>
         <t>
-          Each checkpoint interval (default 30 seconds, MUST be between 10 and 120 seconds) produces one link in the hash chain. The SWF computation runs continuously during the interval, binding the author's behavioral entropy and the platform's physical state to the elapsed wall-clock time. At session end, the Attester seals the complete chain into a .pop Evidence Packet for conveyance to the Verifier.
+          Each checkpoint interval (default 30 seconds, MUST be between 10 and 120 seconds) produces one link in the hash chain. The SWF computation runs continuously during the interval, binding the author's behavioral entropy and the platform's physical state to the elapsed wall-clock time. At session end, the Attester seals the complete chain into a .cpop Evidence Packet for conveyance to the Verifier.
         </t>
       </section>
     </section>
@@ -413,10 +624,10 @@
         The Proof of Process (PoP) framework follows the RATS architecture while introducing domain-specific extensions for physical process attestation.
       </t>
       <dl>
-        <dt>PoP Evidence Packet (.pop):</dt>
-        <dd>An Attester artifact containing Merkle trees, PoBST traces, and physical liveness markers (CBOR tag 1347571280, encoding ASCII "POP ").</dd>
-        <dt>WAR Result (.war):</dt>
-        <dd>A Verifier Attestation Result containing signed EAT claims and forensic assessments (CBOR tag 1463894560). The WAR format is specified in <xref target="PoP-Appraisal"/>.</dd>
+        <dt>PoP Evidence Packet (.cpop):</dt>
+        <dd>An Attester artifact containing Merkle trees, PoBST traces, and physical liveness markers (CBOR tag 1129336656, encoding ASCII "CPOP").</dd>
+        <dt>WAR Result (.cwar):</dt>
+        <dd>A Verifier Attestation Result containing signed EAT claims and forensic assessments (CBOR tag 1129791826). The WAR format is specified in <xref target="PoP-Appraisal"/>.</dd>
         <dt>PoBST:</dt>
         <dd>Proof of Biological Space-Time. A memory-hard sequential function with probabilistic verification, entangled with human jitter.</dd>
         <dt>CDCE:</dt>
@@ -435,7 +646,7 @@
         <li>RECORDING: AE captures semantic events and physical telemetry into a hash-linked buffer. Events are appended and the block hash is updated.</li>
         <li>PENDING_CHECK: The current event block is frozen to prepare for a checkpoint. No new events are accepted into this block.</li>
         <li>CHECKPOINT: AE computes the SWF over the entangled seed (previous hash + current jitter + physical markers).</li>
-        <li>SEALING: The Attester generates a final snapshot, signs the transcript root with the Attester's signing key (hardware-bound for T3/T4; software-managed for T1/T2), and prepares the transport container (.pop).</li>
+        <li>SEALING: The Attester generates a final snapshot, signs the transcript root with the Attester's signing key (hardware-bound for T3/T4; software-managed for T1/T2), and prepares the transport container (.cpop).</li>
       </ul>
     </section>
 
@@ -561,12 +772,12 @@
     <section anchor="wire-format">
       <name>Evidence Format and CDDL</name>
       <t>
-        Evidence Packets are CBOR-encoded <xref target="RFC8949"/> and identified by semantic tag 1347571280. The CDDL notation <xref target="RFC8610"/> is used to define the wire format.
+        Evidence Packets are CBOR-encoded <xref target="RFC8949"/> and identified by semantic tag 1129336656. The CDDL notation <xref target="RFC8610"/> is used to define the wire format.
       </t>
       <artwork type="cddl"><![CDATA[
 ; CBOR tag wrappers
-pop-evidence = #6.1347571280(evidence-packet)
-pop-war = #6.1463894560(attestation-result)
+pop-evidence = #6.1129336656(evidence-packet)
+pop-war = #6.1129791826(attestation-result)
 
 ; Primary structures
 evidence-packet = {
@@ -844,7 +1055,7 @@ checkpoint-hash = SHA-256(
         </t>
         <ul>
           <li>Payload: the CBOR-encoded evidence-packet (including CBOR tag
-            1347571280)</li>
+            1129336656)</li>
           <li>Protected headers: algorithm identifier (ES256 or EdDSA
             RECOMMENDED)</li>
           <li>Signature: computed using the Attester's signing key</li>
@@ -1122,20 +1333,20 @@ jitter-seal = HMAC-SHA-256(seal-key, seal-input)
           "CBOR Tags" registry per RFC 8949, Section 9.2:
         </t>
         <t>
-          Tag 1347571280:
+          Tag 1129336656:
         </t>
         <dl>
-          <dt>Tag:</dt><dd>1347571280</dd>
+          <dt>Tag:</dt><dd>1129336656</dd>
           <dt>Data Item:</dt><dd>map</dd>
           <dt>Semantics:</dt><dd>PoP Evidence Packet (see <xref target="wire-format"/> of this document)</dd>
           <dt>Point of Contact:</dt><dd>David Condrey (david@writerslogic.com)</dd>
           <dt>Description of Semantics:</dt><dd>[this document]</dd>
         </dl>
         <t>
-          Tag 1463894560:
+          Tag 1129791826:
         </t>
         <dl>
-          <dt>Tag:</dt><dd>1463894560</dd>
+          <dt>Tag:</dt><dd>1129791826</dd>
           <dt>Data Item:</dt><dd>map</dd>
           <dt>Semantics:</dt><dd>PoP Attestation Result (see <xref target="PoP-Appraisal"/>)</dd>
           <dt>Point of Contact:</dt><dd>David Condrey (david@writerslogic.com)</dd>
@@ -1163,11 +1374,11 @@ jitter-seal = HMAC-SHA-256(seal-key, seal-input)
           types per RFC 6838:
         </t>
         <t>
-          application/vnd.writerslogic-pop+cbor:
+          application/cpop+cbor:
         </t>
         <dl>
           <dt>Type name:</dt><dd>application</dd>
-          <dt>Subtype name:</dt><dd>vnd.writerslogic-pop+cbor</dd>
+          <dt>Subtype name:</dt><dd>cpop+cbor</dd>
           <dt>Required parameters:</dt><dd>none</dd>
           <dt>Optional parameters:</dt><dd>none</dd>
           <dt>Encoding considerations:</dt><dd>binary (CBOR)</dd>
@@ -1177,11 +1388,11 @@ jitter-seal = HMAC-SHA-256(seal-key, seal-input)
           <dt>Person and email address to contact:</dt><dd>David Condrey (david@writerslogic.com)</dd>
         </dl>
         <t>
-          application/vnd.writerslogic-war+cbor:
+          application/cwar+cbor:
         </t>
         <dl>
           <dt>Type name:</dt><dd>application</dd>
-          <dt>Subtype name:</dt><dd>vnd.writerslogic-war+cbor</dd>
+          <dt>Subtype name:</dt><dd>cwar+cbor</dd>
           <dt>Required parameters:</dt><dd>none</dd>
           <dt>Optional parameters:</dt><dd>none</dd>
           <dt>Encoding considerations:</dt><dd>binary (CBOR)</dd>
@@ -1517,6 +1728,28 @@ jitter-seal = HMAC-SHA-256(seal-key, seal-input)
             <date year="2026" month="January"/>
           </front>
           <seriesInfo name="Internet-Draft" value="draft-usama-seat-intra-vs-post-03"/>
+        </reference>
+        <reference anchor="Liang2023" target="https://doi.org/10.1016/j.patter.2023.100779">
+          <front>
+            <title>GPT Detectors Are Biased Against Non-Native English Writers</title>
+            <author fullname="Weixin Liang" initials="W." surname="Liang"/>
+            <author fullname="Mert Yuksekgonul" initials="M." surname="Yuksekgonul"/>
+            <author fullname="Yining Mao" initials="Y." surname="Mao"/>
+            <author fullname="Eric Wu" initials="E." surname="Wu"/>
+            <author fullname="James Zou" initials="J." surname="Zou"/>
+            <date year="2023" month="July"/>
+          </front>
+          <seriesInfo name="Patterns" value="4(7), 100779"/>
+        </reference>
+        <reference anchor="C2PA" target="https://c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html">
+          <front>
+            <title>C2PA Technical Specification</title>
+            <author>
+              <organization>Coalition for Content Provenance and Authenticity</organization>
+            </author>
+            <date year="2024"/>
+          </front>
+          <seriesInfo name="Version" value="2.2"/>
         </reference>
         <reference anchor="SEAT-UseCases" target="https://datatracker.ietf.org/doc/html/draft-mihalcea-seat-use-cases-01">
           <front>

@@ -1,10 +1,10 @@
 ; Proof of Process (PoP) Evidence and Attestation Result Schema
-; draft-condrey-rats-pop-protocol-04 / draft-condrey-rats-pop-appraisal-03
+; draft-condrey-rats-pop-protocol-06 / draft-condrey-rats-pop-appraisal-04
 ;
 ; This schema defines the CBOR-encoded data structures for the
 ; Proof of Process framework. Evidence Packets are identified by
-; CBOR tag 1347571280 ("POP ") and Attestation Results by
-; CBOR tag 1463894560 ("WAR ").
+; CBOR tag 1129336656 ("CPOP") and Attestation Results by
+; CBOR tag 1129791826 ("CWAR").
 ;
 ; All map keys use integer encoding per IETF CBOR conventions.
 ; All floating-point fields MUST use 32-bit IEEE 754 binary32.
@@ -15,8 +15,8 @@
 ; CBOR Tag Wrappers
 ; ============================================================
 
-pop-evidence = #6.1347571280(evidence-packet)
-pop-war = #6.1463894560(attestation-result)
+pop-evidence = #6.1129336656(evidence-packet)
+pop-war = #6.1129791826(attestation-result)
 
 ; ============================================================
 ; Evidence Packet (Protocol)
@@ -158,7 +158,7 @@ channel-binding = {
 
 ; ============================================================
 ; Attestation Result / WAR (Appraisal)
-; CBOR tag 1463894560
+; CBOR tag 1129791826
 ; ============================================================
 
 attestation-result = {
