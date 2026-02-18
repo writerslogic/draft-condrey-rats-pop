@@ -1,10 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <rfc xmlns:xi="http://www.w3.org/2001/XInclude"
      version="3"
-     docName="draft-condrey-rats-pop-protocol-04"
+     docName="draft-condrey-rats-pop-protocol-05"
      ipr="trust200902"
      category="exp"
-     consensus="false"
      submissionType="independent"
      sortRefs="true"
      symRefs="true"
@@ -13,7 +12,7 @@
 
   <front>
     <title abbrev="PoP Protocol">Proof of Process (PoP): Architecture and Evidence Format</title>
-    <seriesInfo name="Internet-Draft" value="draft-condrey-rats-pop-protocol-04"/>
+    <seriesInfo name="Internet-Draft" value="draft-condrey-rats-pop-protocol-05"/>
     <author fullname="David Condrey" initials="D." surname="Condrey">
       <organization abbrev="WritersLogic">WritersLogic Inc</organization>
       <address>
@@ -25,7 +24,7 @@
         <email>david@writerslogic.com</email>
       </address>
     </author>
-    <date year="2026" month="February" day="16"/>
+    <date year="2026" month="February" day="18"/>
 
     <area>Security</area>
     <workgroup>Individual Submission</workgroup>
@@ -34,6 +33,7 @@
     <keyword>RATS</keyword>
     <keyword>provenance</keyword>
     <keyword>authorship</keyword>
+    <keyword>SEAT</keyword>
 
     <abstract>
       <t>
@@ -43,6 +43,12 @@
         The protocol defines a cryptographic mechanism for generating Evidence Packets utilizing a composite Sequential Work Function (SWF) based on Proof of Biological Space-Time (PoBST) to enforce temporal monotonicity and Cross-Domain Constraint Entanglement (CDCE) to bind behavioral entropy (human jitter) and physical state to the document. Technical specifications for wire formats, sequential work functions, and hardware-anchored trust are provided.
       </t>
     </abstract>
+
+    <note removeInRFC="true">
+      <name>Discussion Venues</name>
+      <t>Source for this draft and an issue tracker can be found at
+        <eref target="https://github.com/writerslogic/draft-condrey-rats-pop"/>.</t>
+    </note>
   </front>
 
   <middle>
@@ -369,6 +375,9 @@
           </t>
           <t>
             For offline verification (where no TLS session exists between Attester and Verifier), the channel-binding field is absent and Relying Parties MUST evaluate Evidence provenance through out-of-band channels.
+          </t>
+          <t>
+            When PoP Evidence is conveyed over an attested TLS channel, implementations MAY leverage the SEAT exported authenticator mechanism <xref target="SEAT-EXPAT"/> to combine platform attestation (proving the Attesting Environment's integrity) with PoP process attestation (proving the authorship process). The TLS channel binding described above is compatible with the SEAT evidence binding approach, which derives binding values from TLS exporters. At T3/T4 tiers, SEAT platform attestation provides the hardware trust anchor that corroborates PoP's Attesting Environment claims.
           </t>
         </section>
       </section>
@@ -851,6 +860,9 @@ checkpoint-hash = SHA-256(
           the internal hash chain. Relying Parties MUST evaluate the
           trust implications of unwrapped Evidence.
         </t>
+        <t>
+          For online conveyance, COSE_Sign1-wrapped Evidence Packets can be encapsulated within a Conceptual Message Wrapper (CMW) for transport via the SEAT cmw_attestation TLS extension <xref target="SEAT-EXPAT"/>. This enables PoP Evidence to be delivered alongside platform attestation evidence in a single post-handshake authentication exchange, which is the preferred attestation timing model <xref target="SEAT-Timing"/>. The SEAT use cases <xref target="SEAT-UseCases"/> identify runtime attestation and operation-triggered re-attestation as key requirements, both of which PoP's continuous checkpoint model satisfies.
+        </t>
       </section>
     </section>
 
@@ -1065,16 +1077,15 @@ jitter-seal = HMAC-SHA-256(seal-key, seal-input)
           different session. It is subject to the same adversarial Attester
           limitation as the entangled-mac (<xref target="sec-mac-limitations"/>).
         </t>
+        <t>
+          NOTE: In the adversarial Attester model, the Attester generates both the SWF
+          output (from which the MAC key is derived) and the MAC input data. The
+          entangled-mac and jitter-seal therefore provide data integrity binding but
+          do not prevent an adversarial Attester from computing MACs over fabricated
+          data. Their security value is limited to ensuring internal consistency
+          within an honestly-generated checkpoint. See <xref target="security-considerations"/>.
+        </t>
       </section>
-
-      <t>
-        NOTE: In the adversarial Attester model, the Attester generates both the SWF
-        output (from which the MAC key is derived) and the MAC input data. The
-        entangled-mac and jitter-seal therefore provide data integrity binding but
-        do not prevent an adversarial Attester from computing MACs over fabricated
-        data. Their security value is limited to ensuring internal consistency
-        within an honestly-generated checkpoint. See <xref target="security-considerations"/>.
-      </t>
 
       <section anchor="swf-security">
         <name>Security Bound</name>
@@ -1430,7 +1441,7 @@ jitter-seal = HMAC-SHA-256(seal-key, seal-input)
             <author fullname="David Condrey" initials="D." surname="Condrey"/>
             <date year="2026" month="February"/>
           </front>
-          <seriesInfo name="Internet-Draft" value="draft-condrey-rats-pop-appraisal-03"/>
+          <seriesInfo name="Internet-Draft" value="draft-condrey-rats-pop-appraisal-04"/>
         </reference>
       </references>
       <references>
@@ -1486,6 +1497,40 @@ jitter-seal = HMAC-SHA-256(seal-key, seal-input)
           </front>
           <seriesInfo name="Internet-Draft" value="draft-ietf-rats-reference-interaction-models-15"/>
         </reference>
+        <reference anchor="SEAT-EXPAT" target="https://datatracker.ietf.org/doc/html/draft-fossati-seat-expat-01">
+          <front>
+            <title>Remote Attestation with Exported Authenticators</title>
+            <author fullname="Muhammad Usama Sardar" initials="M.U." surname="Sardar"/>
+            <author fullname="Thomas Fossati" initials="T." surname="Fossati"/>
+            <author fullname="Tirumaleswar Reddy" initials="T." surname="Reddy"/>
+            <author fullname="Yaron Sheffer" initials="Y." surname="Sheffer"/>
+            <author fullname="Hannes Tschofenig" initials="H." surname="Tschofenig"/>
+            <author fullname="Ionut Mihalcea" initials="I." surname="Mihalcea"/>
+            <date year="2026" month="January"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-fossati-seat-expat-01"/>
+        </reference>
+        <reference anchor="SEAT-Timing" target="https://datatracker.ietf.org/doc/html/draft-usama-seat-intra-vs-post-03">
+          <front>
+            <title>Pre-, Intra- and Post-handshake Attestation</title>
+            <author fullname="Muhammad Usama Sardar" initials="M.U." surname="Sardar"/>
+            <date year="2026" month="January"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-usama-seat-intra-vs-post-03"/>
+        </reference>
+        <reference anchor="SEAT-UseCases" target="https://datatracker.ietf.org/doc/html/draft-mihalcea-seat-use-cases-01">
+          <front>
+            <title>Use Cases and Properties for Integrating Remote Attestation with Secure Channel Protocols</title>
+            <author fullname="Ionut Mihalcea" initials="I." surname="Mihalcea"/>
+            <author fullname="Muhammad Usama Sardar" initials="M.U." surname="Sardar"/>
+            <author fullname="Thomas Fossati" initials="T." surname="Fossati"/>
+            <author fullname="Tirumaleswar Reddy" initials="T." surname="Reddy"/>
+            <author fullname="Yuning Jiang" initials="Y." surname="Jiang"/>
+            <author fullname="Meiling Chen" initials="M." surname="Chen"/>
+            <date year="2026" month="January"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-mihalcea-seat-use-cases-01"/>
+        </reference>
       </references>
     </references>
 
@@ -1508,17 +1553,25 @@ Argon2id Parameters:
 
 Iterations: 10,000
 
+Salt (hex): c5de0ba53fa83ab477ead9013bfca978
+             339e5072882cafb3d0efc8cc40299155
+
 Intermediate States:
   state_0 (Argon2id):
-    TBD -- to be recomputed with updated salt derivation
+    a40e0f73832f88dc8bfe5f8956fff4a0
+    ad2fc4de5455e9d85497c6083b3b1802
   state_1000:
-    TBD -- to be recomputed with updated salt derivation
+    c727ead9631eef95ca9a5976a947f71a
+    6f4f29a5c80aa2dc7f120f9a4193d7b4
   state_5000:
-    TBD -- to be recomputed with updated salt derivation
+    d6cba1225d1a2d25dddecfcf2d473020
+    a19df736878f40ccdfb9334df5af58a5
   state_9999:
-    TBD -- to be recomputed with updated salt derivation
+    d7482a780c9e89c787f1ff1e2c566b7b
+    536260e37d24c539e46de1598321aea2
   state_10000 (final):
-    TBD -- to be recomputed with updated salt derivation
+    e445a3cdc8152d66c71366d22b2c5975
+    cff4d0c8ee6ec0e76515b04d143bd148
       ]]></artwork>
     </section>
 
