@@ -105,7 +105,7 @@
         A Verifier MUST perform the following procedure to appraise a PoP Evidence Packet:
       </t>
       <ol>
-        <li><em>Structural Validation:</em> The Verifier MUST reject with verdict invalid (4) any Evidence Packet that: (a) fails CBOR decoding, (b) lacks CBOR tag 1347571280, (c) has version != 1, (d) is missing mandatory fields (keys 1-6 in evidence-packet, keys 1-9 in each checkpoint), or (e) contains CBOR types that do not match the CDDL schema.</li>
+        <li><em>Structural Validation:</em> The Verifier MUST reject with verdict invalid (4) any Evidence Packet that: (a) fails CBOR decoding, (b) lacks CBOR tag 1129336656, (c) has version != 1, (d) is missing mandatory fields (keys 1-6 in evidence-packet, keys 1-9 in each checkpoint), or (e) contains CBOR types that do not match the CDDL schema.</li>
         <li><em>Chain Integrity:</em> Verify the SHA-256 hash link between all checkpoints. Any break invalidates the entire Evidence Packet. The Verifier MUST set the verdict to invalid (4). The warnings field SHOULD include the checkpoint sequence number where the break was detected.</li>
         <li><em>Temporal Order:</em> For each process-proof, recompute Argon2id from the declared seed to obtain state_0, then verify sampled Merkle proofs against the committed root (process-proof key 4, merkle-root). Verify that claimed-duration is within [0.5x, 3.0x] of the expected wall-clock time for the declared proof-params on reference hardware (defined as a system with DDR4 memory providing approximately 25 GB/s sustained bandwidth). Expected times are defined in <xref target="PoP-Protocol"/>, Mandatory SWF Parameters section.</li>
         <li><em>Entropy Threshold:</em> Independently estimate entropy from the jitter-binding intervals array using a standard entropy estimator (e.g., NIST SP 800-90B most common value estimator). Verify the independent estimate meets or exceeds 3.0 bits per inter-keystroke interval. The Attester's self-reported entropy-estimate field MUST NOT be relied upon. Low-entropy segments (below threshold) MUST be flagged as "Non-Biological."</li>
@@ -383,11 +383,11 @@
       <t>
         The Writers Authenticity Report (WAR) is a CBOR-encoded
         <xref target="RFC8949"/> Attestation Result identified by semantic
-        tag 1463894560 (encoding ASCII "WAR "). The CDDL notation
+        tag 1129791826 (encoding ASCII "CWAR"). The CDDL notation
         <xref target="RFC8610"/> defines the wire format:
       </t>
       <artwork type="cddl"><![CDATA[
-pop-war = #6.1463894560(attestation-result)
+pop-war = #6.1129791826(attestation-result)
 
 attestation-result = {
     1 => uint,                    ; version (MUST be 1)
@@ -473,7 +473,7 @@ attestation-tier = &(
       <t>
         The evidence-ref field MUST contain a hash-value computed as
         SHA-256 over the CBOR-encoded evidence-packet structure
-        (including CBOR tag 1347571280), excluding any COSE_Sign1
+        (including CBOR tag 1129336656), excluding any COSE_Sign1
         wrapper. This binds the Attestation Result to a specific
         Evidence Packet.
       </t>
