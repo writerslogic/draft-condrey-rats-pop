@@ -1,130 +1,238 @@
 ; Proof of Process (PoP) Evidence Schema
-; draft-condrey-rats-pop-protocol / draft-condrey-rats-pop-appraisal
+; draft-condrey-rats-pop-protocol-04 / draft-condrey-rats-pop-appraisal-03
 ;
-; This schema defines the CBOR-encoded data structures for
-; evidence packets, attestation results, and supporting types
-; used in the Proof of Process framework.
+; This schema defines the CBOR-encoded data structures for the
+; Proof of Process framework. Evidence Packets are identified by
+; CBOR tag 1347571280 ("POP ") and Attestation Results by
+; CBOR tag 1463894560 ("WAR ").
+;
+; All map keys use integer encoding per IETF CBOR conventions.
 
-; === Core Evidence Packet ===
+; ============================================================
+; Evidence Packet (Protocol)
+; ============================================================
 
+; Top-level Evidence Packet (CBOR tag 1347571280)
 evidence-packet = {
-  version: uint,                    ; Protocol version (currently 1)
-  session-id: uuid,                 ; UUIDv7 per RFC 9562
-  sequence: uint,                   ; Monotonic packet number
-  timestamp: tdate,                 ; Wall-clock time at window close
-  prev-hash: bstr,                  ; SHA-256 of preceding packet
-  content-hash: bstr,               ; SHA-256 of document state
-  metrics: process-metrics,         ; Behavioral measurements
-  swf-proof: swf-output,            ; Sequential Work Function proof
-  seal: bstr,                       ; HMAC-SHA-256 jitter seal
-  ? continuation: continuation-token,
-  ? tier: evidence-tier,
+    1 => uint,                    ; version (MUST be 1)
+    2 => tstr,                    ; profile-uri
+    3 => uuid,                    ; packet-id
+    4 => pop-timestamp,           ; created
+    5 => document-ref,            ; document
+    6 => [+ checkpoint],          ; checkpoints
+    ? 7 => attestation-tier,      ; T1-T4
+    ? 8 => [* tstr],              ; limitations
+    ? 9 => profile-declaration,   ; profile
+    ? 10 => [+ presence-challenge], ; QR/OOB proofs
+    ? 18 => physical-liveness,    ; CDCE markers
 }
 
-; === Process Metrics ===
-
-process-metrics = {
-  cadence-mean: float,              ; Mean inter-keystroke interval (ms)
-  cadence-variance: float,          ; Variance of IKI
-  entropy: float,                   ; Shannon entropy (bits/sample)
-  revision-count: uint,             ; Edit operations in window
-  pause-distribution: [* float],    ; Histogram of pause durations
-  ? error-rate: float,              ; Correction rate
-  ? snr: float,                     ; Signal-to-noise ratio
-  ? clc: float,                     ; Compositional Lyapunov Coefficient
+checkpoint = {
+    1 => uint,                    ; sequence (monotonic)
+    2 => uuid,                    ; checkpoint-id
+    3 => pop-timestamp,           ; timestamp (local)
+    4 => hash-value,              ; content-hash
+    5 => uint,                    ; char-count
+    6 => edit-delta,              ; delta
+    7 => hash-value,              ; prev-hash
+    8 => hash-value,              ; checkpoint-hash
+    9 => process-proof,           ; SWF proof
+    10 => jitter-binding,         ; behavioral-entropy
+    11 => physical-state,         ; CDCE Weave
+    12 => bstr .size 32,          ; entangled-mac
 }
 
-; === Sequential Work Function ===
-
-swf-output = {
-  input: bstr,                      ; Derived from packet hash
-  output: bstr,                     ; SWF evaluation result
-  proof: bstr,                      ; Verification proof
-  difficulty: uint,                 ; t_vdf parameter
+document-ref = {
+    1 => hash-value,              ; content-hash
+    ? 2 => tstr,                  ; filename
+    3 => uint,                    ; byte-length
+    4 => uint,                    ; char-count
+    ? 5 => hash-salt-mode,        ; salting mode
+    ? 6 => bstr,                  ; salt-commitment
 }
 
-; === Continuation Token ===
+; ============================================================
+; Sequential Work Function (SWF)
+; ============================================================
 
-continuation-token = {
-  session-id: uuid,
-  prev-session-hash: bstr,          ; Hash of previous session's last packet
-  timestamp: tdate,
-  hmac: bstr,                       ; HMAC binding to device key
+process-proof = {
+    1 => proof-algorithm,         ; algorithm id
+    2 => proof-params,            ; SWF params
+    3 => bstr,                    ; input (seed)
+    4 => bstr,                    ; output (root)
+    5 => [+ merkle-proof],        ; sampled proofs
+    6 => float32,                 ; claimed-duration
 }
 
-; === Evidence Tiers ===
+proof-params = {
+    1 => uint,                    ; time-cost (t)
+    2 => uint,                    ; memory-cost (m, KiB)
+    3 => uint,                    ; parallelism (p)
+    4 => uint,                    ; iterations
+}
 
-evidence-tier = &(
-  core: 1,                          ; Software-only, basic entropy
-  enhanced: 2,                      ; SWF time-binding
-  maximum: 3,                       ; Hardware-anchored timing
-)
+merkle-proof = {
+    1 => uint,                    ; leaf-index
+    2 => [+ bstr .size 32],       ; sibling-path
+    3 => bstr .size 32,           ; leaf-value
+}
 
-; === Attestation Result ===
+; ============================================================
+; Behavioral Entropy and Physical State
+; ============================================================
+
+jitter-binding = {
+    1 => [+ float32],             ; intervals (ms)
+    2 => float32,                 ; entropy-estimate (bits)
+    3 => bstr .size 32,           ; jitter-seal (HMAC)
+}
+
+edit-delta = {
+    1 => int,                     ; chars-added
+    2 => int,                     ; chars-deleted
+    3 => uint,                    ; op-count
+    ? 4 => [* edit-position],     ; positions
+}
+
+edit-position = [
+    uint,                         ; offset
+    int,                          ; change (+/-)
+]
+
+physical-state = {
+    1 => [+ float32],             ; thermal (relative)
+    2 => uint,                    ; entropy-delta
+    ? 3 => bstr .size 32,         ; kernel-commitment
+}
+
+physical-liveness = {
+    1 => [+ thermal-sample],      ; thermal trajectory
+    2 => bstr .size 32,           ; entropy-anchor
+}
+
+thermal-sample = [
+    pop-timestamp,                ; sample time
+    float32,                      ; temperature delta
+]
+
+; ============================================================
+; Presence Challenges and Profiles
+; ============================================================
+
+presence-challenge = {
+    1 => bstr,                    ; challenge-nonce
+    2 => bstr,                    ; device-signature
+    3 => pop-timestamp,           ; response-time
+}
+
+profile-declaration = {
+    1 => tstr,                    ; profile-id
+    2 => [+ uint],                ; feature-flags
+}
+
+; NOTE: Cross-session linking (continuation tokens) is deferred
+; to a future revision. See draft-condrey-rats-pop-protocol.
+
+; ============================================================
+; Attestation Result / WAR (Appraisal)
+; CBOR tag 1463894560
+; ============================================================
 
 attestation-result = {
-  version: uint,
-  evidence-ref: bstr,               ; Hash of evidence chain head
-  verdict: verdict,
-  assurance-level: assurance-level,
-  chain-length: uint,
-  chain-duration: uint,             ; Total seconds
-  entropy-assessment: entropy-report,
-  ? warnings: [* tstr],
-  verifier-signature: bstr,         ; COSE_Sign1
+    1 => uint,                    ; version (MUST be 1)
+    2 => bstr .size 32,           ; evidence-ref (hash of packet chain)
+    3 => verdict,                 ; appraisal verdict
+    4 => attestation-tier,        ; assessed assurance level
+    5 => uint,                    ; chain-length
+    6 => uint,                    ; chain-duration (seconds)
+    7 => entropy-report,          ; entropy assessment
+    ? 8 => forgery-cost-estimate, ; quantified forgery cost
+    ? 9 => [* absence-proof],     ; absence claims
+    ? 10 => [* tstr],             ; warnings
+    11 => bstr,                   ; verifier-signature (COSE_Sign1)
 }
 
 verdict = &(
-  authentic: 1,                     ; Evidence consistent with human authorship
-  inconclusive: 2,                  ; Insufficient evidence
-  suspicious: 3,                    ; Anomalies detected
-  invalid: 4,                       ; Evidence chain broken or forged
-)
-
-assurance-level = &(
-  t1-basic: 1,                      ; Software-only attestation
-  t2-standard: 2,                   ; T1 + SWF time binding
-  t3-enhanced: 3,                   ; T2 + hardware-anchored time
-  t4-maximum: 4,                    ; T3 + continuous device attestation
+    authentic: 1,                 ; consistent with human authorship
+    inconclusive: 2,              ; insufficient evidence
+    suspicious: 3,                ; anomalies detected
+    invalid: 4,                   ; chain broken or forged
 )
 
 entropy-report = {
-  timing-entropy: float,            ; bits/sample
-  revision-entropy: float,
-  pause-entropy: float,
-  meets-threshold: bool,
+    1 => float32,                 ; timing-entropy (bits/sample)
+    2 => float32,                 ; revision-entropy
+    3 => float32,                 ; pause-entropy
+    4 => bool,                    ; meets-threshold
 }
 
-; === Forgery Cost Bound ===
+; ============================================================
+; Forgery Cost Bound (Appraisal)
+; ============================================================
 
 forgery-cost-estimate = {
-  c-swf: float,                     ; Sequential work function cost
-  c-entropy: float,                 ; Behavioral synthesis cost
-  c-hardware: float,                ; Hardware attestation cost
-  c-total: float,                   ; Sum
-  currency: tstr,                   ; e.g., "USD" or "CPU-hours"
+    1 => float32,                 ; c-swf
+    2 => float32,                 ; c-entropy
+    3 => float32,                 ; c-hardware
+    4 => float32,                 ; c-total
+    5 => tstr,                    ; currency ("USD" / "CPU-hours")
 }
 
-; === Absence Proof ===
+; ============================================================
+; Absence Proofs (Appraisal)
+; ============================================================
 
 absence-proof = {
-  proof-type: absence-type,
-  claimed-window: time-window,
-  evidence: bstr,                   ; Type-specific proof data
-  verifier-signature: bstr,
+    1 => absence-type,            ; proof category
+    2 => time-window,             ; claimed window
+    3 => bstr,                    ; type-specific proof data
 }
 
 absence-type = &(
-  computationally-bound: 1,
-  monitoring-dependent: 2,
-  environmental: 3,
+    computationally-bound: 1,     ; verifiable from Evidence alone
+    monitoring-dependent: 2,      ; requires trust in AE monitoring
+    environmental: 3,             ; environmental assertions
 )
 
 time-window = {
-  start: tdate,
-  end: tdate,
+    1 => pop-timestamp,           ; start
+    2 => pop-timestamp,           ; end
 }
 
-; === Primitive Types ===
+; ============================================================
+; Enumerations
+; ============================================================
+
+attestation-tier = &(
+    software-only: 1,             ; T1: AAL1
+    attested-software: 2,         ; T2: AAL2
+    hardware-bound: 3,            ; T3: AAL3
+    hardware-hardened: 4,         ; T4: LoA4
+)
+
+proof-algorithm = &(
+    sha256-chain: 1,
+    pobst-argon2id: 20,
+)
+
+hash-salt-mode = &(
+    unsalted: 0,
+    author-salted: 1,
+)
+
+hash-algorithm = &(
+    sha256: 1,
+    sha384: 2,
+    sha512: 3,
+)
+
+; ============================================================
+; Base Types
+; ============================================================
 
 uuid = bstr .size 16
+pop-timestamp = #6.1(number)      ; CBOR tag 1 (epoch-based date/time)
+hash-value = {
+    1 => hash-algorithm,
+    2 => bstr,
+}
