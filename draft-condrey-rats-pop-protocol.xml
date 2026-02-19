@@ -12,7 +12,7 @@
 
   <front>
     <title abbrev="PoP Protocol">Proof of Process (PoP): Architecture and Evidence Format</title>
-    <seriesInfo name="Internet-Draft" value="draft-condrey-rats-pop-protocol-06"/>
+    <seriesInfo name="Internet-Draft" value="draft-condrey-rats-pop-protocol-latest"/>
     <author fullname="David Condrey" initials="D." surname="Condrey">
       <organization abbrev="WritersLogic">WritersLogic Inc</organization>
       <address>
@@ -24,7 +24,7 @@
         <email>david@writerslogic.com</email>
       </address>
     </author>
-    <date year="2026" month="February" day="18"/>
+    <date/>
 
     <area>Security</area>
     <workgroup>Individual Submission</workgroup>
