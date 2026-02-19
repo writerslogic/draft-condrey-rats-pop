@@ -1,5 +1,5 @@
 ; Proof of Process (PoP) Evidence and Attestation Result Schema
-; draft-condrey-rats-pop-protocol-06 / draft-condrey-rats-pop-appraisal-04
+; draft-condrey-rats-pop-protocol / draft-condrey-rats-pop-appraisal
 ;
 ; This schema defines the CBOR-encoded data structures for the
 ; Proof of Process framework. Evidence Packets are identified by
