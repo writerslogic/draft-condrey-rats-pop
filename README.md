@@ -1,24 +1,27 @@
-# IETF RATS Proof of Process
+# Proof of Process (PoP)
 
-Internet-Drafts for Proof of Process (PoP), an evidence framework built on the RATS architecture (RFC 9334) that enables tamper-evident, independently verifiable attestation of how digital content is produced.
+This is the working area for the individual Internet-Drafts "Proof of Process Protocol: State Machine, Semantic Events, and Cryptographic Parameters" and "Proof of Process Appraisal: Forensic Assessment, Forgery Bounds, and Absence Proofs".
 
-## Documents
+## Proof of Process Protocol
 
-| Document | Version | Title |
-|----------|---------|-------|
-| [draft-condrey-rats-pop-protocol](https://datatracker.ietf.org/doc/draft-condrey-rats-pop-protocol/) | -04 | Proof of Process Protocol: State Machine, Semantic Events, and Cryptographic Parameters |
-| [draft-condrey-rats-pop-appraisal](https://datatracker.ietf.org/doc/draft-condrey-rats-pop-appraisal/) | -03 | Proof of Process Appraisal: Forensic Assessment, Forgery Bounds, and Absence Proofs |
+* [Editor's Copy](https://writerslogic.github.io/draft-condrey-rats-pop/#go.draft-condrey-rats-pop-protocol.html)
+* [Datatracker Page](https://datatracker.ietf.org/doc/draft-condrey-rats-pop-protocol)
+* [Individual Draft](https://datatracker.ietf.org/doc/html/draft-condrey-rats-pop-protocol)
+* [Compare Editor's Copy to Individual Draft](https://writerslogic.github.io/draft-condrey-rats-pop/#go.draft-condrey-rats-pop-protocol.diff)
 
-## Building
+## Proof of Process Appraisal
 
-Requires [xml2rfc](https://xml2rfc.tools.ietf.org/) and `xmllint`.
-
-```sh
-make all    # Build text and HTML
-make lint   # Validate XML
-make clean  # Remove generated files
-```
+* [Editor's Copy](https://writerslogic.github.io/draft-condrey-rats-pop/#go.draft-condrey-rats-pop-appraisal.html)
+* [Datatracker Page](https://datatracker.ietf.org/doc/draft-condrey-rats-pop-appraisal)
+* [Individual Draft](https://datatracker.ietf.org/doc/html/draft-condrey-rats-pop-appraisal)
+* [Compare Editor's Copy to Individual Draft](https://writerslogic.github.io/draft-condrey-rats-pop/#go.draft-condrey-rats-pop-appraisal.diff)
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and the [IETF contribution guidelines](https://www.ietf.org/about/participate/).
+See the [guidelines for contributions](https://github.com/writerslogic/draft-condrey-rats-pop/blob/main/CONTRIBUTING.md).
+
+Contributions can be made by creating pull requests.
+The GitHub interface can also be used for this.
+
+Command line usage requires that you have the necessary software installed. See
+[the instructions](https://github.com/martinthomson/i-d-template/blob/main/doc/SETUP.md).
