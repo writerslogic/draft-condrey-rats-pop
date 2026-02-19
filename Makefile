@@ -1,30 +1,15 @@
-DRAFTS := draft-condrey-rats-pop-protocol.xml draft-condrey-rats-pop-appraisal.xml
-TXTS := $(DRAFTS:.xml=.txt)
-HTMLS := $(DRAFTS:.xml=.html)
+LIBDIR := lib
+include $(LIBDIR)/main.mk
 
-.PHONY: all clean lint idnits
-
-all: $(TXTS) $(HTMLS)
-
-%.txt: %.xml
-	xml2rfc --text $<
-
-%.html: %.xml
-	xml2rfc --html $<
-
-lint:
-	@for f in $(DRAFTS); do \
-		echo "Validating $$f..."; \
-		xmllint --noout $$f || \
-		echo "WARN: $$f has validation issues"; \
-	done
-	@echo "Lint complete."
-
-idnits: $(TXTS)
-	@for f in $(TXTS); do \
-		echo "Checking $$f..."; \
-		idnits $$f || true; \
-	done
-
-clean:
-	rm -f $(TXTS) $(HTMLS) *.pdf
+$(LIBDIR)/main.mk:
+ifneq (,$(shell grep "path *= *$(LIBDIR)" .gitmodules 2>/dev/null))
+	git submodule sync
+	git submodule update --init
+else
+ifneq (,$(wildcard $(ID_TEMPLATE_HOME)))
+	ln -s "$(ID_TEMPLATE_HOME)" $(LIBDIR)
+else
+	git clone -q --depth 10 -b main \
+	    https://github.com/martinthomson/i-d-template $(LIBDIR)
+endif
+endif
