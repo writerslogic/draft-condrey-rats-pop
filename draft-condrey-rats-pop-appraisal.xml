@@ -134,7 +134,7 @@
         <dd>Verifiers MUST correlate timing patterns with semantic complexity. Human authors exhibit increased inter-keystroke intervals (IKI) and pause frequency during composition of semantically complex segments compared to simple connective text. Verifiers MUST compute the Pearson correlation between segment semantic complexity and mean IKI. Evidence with r &lt; 0.2 (or r &lt; 0.1 in assistive mode) MUST be flagged as a Semantic Mismatch.</dd>
 
         <dt>Mechanical Turk Detection:</dt>
-        <dd>Verifiers MUST compute C_intra (Pearson correlation between pause duration and subsequent edit complexity within each checkpoint). C_intra values below 0.15 MUST be flagged as indicating robotic pacing, where an automated system maintains a machine-clocked editing rate independent of content demands.</dd>
+        <dd>Verifiers MUST compute C_intra (Pearson correlation between pause duration and subsequent edit complexity within each checkpoint). C_intra values below 0.15 MUST be flagged as indicating robotic pacing, where an automated system maintains a machine-clocked editing rate independent of content demands. Checkpoints containing self-receipt structures (key 13) MUST have their associated paste events excluded from C_intra computation.</dd>
 
         <dt>Error Topology Analysis:</dt>
         <dd>Verifiers SHOULD analyze error patterns for consistency with human cognitive processing <xref target="Salthouse1986"/>: localized corrections near recent insertions, fractal self-similarity in revision patterns, and deletion-to-insertion ratios consistent with natural composition. Evidence exhibiting unnaturally low error rates (below 1 correction per 500 characters) or randomly distributed errors lacking positional correlation SHOULD be flagged.</dd>
@@ -234,6 +234,29 @@
           <li>Temporal clustering: paste events at regular intervals suggesting
             a prompt-copy-paste workflow.</li>
         </ul>
+        <t>
+          Not all paste events indicate mechanical turk behavior.
+          Authors who compose content in one application and transfer
+          it to another (e.g., drafting in a text editor and pasting
+          into a typesetting or markup system) produce a distinct
+          pattern: one or few paste events concentrated at session
+          start, followed by sustained editing (reformatting, adding
+          markup, inserting citations). Verifiers SHOULD distinguish
+          this cross-tool composition pattern from prompt-copy-paste
+          workflows by evaluating whether: (1) paste events are
+          concentrated at session start rather than distributed
+          throughout; (2) post-paste editing exhibits normal behavioral
+          signals (IKI variance, CLC correlation, error topology
+          consistent with human editing); and (3) the session's
+          paste-to-keystroke ratio reflects a single transfer event
+          rather than repeated injections. When cross-tool composition
+          is indicated, Verifiers SHOULD exclude the initial transfer
+          from the mechanical turk score. When the paste event is
+          accompanied by a self-receipt structure (checkpoint key 13),
+          the Verifier can cryptographically verify the provenance of
+          the pasted content as described in
+          <xref target="tool-receipt-protocol"/>.
+        </t>
         <t>
           Verifiers SHOULD compute a mechanical turk probability score
           from 0.0 (no indicators) to 1.0 (all indicators present). A
@@ -550,7 +573,7 @@ attestation-tier = &(
     </section>
 
     <section anchor="tool-receipt-protocol">
-      <name>Tool Receipt Protocol (AI Attribution)</name>
+      <name>Tool Receipt Protocol</name>
       <t>
         NOTE: This section is informational. The complete CDDL wire format for
         Tool Receipts, including signature algorithms and binding mechanisms,
@@ -567,6 +590,26 @@ attestation-tier = &(
       </ol>
       <t>
         Verifiers appraise the ratio of human-to-machine effort based on these receipts and the intervening SWF-proved intervals.
+      </t>
+      <t>
+        The same mechanism supports cross-tool composition workflows
+        where an author drafts content in one application and transfers
+        it to another for formatting or publication. When the first
+        authoring environment runs PoP, it produces an Evidence Packet
+        covering the drafting phase. The second environment records the
+        paste event with a self-receipt: a Tool Receipt whose tool_id
+        identifies the first authoring environment and whose
+        output_commit matches the content hash from the first Evidence
+        Packet's final checkpoint. The self-receipt additionally
+        includes an evidence_ref field containing the SHA-256 hash of
+        the first Evidence Packet. The Verifier chains the two packets:
+        the first Evidence Packet proves the drafting process, the
+        second proves the editing and formatting process, and the
+        self-receipt's output_commit binds the paste to the first
+        packet's terminal content state. When cross-tool composition
+        without a self-receipt is detected, Verifiers SHOULD apply the
+        cross-tool composition guidance defined in the Mechanical Turk
+        Scoring section.
       </t>
     </section>
 
@@ -925,10 +968,30 @@ attestation-tier = &(
       </section>
       <section anchor="tool-receipt-checks" numbered="false">
         <name>Tool Receipt Validation (when present)</name>
+        <t>
+          NOTE: The Tool Receipt wire format is informational in this
+          revision. The following validation steps apply when receipts
+          are present.
+        </t>
+        <t>
+          AI Tool Receipts:
+        </t>
         <ol>
           <li>Verify Tool signature over Receipt.</li>
           <li>Verify PASTE event references correct output_commit.</li>
           <li>Calculate human-to-machine effort ratio from SWF-proved intervals.</li>
+        </ol>
+        <t>
+          Self-Receipts (cross-tool composition):
+        </t>
+        <ol>
+          <li>Verify that evidence-ref (field 3) identifies a valid
+            Evidence Packet.</li>
+          <li>Verify that output-commit (field 2) matches the
+            content-hash of the referenced Evidence Packet's final
+            checkpoint.</li>
+          <li>Exclude the associated paste event from Mechanical Turk
+            scoring.</li>
         </ol>
       </section>
     </section>
