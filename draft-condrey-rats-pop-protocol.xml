@@ -76,32 +76,92 @@
       </t>
     </section>
 
+    <section anchor="problem-statement">
+      <name>Problem Statement</name>
+      <t>
+        Digital documents lack creation-process provenance. Existing
+        cryptographic mechanisms address complementary but insufficient
+        aspects of this gap: COSE signatures <xref target="RFC9052"/>
+        prove key possession, trusted timestamps
+        <xref target="RFC3161"/> prove that content existed at a given
+        time, and media provenance standards such as C2PA
+        <xref target="C2PA"/> track the custody and transformation of
+        digital assets after creation. None of these mechanisms reveals
+        how a document was produced or how it evolved during authorship.
+      </t>
+      <t>
+        Non-cryptographic approaches have emerged to address this gap,
+        but each carries fundamental limitations:
+      </t>
+      <dl>
+        <dt>Surveillance-based methods:</dt>
+        <dd>Screen recording, keystroke logging, and similar monitoring
+        capture the authoring process but are inherently
+        privacy-invasive, require continuous trust in a third-party
+        archive, and produce evidence that cannot be independently
+        verified without access to the surveillance
+        infrastructure.</dd>
+        <dt>Detection-based methods:</dt>
+        <dd>Stylometric classifiers and AI-generated content detectors
+        operate on finished output rather than the creation process.
+        These tools are probabilistic, degrade as generative models
+        improve, are vulnerable to adversarial evasion, and exhibit
+        systematic bias against non-native language speakers
+        <xref target="Liang2023"/>. Their outputs do not constitute
+        deterministic, independently reproducible evidence.</dd>
+      </dl>
+      <t>
+        The need for creation-process provenance extends across sectors
+        and jurisdictions. AI-assisted authoring is entering clinical
+        documentation workflows, prompting the U.S. Department of
+        Health and Human Services to seek input on how to maintain
+        accountability when AI tools contribute to medical records
+        <xref target="HHS-AI-RFI"/>. The autonomous content generation
+        capabilities of AI agents have led the National Institute of
+        Standards and Technology to examine security implications,
+        including the attribution of agent-produced output
+        <xref target="NIST-AI-Agents-RFI"/>. In creative industries,
+        the Authors Guild has launched a human authorship certification
+        program for books, but absent cryptographic process evidence,
+        the program relies entirely on author self-attestation
+        <xref target="AG-Human-Authored"/>. The common requirement across
+        these sectors is a standardized mechanism to verify how content
+        was produced rather than inferring it after the fact. Such a
+        mechanism must satisfy four properties:
+      </t>
+      <ol>
+        <li><em>Privacy-preserving:</em> Evidence must not require
+        disclosure of document content or invasive behavioral
+        surveillance. Cryptographic hashes, not raw content, must form
+        the evidentiary basis.</li>
+        <li><em>Independently verifiable:</em> Proofs must be
+        self-contained and deterministically checkable by any Verifier
+        without access to external archives or proprietary
+        systems.</li>
+        <li><em>Tamper-evident:</em> Evidence must form a cryptographic
+        chain resistant to retroactive modification, reordering, or
+        selective omission.</li>
+        <li><em>Process-documenting:</em> The mechanism must capture how
+        a document evolved over time, not merely what it contains at a
+        point in time.</li>
+      </ol>
+    </section>
+
     <section anchor="use-cases">
       <name>Use Cases</name>
       <t>
-        Stakeholders across creative industries, education, law, and
-        commerce increasingly need to determine how content was produced,
-        not merely what it contains. Post-hoc detection techniques
-        (stylometric classifiers, watermark detectors) are demonstrably
-        insufficient for this purpose: they degrade as generative models
-        improve, are defeated by paraphrasing, and exhibit systematic
-        bias against non-native language speakers, with one study
-        finding that detectors misclassified over 61% of essays by
-        non-native English writers as AI-generated
-        <xref target="Liang2023"/>. Institutions relying on these
-        detectors face significant litigation risk, as courts have begun
+        The provenance gap identified in
+        <xref target="problem-statement"/> has concrete consequences
+        across multiple domains. Where detection-based methods have been
+        deployed as substitutes for process evidence, the results have
+        been problematic: Liang et al. found that GPT detectors
+        misclassified over 61% of essays by non-native English writers
+        as AI-generated <xref target="Liang2023"/>, and courts have
+        begun
         ruling that sanctions based solely on AI detection scores lack
-        valid evidentiary basis.
-      </t>
-      <t>
-        PoP addresses this gap through process attestation: capturing
-        tamper-evident evidence of how content is created, rather than
-        making probabilistic inferences about finished output. This
-        approach complements existing media provenance standards such as
-        C2PA <xref target="C2PA"/>, which tracks the custody and
-        transformation of digital assets after creation. Where C2PA
-        attests to what happened to content, PoP attests to how content
-        came into existence.
+        valid evidentiary basis. The following use cases illustrate how
+        process attestation addresses needs that neither content
+        detection nor custody-based provenance can satisfy.
       </t>
       <t>
         Importantly, PoP does not assert that human-authored content is
@@ -1657,6 +1717,7 @@ jitter-seal = HMAC-SHA-256(seal-key, seal-input)
       </references>
       <references>
         <name>Informative References</name>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.3161.xml"/>
         <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.3552.xml"/>
         <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.6973.xml"/>
         <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9266.xml"/>
@@ -1763,6 +1824,35 @@ jitter-seal = HMAC-SHA-256(seal-key, seal-input)
             <date year="2026" month="January"/>
           </front>
           <seriesInfo name="Internet-Draft" value="draft-mihalcea-seat-use-cases-01"/>
+        </reference>
+        <reference anchor="HHS-AI-RFI" target="https://www.regulations.gov/docket/HHS-ONC-2026-0001">
+          <front>
+            <title>Request for Information: Accelerating the Adoption and Use of Artificial Intelligence as Part of Clinical Care</title>
+            <author>
+              <organization>U.S. Department of Health and Human Services, Office of the National Coordinator for Health Information Technology</organization>
+            </author>
+            <date year="2025" month="December"/>
+          </front>
+          <seriesInfo name="Federal Register" value="2025-23641"/>
+        </reference>
+        <reference anchor="NIST-AI-Agents-RFI" target="https://www.regulations.gov/docket/NIST-2025-0035">
+          <front>
+            <title>Request for Information Regarding Security Considerations for Artificial Intelligence Agents</title>
+            <author>
+              <organization>National Institute of Standards and Technology</organization>
+            </author>
+            <date year="2026" month="January"/>
+          </front>
+          <seriesInfo name="Federal Register" value="2026-00206"/>
+        </reference>
+        <reference anchor="AG-Human-Authored" target="https://authorsguild.org/news/ag-launches-human-authored-certification-to-preserve-authenticity-in-literature/">
+          <front>
+            <title>Authors Guild Launches "Human Authored" Certification to Preserve Authenticity in Literature</title>
+            <author>
+              <organization>The Authors Guild</organization>
+            </author>
+            <date year="2025" month="January"/>
+          </front>
         </reference>
       </references>
     </references>
