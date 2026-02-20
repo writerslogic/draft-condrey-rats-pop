@@ -109,6 +109,19 @@
         systematic bias against non-native language speakers
         <xref target="Liang2023"/>. Their outputs do not constitute
         deterministic, independently reproducible evidence.</dd>
+        <dt>Proprietary commercial solutions:</dt>
+        <dd>Several products have emerged to fill this gap but lack
+        openness, verifiability, or both. GPTZero ships a Chrome
+        extension that records writing replay in Google Docs and
+        analyzes typing patterns using a proprietary algorithm
+        <xref target="GPTZero"/>; the analysis is opaque, controlled
+        by the detector rather than the author, and not independently
+        reproducible. The Authors Guild "Human Authored" certification
+        for books relies on author self-attestation with no
+        cryptographic verification <xref target="AG-Human-Authored"/>.
+        Amazon requires publishers to disclose AI-generated content on
+        its Kindle Direct Publishing platform but provides no mechanism
+        to verify compliance <xref target="Amazon-KDP-AI"/>.</dd>
       </dl>
       <t>
         The need for creation-process provenance extends across sectors
@@ -120,14 +133,10 @@
         capabilities of AI agents have led the National Institute of
         Standards and Technology to examine security implications,
         including the attribution of agent-produced output
-        <xref target="NIST-AI-Agents-RFI"/>. In creative industries,
-        the Authors Guild has launched a human authorship certification
-        program for books, but absent cryptographic process evidence,
-        the program relies entirely on author self-attestation
-        <xref target="AG-Human-Authored"/>. The common requirement across
-        these sectors is a standardized mechanism to verify how content
-        was produced rather than inferring it after the fact. Such a
-        mechanism must satisfy four properties:
+        <xref target="NIST-AI-Agents-RFI"/>. The common requirement across
+        these sectors is a standardized, open mechanism to verify how
+        content was produced rather than inferring it after the fact.
+        Such a mechanism must satisfy four properties:
       </t>
       <ol>
         <li><em>Privacy-preserving:</em> Evidence must not require
@@ -1891,6 +1900,24 @@ jitter-seal = HMAC-SHA-256(seal-key, seal-input)
               <organization>The Authors Guild</organization>
             </author>
             <date year="2025" month="January"/>
+          </front>
+        </reference>
+        <reference anchor="GPTZero" target="https://gptzero.me/chrome">
+          <front>
+            <title>GPTZero: AI Detection and Writing Process for Google Docs</title>
+            <author>
+              <organization>GPTZero, Inc.</organization>
+            </author>
+            <date year="2025"/>
+          </front>
+        </reference>
+        <reference anchor="Amazon-KDP-AI" target="https://kdp.amazon.com/en_US/help/topic/G200672390">
+          <front>
+            <title>Kindle Direct Publishing Content Guidelines</title>
+            <author>
+              <organization>Amazon.com, Inc.</organization>
+            </author>
+            <date year="2025"/>
           </front>
         </reference>
       </references>
