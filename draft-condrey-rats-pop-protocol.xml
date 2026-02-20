@@ -329,6 +329,41 @@
       </section>
     </section>
 
+    <section anchor="scope-and-applicability">
+      <name>Scope and Applicability</name>
+      <t>
+        PoP is designed as a voluntary, author-initiated mechanism.
+        The following constraints define its intended scope of use:
+      </t>
+      <ul>
+        <li>Evidence collection MUST be initiated by the author.
+          The Attester operates under the author's control; no
+          external party may activate evidence collection without
+          the author's explicit consent.</li>
+        <li>Implementations MUST NOT be deployed as proctoring
+          or surveillance mechanisms. PoP does not capture screen
+          content, camera input, biometric identification, or
+          application activity outside the authoring environment.</li>
+        <li>The author MUST retain sole control over whether to
+          share Evidence Packets with a Verifier or Relying Party.
+          Evidence Packets are generated and stored locally until
+          the author chooses to release them.</li>
+        <li>Verifiers MUST NOT automatically reject Evidence
+          based solely on atypical timing patterns. Atypical
+          input patterns may reflect assistive technologies,
+          non-Latin input methods, or individual variation
+          rather than forgery (see
+          <xref target="PoP-Appraisal"/>).</li>
+      </ul>
+      <t>
+        Whether any institution or platform requires PoP evidence
+        as a condition of participation is a policy decision outside
+        the scope of this protocol. PoP provides a technical
+        mechanism for producing verifiable evidence; it does not
+        mandate that evidence be produced or consumed.
+      </t>
+    </section>
+
     <section anchor="system-model">
       <name>System Model</name>
       <t>
