@@ -51,7 +51,7 @@ checkpoint = {
     8 => hash-value,              ; checkpoint-hash
     9 => process-proof,           ; SWF proof
     ? 10 => jitter-binding,       ; behavioral-entropy (ENHANCED+)
-    ? 11 => physical-state,       ; CDCE Weave (ENHANCED+)
+    ? 11 => physical-state,       ; physical-state binding (ENHANCED+)
     ? 12 => bstr .size 32,        ; entangled-mac (ENHANCED+)
     ? 13 => [+ self-receipt],     ; cross-tool composition receipts
     * int => any,                 ; extension fields
@@ -267,7 +267,7 @@ content-tier = &(
 
 proof-algorithm = &(
     ; 1 is reserved for future use
-    pobst-argon2id: 20,
+    swf-argon2id: 20,
 )
 
 hash-salt-mode = &(
