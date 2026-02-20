@@ -53,6 +53,7 @@ checkpoint = {
     ? 10 => jitter-binding,       ; behavioral-entropy (ENHANCED+)
     ? 11 => physical-state,       ; CDCE Weave (ENHANCED+)
     ? 12 => bstr .size 32,        ; entangled-mac (ENHANCED+)
+    ? 13 => [+ self-receipt],     ; cross-tool composition receipts
     * int => any,                 ; extension fields
 }
 
@@ -151,6 +152,22 @@ binding-type = &(
 channel-binding = {
     1 => binding-type,            ; binding-type
     2 => bstr .size 32,           ; binding-value (EKM output)
+}
+
+; ============================================================
+; Self-Receipt (Cross-Tool Composition)
+; ============================================================
+
+; Self-receipts bind a paste event to an Evidence Packet
+; produced by the author's prior authoring environment.
+; General Tool Receipts (requiring external tool signatures)
+; will use the same checkpoint field (key 13) when defined.
+
+self-receipt = {
+    1 => tstr,                    ; tool-id (source environment)
+    2 => hash-value,              ; output-commit (content hash at transfer)
+    3 => hash-value,              ; evidence-ref (hash of source packet)
+    4 => pop-timestamp,           ; transfer-time
 }
 
 ; NOTE: Cross-session linking (continuation tokens) is deferred
