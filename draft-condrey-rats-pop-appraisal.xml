@@ -667,12 +667,12 @@ attestation-tier = &(
     </section>
 
     <section anchor="accessibility">
-      <name>Accessibility and Assistive Modes</name>
+      <name>Accessibility and Alternative Input Modes</name>
       <t>
-        Verifiers MUST NOT automatically reject evidence based solely on atypical timing patterns. Implementations MUST support "Assistive Modes" that adjust SNR and CLC thresholds for authors with motor disabilities or those using assistive technologies (eye-tracking, dictation).
+        Verifiers MUST NOT automatically reject evidence based solely on atypical timing patterns. Implementations MUST support input mode declarations that adjust SNR and CLC thresholds for authors using assistive technologies (eye-tracking, dictation, switch-access) or alternative input methods (input method editors for CJK and other non-Latin scripts).
       </t>
       <t>
-        To signal assistive mode usage, the Attester SHOULD include an assistive-mode indicator in the profile-declaration structure of the Evidence Packet. When this indicator is present, Verifiers MUST apply adjusted thresholds as follows:
+        To signal input mode usage, the Attester SHOULD include an assistive-mode indicator in the profile-declaration structure of the Evidence Packet. When this indicator is present, Verifiers MUST apply adjusted thresholds as follows:
       </t>
       <section anchor="assistive-eye-tracking">
         <name>Eye-Tracking Mode</name>
@@ -707,6 +707,42 @@ attestation-tier = &(
         </ul>
       </section>
 
+      <section anchor="ime-input">
+        <name>Input Method Editor (IME) Mode</name>
+        <t>
+          CJK and other non-Latin input methods produce a
+          composition-commit cycle: rapid phonetic keystrokes
+          (e.g., pinyin, romaji) followed by a candidate selection
+          pause, then a commit event that inserts one or more
+          characters. This cycle produces timing patterns distinct
+          from both direct keyboard input and clipboard paste.
+          Adjusted thresholds:
+        </t>
+        <ul>
+          <li>IKI analysis: Verifiers MUST account for the bimodal
+            distribution of IME input. Composition-phase keystrokes
+            exhibit intervals of 50-200 ms; inter-sequence pauses
+            during candidate selection range from 300-2000 ms.
+            Verifiers MUST segment IKI analysis by composition phase
+            rather than applying a single distribution model.</li>
+          <li>SNR: -5 dB to +8 dB (wider than keyboard due to
+            candidate selection pauses).</li>
+          <li>CLC correlation: r &gt; 0.15 (candidate selection
+            timing adds variance uncorrelated with content
+            complexity).</li>
+          <li>Paste-to-keystroke ratio: IME commit events insert
+            one or more characters per candidate selection, which
+            Verifiers MUST distinguish from clipboard paste by the
+            presence of preceding composition keystrokes. Commit
+            events MUST be excluded from paste detection.</li>
+          <li>Error topology: Adapted for candidate reselection.
+            The characteristic IME error pattern is commit, delete,
+            recompose, recommit, which differs from keyboard typo
+            corrections (character, backspace, retype) and dictation
+            corrections (word-level replacement).</li>
+        </ul>
+      </section>
+
       <section anchor="assistive-accommodations">
         <name>Additional Accommodations</name>
         <ul>
@@ -724,7 +760,8 @@ attestation-tier = &(
           structure in the Evidence Packet. Implementations MAY include
           an assistive-mode feature flag (value 60) in the feature-flags
           array. The following values are defined: 0 (none), 1
-          (motor-disability), 2 (eye-tracking), 3 (dictation). A future
+          (motor-disability), 2 (eye-tracking), 3 (dictation), 4
+          (ime-input). A future
           revision of <xref target="PoP-Protocol"/> will formalize this
           signaling mechanism.
         </t>
