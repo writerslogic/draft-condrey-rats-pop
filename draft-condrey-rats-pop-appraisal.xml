@@ -144,6 +144,9 @@
 
         <dt>Session Consistency Analysis:</dt>
         <dd>Verifiers MUST analyze cross-checkpoint behavioral trends. IKI distributions should exhibit gradual drift consistent with fatigue effects. An abrupt change is defined as a shift in mean IKI between consecutive checkpoints exceeding 2 standard deviations of the session-wide IKI distribution. Verifiers MUST flag transitions exceeding this threshold as potential data source switching. Jitter-binding intervals across consecutive checkpoints MUST be checked for statistical independence (cross-checkpoint correlation below 0.3). Edit-delta patterns SHOULD be checked for non-stationarity consistent with human creative flow.</dd>
+
+        <dt>Spatial-Temporal Divergence (Informative):</dt>
+        <dd>Advanced Verifiers MAY project the 1D <tt>jitter-binding.intervals</tt> array into an estimated 8-zone spatial keyboard model. By binning inter-keystroke intervals (IKI) into histograms representing spatial travel distances, Verifiers can compute the Kullback-Leibler (KL) divergence against biological baseline distributions. High KL divergence indicates structural timing anomalies invisible to raw entropy checks.</dd>
       </dl>
       <t>
         A conforming Verifier MUST evaluate all forensic mechanisms for
@@ -152,6 +155,28 @@
         Verifiers MAY implement additional analysis mechanisms beyond
         those defined in this specification.
       </t>
+
+      <section anchor="state-space-reconstruction">
+        <name>State Space Reconstruction (Informative)</name>
+        <t>
+          Advanced Verifiers MAY apply Takens' embedding theorem to
+          reconstruct the dynamical attractor of the author's motor
+          noise from the scalar time series
+          (<tt>jitter-binding.intervals</tt>). By embedding the 1D
+          interval sequence into a higher-dimensional phase space using
+          time-delay coordinates, the Verifier can estimate the
+          correlation dimension of the resulting trajectory. Biological
+          motor control processes typically produce a low-dimensional
+          attractor (dimension 2-5), reflecting the finite degrees of
+          freedom in the neuromuscular system. Synthetic or AI-injected
+          timing noise will typically fail to produce a low-dimensional
+          biological attractor in the embedded space, instead exhibiting
+          high or non-convergent correlation dimension estimates. This
+          provides a high-confidence signal for adversarial probing that
+          is complementary to the spectral (SNR) and distributional (KL
+          divergence) checks.
+        </t>
+      </section>
 
       <section anchor="snr-computation">
         <name>SNR Computation (Informative)</name>
@@ -320,6 +345,23 @@
           without hardware binding, C_swf represents an economic cost only
           (the adversary must spend real time, but has no hardware constraint).
         </t>
+        <section anchor="adaptive-swf-calibration">
+          <name>Adaptive SWF Calibration (Informative)</name>
+          <t>
+            Attesters SHOULD dynamically calibrate the <tt>iterations</tt>
+            and <tt>time-cost</tt> parameters during the
+            <tt>initial-jitter-sample</tt> phase to consistently hit the
+            target interval duration, compensating for local hardware
+            variance. By running a short calibration pass before the first
+            checkpoint, the Attester measures actual Argon2id throughput on
+            the local platform and adjusts SWF parameters so that each
+            checkpoint's memory-hard computation completes within the
+            expected wall-clock window. This ensures that the economic
+            security bounds documented in this section hold uniformly
+            across diverse deployment hardware, rather than relying on
+            fixed parameters tuned to a single reference platform.
+          </t>
+        </section>
       </section>
 
       <section anchor="cost-entropy">
@@ -687,12 +729,18 @@ attestation-tier = &(
           <li>Entropy values: 0.01 bit resolution (two decimal places).</li>
           <li>SNR values: 0.5 dB resolution.</li>
           <li>CLC and IKI metric values: two decimal places.</li>
+          <li>KL divergence values (Spatial-Temporal Divergence): two
+            decimal places.</li>
         </ul>
         <t>
           These quantization levels are calibrated to preserve the
           forensic utility of all assessment mechanisms defined in
           <xref target="forensic-assessment"/> while limiting the
           precision available for stylometric fingerprinting.
+          Spatial-temporal binning and zone-model projections MUST
+          operate on the already-quantized millisecond IKI values;
+          Verifiers MUST NOT reconstruct sub-millisecond timing from
+          spatial models.
         </t>
       </section>
       <section anchor="privacy-retention">
