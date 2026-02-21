@@ -646,7 +646,7 @@
         <section anchor="replay-attack">
           <name>Replay Attack</name>
           <t>
-            Attempting to reuse previously valid Evidence for new claims. Defeated by Physical Freshness anchors that bind Evidence to non-reproducible physical state (thermal trajectories, kernel entropy samples).
+            Attempting to reuse previously valid Evidence for new claims. Defeated by Physical Freshness anchors that bind Evidence to non-reproducible physical state (thermal trajectories, kernel entropy samples). Entangled VDF Mode (<tt>swf-argon2id-entangled</tt>) further closes the parallel generation attack surface by creating a strict cryptographic dependency on the completion of the previous interval's memory-hard function, preventing an adversary from pre-computing SWF proofs in parallel.
           </t>
         </section>
 
@@ -930,7 +930,7 @@ process-proof = {
     3 => bstr .size 32,            ; input (seed)
     4 => bstr .size 32,            ; merkle-root
     5 => [+ merkle-proof],        ; sampled proofs
-    6 => float32,                 ; claimed-duration (seconds)
+    6 => uint,                     ; claimed-duration (milliseconds)
 }
 
 ; Subsidiary type definitions
@@ -950,6 +950,7 @@ content-tier = &(
 proof-algorithm = &(
     ; 1 is reserved for future use
     swf-argon2id: 20,
+    swf-argon2id-entangled: 21, ; Entangled VDF Mode
 )
 
 hash-salt-mode = &(
@@ -965,8 +966,8 @@ proof-params = {
 }
 
 jitter-binding = {
-    1 => [+ float32],             ; intervals (ms)
-    2 => float32,                 ; entropy-estimate (bits)
+    1 => [+ uint],                ; intervals (milliseconds)
+    2 => uint,                    ; entropy-estimate (centibits)
     3 => bstr .size 32,           ; jitter-seal (HMAC)
 }
 
@@ -989,7 +990,7 @@ edit-position = [
 ]
 
 physical-state = {
-    1 => [+ float32],             ; thermal (relative)
+    1 => [+ int],                 ; thermal (relative, millidegrees)
     2 => int,                     ; entropy-delta (signed)
     ? 3 => bstr .size 32,         ; kernel-commitment
 }
@@ -1001,7 +1002,7 @@ physical-liveness = {
 
 thermal-sample = [
     pop-timestamp,                ; sample time
-    float32,                      ; temperature delta
+    int,                          ; temperature delta (millidegrees)
 ]
 
 presence-challenge = {
@@ -1033,7 +1034,7 @@ self-receipt = {
 
 ; Base types
 uuid = bstr .size 16
-pop-timestamp = #6.1(float32)      ; CBOR tag 1 (epoch-based, float32)
+pop-timestamp = #6.1(uint)           ; CBOR tag 1 (epoch milliseconds)
 hash-value = {
     1 => hash-algorithm,
     2 => bstr,
@@ -1048,8 +1049,8 @@ hash-algorithm = &(
         The attestation-result type used in the pop-war tag wrapper is
         defined in <xref target="PoP-Appraisal"/>.
       </t>
-      <t>All floating-point fields in this specification MUST be encoded using 32-bit IEEE 754 binary32 format, regardless of whether a smaller encoding would suffice. This ensures deterministic encoding.</t>
-      <t>pop-timestamp values MUST use floating-point encoding with at least millisecond precision. Integer encoding (second granularity) MUST NOT be used. pop-timestamp values MUST be positive (greater than zero). Verifiers MUST reject Evidence containing negative or zero timestamps.</t>
+      <t>To ensure cross-architecture determinism, all temporal and entropy measurements MUST be encoded as unsigned integers (<tt>uint</tt>). Timestamps and durations are expressed in milliseconds. Entropy estimates are expressed in centibits (1/100th of a bit).</t>
+      <t>pop-timestamp values MUST be positive (greater than zero). Verifiers MUST reject Evidence containing zero timestamps.</t>
       <t>
         When hash-salt-mode is author-salted (1), the author generates a
         random salt of at least 16 bytes. The salt-commitment field MUST
@@ -1066,10 +1067,10 @@ hash-algorithm = &(
         containing mixed hash algorithms.
       </t>
       <t>
-        Encoders MUST NOT use CBOR preferred float serialization (which may
-        encode values like 0.0 as float16) for PoP fields. All floating-point
-        values MUST be encoded as 4-byte IEEE 754 binary32 (CBOR major type 7,
-        additional info 26) regardless of the value.
+        Encoders MUST use CBOR unsigned integer (major type 0) or
+        negative integer (major type 1) encoding for all PoP numeric
+        fields. Floating-point encodings (CBOR major type 7) MUST NOT
+        be used.
       </t>
       <t>
         Extension keys in evidence-packet and checkpoint structures MUST
@@ -1262,7 +1263,8 @@ for j in 0..k-1:
       <section anchor="swf-seed-derivation">
         <name>SWF Seed Derivation</name>
         <t>
-          The SWF seed for each checkpoint MUST be derived as:
+          For <tt>swf-argon2id</tt> (20), the SWF seed for each
+          checkpoint MUST be derived as:
         </t>
         <artwork><![CDATA[
 seed = SHA-256(
@@ -1272,7 +1274,27 @@ seed = SHA-256(
 )
         ]]></artwork>
         <t>
-          For the first checkpoint (sequence = 1):
+          For <tt>swf-argon2id-entangled</tt> (21), the Attester MUST
+          entangle the previous checkpoint's SWF output. The seed is
+          derived as:
+        </t>
+        <artwork><![CDATA[
+seed = SHA-256(
+    prev-hash ||
+    prev-swf-output ||
+    CBOR-encode(jitter-binding.intervals) ||
+    CBOR-encode(physical-state)
+)
+        ]]></artwork>
+        <t>
+          Where <tt>prev-swf-output</tt> is the final Argon2id state
+          from the immediately preceding checkpoint's sequential work
+          function computation. This creates a strict cryptographic
+          dependency chain: each checkpoint's SWF cannot begin until the
+          previous checkpoint's SWF has completed.
+        </t>
+        <t>
+          For the first checkpoint (sequence = 1), both modes use:
         </t>
         <artwork><![CDATA[
 seed = SHA-256(
