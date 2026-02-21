@@ -106,7 +106,7 @@
       </t>
       <ol>
         <li><em>Structural Validation:</em> The Verifier MUST reject with verdict invalid (4) any Evidence Packet that: (a) fails CBOR decoding, (b) lacks CBOR tag 1129336656, (c) has version != 1, (d) is missing mandatory fields (keys 1-6 in evidence-packet, keys 1-9 in each checkpoint), or (e) contains CBOR types that do not match the CDDL schema.</li>
-        <li><em>Chain Integrity:</em> Verify the hash link (using the Evidence Packet's selected hash function H, as defined in <xref target="PoP-Protocol"/>) between all checkpoints. Any break invalidates the entire Evidence Packet. The Verifier MUST set the verdict to invalid (4). The warnings field SHOULD include the checkpoint sequence number where the break was detected.</li>
+        <li><em>Chain Integrity:</em> Verify the hash link (using the Evidence Packet's selected hash function H, as defined in <xref target="PoP-Protocol"/>) between all checkpoints. For continuation packets (previous-packet-ref present), additionally verify that the first checkpoint's prev-hash equals the final checkpoint-hash of the preceding Evidence Packet and that checkpoint sequence numbers are globally monotonic across the series. Any break invalidates the entire Evidence Packet (or series). The Verifier MUST set the verdict to invalid (4). The warnings field SHOULD include the checkpoint sequence number where the break was detected.</li>
         <li><em>Temporal Order:</em> For each process-proof, recompute Argon2id from the declared seed to obtain state_0, then verify sampled Merkle proofs against the committed root (process-proof key 4, merkle-root). Verify that claimed-duration is within [0.5x, 3.0x] of the expected wall-clock time for the declared proof-params on reference hardware (defined as a system with DDR4 memory providing approximately 25 GB/s sustained bandwidth). Expected times are defined in <xref target="PoP-Protocol"/>, Mandatory SWF Parameters section. When comparing timestamps across devices or against external time sources, the clock skew tolerances defined in <xref target="clock-skew-tolerance"/> MUST be applied.</li>
         <li><em>Entropy Threshold:</em> Independently estimate entropy from the jitter-binding intervals array using a standard entropy estimator (e.g., NIST SP 800-90B most common value estimator). Verify the independent estimate meets or exceeds 3.0 bits per inter-keystroke interval. The Attester's self-reported entropy-estimate field MUST NOT be relied upon. Low-entropy segments (below threshold) MUST be flagged as "Non-Biological."</li>
         <li><em>Entanglement:</em> Verify the HMAC value (entangled-mac) over the combined document, jitter, and physical state.</li>
@@ -118,6 +118,21 @@
         are present (ENHANCED and MAXIMUM profiles). For CORE Evidence Packets
         lacking these fields, the Verifier MUST skip Steps 4 and 5 and note
         in the WAR warnings that behavioral analysis was not performed.
+      </t>
+      <t>
+        When appraising a series of continuation packets (linked via
+        previous-packet-ref as defined in <xref target="PoP-Protocol"/>),
+        the Verifier MUST apply the above steps to each packet
+        individually and additionally verify cross-packet linkage:
+        the previous-packet-ref hash MUST match the complete
+        CBOR-encoded preceding packet, document-ref MUST be identical
+        across all packets, and checkpoint sequence numbers MUST be
+        globally monotonic. The chain-length and chain-duration fields
+        in the Attestation Result SHOULD reflect the aggregate totals
+        across the entire series. Forensic assessment (Session
+        Consistency Analysis in particular) SHOULD be evaluated across
+        packet boundaries to detect behavioral discontinuities at
+        rollover points.
       </t>
 
       <section anchor="clock-skew-tolerance">
