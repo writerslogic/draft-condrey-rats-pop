@@ -973,6 +973,7 @@ checkpoint = {
     ? 11 => physical-state,         ; physical-state binding (ENHANCED+)
     ? 12 => hash-digest,             ; entangled-mac (ENHANCED+)
     ? 13 => [+ self-receipt],        ; cross-tool composition receipts
+    ? 14 => [+ active-probe],        ; active liveness probes
     * int => any,                    ; extension fields
 }
 
@@ -1088,10 +1089,25 @@ channel-binding = {
 
 self-receipt = {
     1 => tstr,                    ; tool-id (source environment)
-    2 => hash-value,              ; output-commit (content hash at transfer)
-    3 => hash-value,              ; evidence-ref (hash of source packet)
+    2 => hash-value / compact-ref, ; output-commit
+    3 => hash-value / compact-ref, ; evidence-ref (source packet)
     4 => pop-timestamp,           ; transfer-time
 }
+
+active-probe = {
+    1 => probe-type,              ; challenge category
+    2 => pop-timestamp,           ; stimulus-time
+    3 => pop-timestamp,           ; response-time
+    4 => bstr,                    ; stimulus-data (challenge payload)
+    5 => bstr,                    ; response-data (captured response)
+    ? 6 => uint,                  ; response-latency (milliseconds)
+}
+
+probe-type = &(
+    galton-board: 1,              ; Galton invariant challenge
+    reflex-gate: 2,               ; motor reflex timing gate
+    spatial-target: 3,            ; spatial accuracy challenge
+)
 
 ; Base types
 uuid = bstr .size 16
@@ -1102,6 +1118,11 @@ hash-digest = bstr .size 32 /        ; SHA-256
 hash-value = {
     1 => hash-algorithm,
     2 => bstr,
+}
+compact-ref = {
+    1 => hash-algorithm,          ; algorithm used for full hash
+    2 => bstr .size (8..32),      ; truncated-digest (8-32 bytes)
+    3 => uint,                    ; prefix-length (bytes in digest)
 }
 hash-algorithm = &(
     sha256: 1,
@@ -1147,6 +1168,20 @@ hash-algorithm = &(
         be used.
       </t>
       <t>
+        The <tt>compact-ref</tt> type provides a space-efficient
+        alternative to full <tt>hash-value</tt> references in
+        self-receipt structures. A compact-ref contains a truncated
+        hash prefix (minimum 8 bytes, providing 64 bits of collision
+        resistance) along with the hash algorithm identifier and the
+        prefix-length in bytes. Compact references MUST NOT be used
+        for security-critical bindings (checkpoint-hash, content-hash,
+        prev-hash); they are permitted only in self-receipt fields
+        where the referenced Evidence Packet can be independently
+        retrieved and verified against the full hash. Verifiers
+        encountering a compact-ref MUST resolve it to a full hash-value
+        before performing integrity checks.
+      </t>
+      <t>
         Extension keys in evidence-packet and checkpoint structures MUST
         use integer values 100 or greater. Keys 0-99 are reserved for use
         by this specification and future revisions.
@@ -1170,6 +1205,20 @@ hash-algorithm = &(
         The Verifier obtains the corresponding public key through prior
         device registration (the registration mechanism is out of scope
         for this document).
+      </t>
+      <t>
+        Active-probe structures (checkpoint key 14) record challenge-response
+        interactions issued by the Attester or Verifier during the authoring
+        session. Each probe records the probe-type, the stimulus timestamp
+        and payload, and the captured biological response. Galton-board
+        probes (type 1) present a visual randomness challenge whose response
+        distribution is compared against biological invariants. Reflex-gate
+        probes (type 2) measure involuntary motor reflex latency. Spatial-target
+        probes (type 3) measure pointing accuracy to on-screen targets.
+        The response-latency field, when present, MUST equal
+        (response-time minus stimulus-time) in milliseconds. Verifiers
+        appraise active-probe responses as specified in
+        <xref target="PoP-Appraisal"/>.
       </t>
       <t>
         Per-checkpoint physical-state (checkpoint key 11) captures instantaneous
@@ -1257,6 +1306,57 @@ checkpoint-hash = H(
         <t>
           For online conveyance, COSE_Sign1-wrapped Evidence Packets can be encapsulated within a Conceptual Message Wrapper (CMW) for transport via the SEAT cmw_attestation TLS extension <xref target="SEAT-EXPAT"/>. This enables PoP Evidence to be delivered alongside platform attestation evidence in a single post-handshake authentication exchange, which is the preferred attestation timing model <xref target="SEAT-Timing"/>. The SEAT use cases <xref target="SEAT-UseCases"/> identify runtime attestation and operation-triggered re-attestation as key requirements, both of which PoP's continuous checkpoint model satisfies.
         </t>
+      </section>
+
+      <section anchor="ascii-armor">
+        <name>ASCII-Armored Encoding</name>
+        <t>
+          For transport over text-based protocols, embedding in source
+          code repositories, or human-readable archival, Evidence
+          Packets and Attestation Results MAY be encoded in an
+          ASCII-armored representation. The armored format consists of
+          a header line, Base64-encoded payload (<xref target="RFC4648"/>,
+          Section 4), and a footer line.
+        </t>
+        <t>
+          Evidence Packets (.cpop) use the following armor boundaries:
+        </t>
+        <artwork><![CDATA[
+-----BEGIN POP EVIDENCE-----
+<Base64-encoded CBOR payload>
+-----END POP EVIDENCE-----
+        ]]></artwork>
+        <t>
+          Attestation Results (.cwar) use the following armor
+          boundaries:
+        </t>
+        <artwork><![CDATA[
+-----BEGIN POP WAR-----
+<Base64-encoded CBOR payload>
+-----END POP WAR-----
+        ]]></artwork>
+        <t>
+          The following rules apply to the armored encoding:
+        </t>
+        <ol>
+          <li>The payload MUST be the complete CBOR-encoded structure
+            (including the CBOR semantic tag). When COSE_Sign1 wrapping
+            is present, the entire COSE_Sign1 envelope is the
+            payload.</li>
+          <li>Base64 line length MUST NOT exceed 76 characters per
+            <xref target="RFC4648"/>. Decoders MUST ignore line
+            breaks and whitespace within the Base64 block.</li>
+          <li>No additional headers or metadata are defined between
+            the header line and the Base64 block. Implementations
+            MUST NOT insert key-value headers (unlike PEM, which
+            permits Proc-Type and DEK-Info headers).</li>
+          <li>Implementations MUST accept both armored and raw CBOR
+            encodings. The media type for armored Evidence is
+            application/cpop+cbor with a Content-Transfer-Encoding
+            of base64. The media type for armored Attestation Results
+            is application/cwar+cbor with the same transfer
+            encoding.</li>
+        </ol>
       </section>
     </section>
 
@@ -1789,6 +1889,46 @@ jitter-seal = HMAC-H(seal-key, seal-input)
           <li>Verify platform integrity before Evidence generation</li>
         </ul>
       </section>
+
+      <section anchor="sec-key-rotation">
+        <name>Signing Key Lifecycle and Rotation</name>
+        <t>
+          For T1/T2 tiers where signing keys are software-managed, the
+          Attester SHOULD implement a key rotation policy to limit the
+          impact of key compromise. The following normative guidelines
+          apply:
+        </t>
+        <ol>
+          <li><em>Rotation frequency:</em> Software-managed signing keys
+            SHOULD be rotated at least every 90 days or after generating
+            10,000 Evidence Packets, whichever comes first. Attesters
+            MAY rotate more frequently.</li>
+          <li><em>Key binding:</em> Each Evidence Packet's COSE_Sign1
+            envelope identifies the signing key. When a key is rotated,
+            the Attester MUST begin using the new key for all subsequent
+            Evidence Packets. Evidence Packets MUST NOT be re-signed
+            with a new key after initial generation.</li>
+          <li><em>Key continuity:</em> To allow Verifiers to validate
+            older Evidence Packets, the Attester SHOULD publish a key
+            history document (format out of scope) linking retired
+            public keys to their validity periods. Verifiers MUST
+            accept Evidence signed with a retired key if the Evidence
+            Packet's created timestamp falls within the key's validity
+            period.</li>
+          <li><em>Compromise response:</em> If a signing key is
+            suspected compromised, the Attester MUST immediately cease
+            using it and SHOULD publish a revocation. Evidence Packets
+            signed with a compromised key after the suspected
+            compromise date SHOULD be treated as inconclusive by
+            Verifiers.</li>
+        </ol>
+        <t>
+          For T3/T4 tiers, key management is governed by the hardware
+          Secure Element's lifecycle. Key rotation in hardware tiers
+          typically requires device re-provisioning, which is outside
+          the scope of this specification.
+        </t>
+      </section>
     </section>
 
     <section anchor="privacy-considerations">
@@ -1832,6 +1972,47 @@ jitter-seal = HMAC-H(seal-key, seal-input)
           Authors who wish to remain pseudonymous SHOULD use per-document signing keys and the author-salted content binding mode to prevent cross-document linkage.
         </t>
       </section>
+
+      <section anchor="priv-budget">
+        <name>Privacy Budget</name>
+        <t>
+          Each Evidence Packet released by an Attester discloses
+          behavioral telemetry that incrementally reduces the author's
+          anonymity set. Attesters SHOULD maintain an accounting of
+          cumulative privacy exposure and enforce budgetary limits
+          on high-fidelity data disclosure:
+        </t>
+        <dl spacing="normal">
+          <dt>Jitter resolution:</dt>
+          <dd>Attesters SHOULD default to the coarsest quantization
+            (5ms) that satisfies the target content tier's entropy
+            threshold. Finer resolution (1ms) SHOULD only be emitted
+            when explicitly required by the Verifier's appraisal
+            policy and the author has consented to the increased
+            disclosure.</dd>
+
+          <dt>Physical-state detail:</dt>
+          <dd>CORE and ENHANCED profiles SHOULD omit per-checkpoint
+            physical-state (key 11) unless required by the deployment's
+            appraisal policy. When included, thermal values MUST be
+            normalized to relative deltas.</dd>
+
+          <dt>Session-level budget:</dt>
+          <dd>Attesters SHOULD track the cumulative number of Evidence
+            Packets generated for a given author identity (or signing
+            key). When the cumulative count exceeds 1,000 packets with
+            the same behavioral source, the Attester SHOULD warn the
+            author that cross-document stylometric correlation risk is
+            elevated and SHOULD recommend key rotation and increased
+            jitter quantization.</dd>
+
+          <dt>Selective disclosure:</dt>
+          <dd>When the Relying Party's trust requirements are satisfied
+            by a lower content tier, the Attester SHOULD generate
+            Evidence at the lowest tier sufficient for the use case,
+            minimizing the behavioral data emitted.</dd>
+        </dl>
+      </section>
     </section>
   </middle>
 
@@ -1846,6 +2027,7 @@ jitter-seal = HMAC-H(seal-key, seal-input)
         <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.5869.xml"/>
         <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8174.xml"/>
         <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8610.xml"/>
+        <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.4648.xml"/>
         <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8017.xml"/>
         <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8949.xml"/>
         <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9052.xml"/>
