@@ -220,6 +220,12 @@
 
         <dt>Spatial-Temporal Divergence (Informative):</dt>
         <dd>Advanced Verifiers MAY project the 1D <tt>jitter-binding.intervals</tt> array into an estimated 8-zone spatial keyboard model. By binning inter-keystroke intervals (IKI) into histograms representing spatial travel distances, Verifiers can compute the Kullback-Leibler (KL) divergence against biological baseline distributions. High KL divergence indicates structural timing anomalies invisible to raw entropy checks.</dd>
+
+        <dt>Perplexity Scoring:</dt>
+        <dd>Verifiers SHOULD compute the character-level perplexity of text inserted during each checkpoint interval using a reference language model. Sudden drops in perplexity (highly predictable text) that correlate with rapid insertion rates (characters per second exceeding the session's 95th percentile) MUST be flagged as potential AI injection. A perplexity drop exceeding 50% relative to the session median, sustained for more than 100 consecutive inserted characters, constitutes a flag. Checkpoints containing self-receipt structures (key 13) MUST have their associated paste events excluded from perplexity scoring.</dd>
+
+        <dt>Biological Cadence Analysis:</dt>
+        <dd>Verifiers MUST compute the Coefficient of Variation (CoV = standard deviation / mean) of inter-keystroke intervals within each checkpoint. Human typing exhibits characteristic CoV values reflecting biological motor variance. Evidence with per-checkpoint CoV consistently below 0.15 (mechanically regular) MUST be flagged as potentially non-biological. Evidence with per-checkpoint CoV consistently above 0.90 (chaotically irregular) SHOULD be flagged as potentially injected random noise. The session-wide CoV trend SHOULD exhibit gradual drift consistent with fatigue and warm-up effects.</dd>
       </dl>
       <t>
         A conforming Verifier MUST evaluate all forensic mechanisms for
@@ -413,6 +419,92 @@
           rates and structural boundaries. A graph clustering coefficient
           below 0.1 combined with uniform correction latency is flagged
           as potentially synthetic.
+        </t>
+      </section>
+
+      <section anchor="perplexity-scoring">
+        <name>Perplexity Scoring (Informative)</name>
+        <t>
+          Character-level perplexity measures how predictable inserted
+          text is under a reference language model. Lower perplexity
+          indicates more predictable (template-like or AI-generated)
+          text:
+        </t>
+        <artwork><![CDATA[
+  PPL = exp( -(1/N) * sum_{i=1}^{N} ln P(c_i | c_1..c_{i-1}) )
+
+  where:
+    N = number of characters in the insertion segment
+    P(c_i | ...) = conditional probability from reference model
+        ]]></artwork>
+        <t>
+          The Verifier computes per-checkpoint perplexity for inserted
+          text segments and compares against the session median. A
+          detection event is triggered when:
+        </t>
+        <ul>
+          <li>The checkpoint's perplexity drops below 50% of the
+            session median perplexity, AND</li>
+          <li>The insertion rate exceeds the session's 95th percentile
+            (characters per second), AND</li>
+          <li>The low-perplexity segment spans more than 100
+            consecutive inserted characters.</li>
+        </ul>
+        <t>
+          All three conditions must hold simultaneously to trigger
+          the flag. Paste events accompanied by self-receipt structures
+          are excluded from this analysis, as they represent
+          documented cross-tool composition rather than undisclosed
+          AI injection.
+        </t>
+        <t>
+          The choice of reference language model is a Verifier
+          implementation decision and is not specified by this
+          document. Verifiers SHOULD use a model trained on general
+          prose to avoid domain-specific bias. The reference model
+          MUST NOT be disclosed to the Attester to prevent adversarial
+          tuning.
+        </t>
+      </section>
+
+      <section anchor="cadence-analysis">
+        <name>Biological Cadence Analysis (Informative)</name>
+        <t>
+          The Coefficient of Variation (CoV) of inter-keystroke intervals
+          provides a scalar measure of typing rhythm regularity:
+        </t>
+        <artwork><![CDATA[
+  CoV = sigma_IKI / mu_IKI
+
+  where:
+    sigma_IKI = standard deviation of IKI within the window
+    mu_IKI    = mean IKI within the window
+        ]]></artwork>
+        <t>
+          Observed CoV ranges for different input sources:
+        </t>
+        <ul>
+          <li>Human typing (composition): CoV 0.25-0.70, reflecting
+            natural motor variance, micro-pauses for word selection,
+            and variable key travel distances.</li>
+          <li>Human typing (transcription): CoV 0.15-0.40, more
+            regular due to reduced cognitive load but still
+            biologically variable.</li>
+          <li>Automated injection (scripted replay): CoV below 0.10,
+            mechanically uniform timing from software-driven
+            keystroke injection.</li>
+          <li>Synthetic noise (random jitter): CoV above 0.90,
+            lacking the structured variability of biological motor
+            control.</li>
+        </ul>
+        <t>
+          The Verifier SHOULD compute per-checkpoint CoV and track
+          the session-wide CoV trajectory. A monotonically decreasing
+          CoV trend across the session is consistent with motor
+          warm-up effects in human typing. Abrupt CoV shifts between
+          consecutive checkpoints (exceeding 0.20) SHOULD be
+          evaluated in conjunction with Session Consistency Analysis
+          for potential data source switching.
         </t>
       </section>
     </section>
