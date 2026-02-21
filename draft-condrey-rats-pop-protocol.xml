@@ -613,7 +613,7 @@
           <dt>Behavioral Authenticity:</dt>
           <dd>Given Evidence containing behavioral entropy B, an adversary cannot efficiently generate synthetic entropy that is indistinguishable from biological origin. The cost of generating synthetic behavioral data satisfying all forensic constraints MUST exceed a defined threshold.</dd>
           <dt>Content Binding:</dt>
-          <dd>Evidence E is cryptographically bound to document D such that E cannot be repurposed to attest a different document D'. This property is unconditional given collision resistance of SHA-256.</dd>
+          <dd>Evidence E is cryptographically bound to document D such that E cannot be repurposed to attest a different document D'. This property is unconditional given collision resistance of H.</dd>
           <dt>Non-repudiation (T3/T4):</dt>
           <dd>In hardware-bound tiers, Evidence is signed with keys that the Attester cannot extract or duplicate, providing non-repudiation of the attestation act.</dd>
         </dl>
@@ -705,7 +705,7 @@
         <ul>
           <li><em>Nation-state HSM compromise:</em> Adversaries capable of extracting keys from certified HSMs via invasive physical attacks</li>
           <li><em>Physics-level laboratory spoofing:</em> Adversaries capable of simulating thermal trajectories and entropy sources at sub-microsecond precision</li>
-          <li><em>Quantum computation:</em> Attacks requiring large-scale quantum computers (SHA-256 collision, Argon2id inversion)</li>
+          <li><em>Quantum computation:</em> Attacks requiring large-scale quantum computers (hash function collision finding, Argon2id inversion)</li>
         </ul>
       </section>
     </section>
@@ -733,7 +733,7 @@
         <dt>WAR Result (.cwar):</dt>
         <dd>A Verifier Attestation Result containing signed EAT claims and forensic assessments (CBOR tag 1129791826). The WAR format is specified in <xref target="PoP-Appraisal"/>.</dd>
         <dt>SWF:</dt>
-        <dd>Sequential Work Function. The composite construction combining Argon2id and iterated SHA-256 (see <xref target="swf-construction"/>).</dd>
+        <dd>Sequential Work Function. The composite construction combining Argon2id and iterated hashing using the Evidence Packet's selected hash algorithm (see <xref target="swf-construction"/>).</dd>
       </dl>
     </section>
 
@@ -757,7 +757,7 @@
     </t>
     <dl>
       <dt>CORE (Tier Value 1):</dt>
-      <dd>Checkpoint chain with SWF proofs, SHA-256 content binding, and physical freshness anchors. Proves temporal ordering and content integrity.</dd>
+      <dd>Checkpoint chain with SWF proofs, hash-based content binding, and physical freshness anchors. Proves temporal ordering and content integrity.</dd>
       <dt>ENHANCED (Tier Value 2):</dt>
       <dd>All CORE components plus behavioral entropy capture (Jitter Seals) and intra-checkpoint correlation. Adds evidence of interactive authoring behavior.</dd>
       <dt>MAXIMUM (Tier Value 3):</dt>
@@ -910,7 +910,7 @@ checkpoint = {
     9 => process-proof,           ; SWF proof
     ? 10 => jitter-binding,         ; behavioral-entropy (ENHANCED+)
     ? 11 => physical-state,         ; physical-state binding (ENHANCED+)
-    ? 12 => bstr .size 32,          ; entangled-mac (ENHANCED+)
+    ? 12 => hash-digest,             ; entangled-mac (ENHANCED+)
     ? 13 => [+ self-receipt],        ; cross-tool composition receipts
     * int => any,                    ; extension fields
 }
@@ -921,14 +921,14 @@ document-ref = {
     3 => uint,                    ; byte-length
     4 => uint,                    ; char-count
     ? 5 => hash-salt-mode,        ; salting mode
-    ? 6 => bstr .size 32,          ; salt-commitment
+    ? 6 => hash-digest,             ; salt-commitment
 }
 
 process-proof = {
     1 => proof-algorithm,         ; algorithm id
     2 => proof-params,            ; SWF params
-    3 => bstr .size 32,            ; input (seed)
-    4 => bstr .size 32,            ; merkle-root
+    3 => hash-digest,             ; input (seed)
+    4 => hash-digest,             ; merkle-root
     5 => [+ merkle-proof],        ; sampled proofs
     6 => uint,                     ; claimed-duration (milliseconds)
 }
@@ -968,13 +968,13 @@ proof-params = {
 jitter-binding = {
     1 => [+ uint],                ; intervals (milliseconds)
     2 => uint,                    ; entropy-estimate (centibits)
-    3 => bstr .size 32,           ; jitter-seal (HMAC)
+    3 => hash-digest,             ; jitter-seal (HMAC)
 }
 
 merkle-proof = {
     1 => uint,                    ; leaf-index
-    2 => [+ bstr .size 32],       ; sibling-path
-    3 => bstr .size 32,           ; leaf-value
+    2 => [+ hash-digest],        ; sibling-path
+    3 => hash-digest,             ; leaf-value
 }
 
 edit-delta = {
@@ -1035,6 +1035,9 @@ self-receipt = {
 ; Base types
 uuid = bstr .size 16
 pop-timestamp = #6.1(uint)           ; CBOR tag 1 (epoch milliseconds)
+hash-digest = bstr .size 32 /        ; SHA-256
+              bstr .size 48 /        ; SHA-384
+              bstr .size 64          ; SHA-512
 hash-value = {
     1 => hash-algorithm,
     2 => bstr,
@@ -1054,10 +1057,9 @@ hash-algorithm = &(
       <t>
         When hash-salt-mode is author-salted (1), the author generates a
         random salt of at least 16 bytes. The salt-commitment field MUST
-        contain SHA-256(salt). To verify content binding, the author discloses
-        the salt to the Verifier, which checks that SHA-256(disclosed_salt)
-        matches the salt-commitment. The salt-commitment field MUST be
-        constrained to 32 bytes (.size 32).
+        contain H(salt). To verify content binding, the author discloses
+        the salt to the Verifier, which checks that H(disclosed_salt)
+        matches the salt-commitment.
       </t>
       <t>SHA-256 (value 1) is mandatory-to-implement. Conforming Attesters and Verifiers MUST support SHA-256. Support for SHA-384 and SHA-512 is OPTIONAL.</t>
       <t>The hash digest length MUST match the algorithm output length: 32 bytes for SHA-256, 48 bytes for SHA-384, and 64 bytes for SHA-512.</t>
@@ -1065,6 +1067,17 @@ hash-algorithm = &(
         All hash-value fields within a single Evidence Packet MUST use the
         same hash algorithm. Verifiers MUST reject Evidence Packets
         containing mixed hash algorithms.
+      </t>
+      <t>
+        Let H denote the hash function indicated by the hash-algorithm
+        field in the Evidence Packet. All internal hash computations in
+        this specification -- including the SWF iteration loop, Merkle
+        tree construction, seed derivation, checkpoint-hash computation,
+        Fiat-Shamir sampling, HMAC operations, and HKDF instantiation
+        -- MUST use H. The Argon2id output length (<tt>len</tt>
+        parameter) MUST equal the output length of H (32, 48, or 64
+        bytes). When this document writes H(...) in formulas, the hash
+        function used MUST be the one identified by hash-algorithm.
       </t>
       <t>
         Encoders MUST use CBOR unsigned integer (major type 0) or
@@ -1113,7 +1126,7 @@ hash-algorithm = &(
           The checkpoint-hash field MUST be computed as follows:
         </t>
         <artwork><![CDATA[
-checkpoint-hash = SHA-256(
+checkpoint-hash = H(
     prev-hash ||
     content-hash ||
     CBOR-encode(edit-delta) ||
@@ -1123,15 +1136,15 @@ checkpoint-hash = SHA-256(
 )
         ]]></artwork>
         <t>
-          Where || denotes concatenation and CBOR-encode produces deterministic CBOR per Section 4.2.1 of <xref target="RFC8949"/>.
+          Where H is the Evidence Packet's selected hash function, || denotes concatenation, and CBOR-encode produces deterministic CBOR per Section 4.2.1 of <xref target="RFC8949"/>.
         </t>
-        <t>For the first checkpoint in a chain (sequence = 1), prev-hash MUST be set to SHA-256(CBOR-encode(document-ref)). This anchors the chain to the document identity.</t>
-        <t>When jitter-binding and physical-state fields are absent (CORE profile), the checkpoint-hash MUST be computed without those terms: checkpoint-hash = SHA-256(prev-hash || content-hash || CBOR-encode(edit-delta) || process-proof.merkle-root).</t>
+        <t>For the first checkpoint in a chain (sequence = 1), prev-hash MUST be set to H(CBOR-encode(document-ref)). This anchors the chain to the document identity.</t>
+        <t>When jitter-binding and physical-state fields are absent (CORE profile), the checkpoint-hash MUST be computed without those terms: checkpoint-hash = H(prev-hash || content-hash || CBOR-encode(edit-delta) || process-proof.merkle-root).</t>
         <t>
           All components except process-proof.merkle-root are either
           fixed-length hashes (32/48/64 bytes per algorithm) or
-          CBOR-encoded (self-delimiting). The merkle-root (32 bytes,
-          fixed length) is appended last. This concatenation is
+          CBOR-encoded (self-delimiting). The merkle-root (fixed length
+          per hash algorithm) is appended last. This concatenation is
           unambiguous and does not require additional domain separation.
         </t>
       </section>
@@ -1142,7 +1155,7 @@ checkpoint-hash = SHA-256(
           The fields within a checkpoint MUST be computed in the following order:
         </t>
         <ol>
-          <li>Compute the SWF: run Argon2id with the derived seed, then iterate SHA-256 to produce all intermediate states. Construct the Merkle tree to obtain the merkle-root (process-proof key 4).</li>
+          <li>Compute the SWF: run Argon2id with the derived seed, then iterate H to produce all intermediate states. Construct the Merkle tree to obtain the merkle-root (process-proof key 4).</li>
           <li>Compute the jitter-seal using the merkle-root as HKDF-Expand PRK input and jitter-binding.intervals as HMAC input.</li>
           <li>Assemble the jitter-binding structure (intervals, entropy-estimate, jitter-seal).</li>
           <li>Compute the entangled-mac using the merkle-root as HKDF-Expand PRK input and prev-hash, content-hash, jitter-binding, and physical-state as HMAC input.</li>
@@ -1189,7 +1202,7 @@ checkpoint-hash = SHA-256(
     <section anchor="swf-construction">
       <name>Sequential Work Function</name>
       <t>
-        PoP uses a composite Sequential Work Function (SWF) combining Argon2id <xref target="RFC9106"/> for memory-hardness with iterated SHA-256 for sequential ordering. This construction is NOT a Verifiable Delay Function in the formal sense <xref target="Boneh2018"/>; it does not provide efficient public verification of the delay claim from the output alone.
+        PoP uses a composite Sequential Work Function (SWF) combining Argon2id <xref target="RFC9106"/> for memory-hardness with iterated hashing (using the Evidence Packet's selected hash function H) for sequential ordering. This construction is NOT a Verifiable Delay Function in the formal sense <xref target="Boneh2018"/>; it does not provide efficient public verification of the delay claim from the output alone.
       </t>
       <t>
         Instead, verification relies on Merkle-sampled audit proofs: the Attester commits to a Merkle tree over intermediate states, and the Verifier checks a random subset of state transitions. This provides probabilistic verification in O(k * log n) time where k is the sample count and n is the iteration count.
@@ -1199,13 +1212,14 @@ checkpoint-hash = SHA-256(
         <name>Construction</name>
         <t>The SWF is computed as follows:</t>
         <artwork><![CDATA[
-state_0 = Argon2id(seed, salt=SHA-256("PoP-salt" || seed), t=1, m=65536, p=1, len=32)
+hash_len = output_length(H)          ; 32, 48, or 64 bytes
+state_0  = Argon2id(seed, salt=H("PoP-salt" || seed), t=1, m=65536, p=1, len=hash_len)
 for i in 1..iterations:
-    state_i = SHA-256(state_{i-1})
+    state_i = H(state_{i-1})
 merkle_root = MerkleTree(state_0, state_1, ..., state_iterations).root
         ]]></artwork>
         <t>
-          The salt for Argon2id MUST be derived from the seed: salt = SHA-256("PoP-salt" || seed). This ensures domain separation between the password and salt inputs per RFC 9106 best practices.
+          The salt for Argon2id MUST be derived from the seed: salt = H("PoP-salt" || seed). The Argon2id output length (<tt>len</tt>) MUST equal the output length of H. This ensures domain separation between the password and salt inputs per RFC 9106 best practices and guarantees that SWF state sizes are consistent with the selected hash algorithm.
         </t>
         <t>The merkle-root field (process-proof key 4) MUST contain the Merkle tree root computed over all intermediate states. The final iteration state (state_iterations) is verified as the leaf at index "iterations" in the Merkle tree.</t>
       </section>
@@ -1215,7 +1229,7 @@ merkle_root = MerkleTree(state_0, state_1, ..., state_iterations).root
         <t>The Verifier MUST:</t>
         <ol>
           <li>Recompute Argon2id from the declared seed to obtain state_0</li>
-          <li>For each sampled proof in the Merkle tree, verify the sibling path against the committed root and recompute SHA-256(state_i) to compare against state_{i+1}</li>
+          <li>For each sampled proof in the Merkle tree, verify the sibling path against the committed root and recompute H(state_i) to compare against state_{i+1}</li>
           <li>Verify the final iteration state (state_iterations) by checking its Merkle proof against the committed root (process-proof key 4, merkle-root). If the final-leaf index is not included in the Fiat-Shamir sample set, the Verifier SHOULD additionally derive or request a proof for it.</li>
         </ol>
         <t>
@@ -1231,14 +1245,14 @@ merkle_root = MerkleTree(state_0, state_1, ..., state_iterations).root
           selectively including only honestly-computed leaves:
         </t>
         <artwork><![CDATA[
-sample_seed = SHA-256(merkle_root || process-proof.input)
+sample_seed = H(merkle_root || process-proof.input)
 for j in 0..k-1:
     okm_j   = HKDF-Expand(sample_seed, I2OSP(j, 4), 4)
     index_j = OS2IP(okm_j) mod (iterations + 1)
         ]]></artwork>
         <t>
           Where k is the number of required samples (20 for CORE, 50 for
-          ENHANCED, 100 for MAXIMUM). HKDF-Expand is used with SHA-256 as
+          ENHANCED, 100 for MAXIMUM). HKDF-Expand is instantiated with H as
           the underlying hash function per <xref target="RFC5869"/>. I2OSP
           and OS2IP are the Integer-to-Octet-String and Octet-String-to-Integer
           primitives as defined in <xref target="RFC8017"/>. The Attester
@@ -1267,7 +1281,7 @@ for j in 0..k-1:
           checkpoint MUST be derived as:
         </t>
         <artwork><![CDATA[
-seed = SHA-256(
+seed = H(
     prev-hash ||
     CBOR-encode(jitter-binding.intervals) ||
     CBOR-encode(physical-state)
@@ -1279,7 +1293,7 @@ seed = SHA-256(
           derived as:
         </t>
         <artwork><![CDATA[
-seed = SHA-256(
+seed = H(
     prev-hash ||
     prev-swf-output ||
     CBOR-encode(jitter-binding.intervals) ||
@@ -1297,7 +1311,7 @@ seed = SHA-256(
           For the first checkpoint (sequence = 1), both modes use:
         </t>
         <artwork><![CDATA[
-seed = SHA-256(
+seed = H(
     CBOR-encode(document-ref) ||
     initial-jitter-sample
 )
@@ -1308,7 +1322,7 @@ seed = SHA-256(
           When jitter-binding and physical-state are absent (CORE profile
           without behavioral data), the seed MUST incorporate at least
           the prev-hash and a locally-generated 32-byte random nonce:
-          seed = SHA-256(prev-hash || local-nonce). For the first
+          seed = H(prev-hash || local-nonce). For the first
           checkpoint, the nonce provides non-determinism when
           initial-jitter-sample is unavailable. Implementations MUST
           NOT use a fully deterministic seed derivation.
@@ -1330,7 +1344,7 @@ seed = SHA-256(
           <li>Leaves: state_i for i in 0..iterations, where leaf-index = i
             and leaf-value = state_i. The total number of leaves is
             (iterations + 1).</li>
-          <li>Internal nodes: SHA-256(left_child || right_child)</li>
+          <li>Internal nodes: H(left_child || right_child)</li>
           <li>Tree structure: binary Merkle tree. If the number of leaves
             is not a power of 2, the tree is padded by duplicating the
             last leaf until the count reaches the next power of 2.</li>
@@ -1367,7 +1381,7 @@ seed = SHA-256(
           Expected wall-clock times for the Argon2id phase on reference
           hardware (DDR4, approximately 25 GB/s memory bandwidth):
           CORE approximately 50-100ms, ENHANCED approximately 50-100ms,
-          MAXIMUM approximately 100-200ms. The subsequent SHA-256 iterations
+          MAXIMUM approximately 100-200ms. The subsequent hash iterations
           add approximately 0.1ms per 1000 iterations.
         </t>
       </section>
@@ -1376,16 +1390,16 @@ seed = SHA-256(
         <name>Entangled MAC Computation</name>
         <t>
           When present, the entangled-mac field (checkpoint key 12) MUST be
-          computed as HMAC-SHA-256 <xref target="RFC2104"/> with the following
+          computed as HMAC-H <xref target="RFC2104"/> with the following
           inputs:
         </t>
         <artwork><![CDATA[
 mac-key  = HKDF-Expand(process-proof.merkle-root,
-                       "PoP-entangled-mac", 32)
+                       "PoP-entangled-mac", hash_len)
 mac-input = prev-hash || content-hash ||
             CBOR-encode(jitter-binding) ||
             CBOR-encode(physical-state)
-entangled-mac = HMAC-SHA-256(mac-key, mac-input)
+entangled-mac = HMAC-H(mac-key, mac-input)
         ]]></artwork>
         <t>
           Where HKDF-Expand is defined in <xref target="RFC5869"/>,
@@ -1404,13 +1418,13 @@ entangled-mac = HMAC-SHA-256(mac-key, mac-input)
         <name>Jitter Seal Computation</name>
         <t>
           When present, the jitter-seal field (jitter-binding key 3) MUST be
-          computed as HMAC-SHA-256 with the following inputs:
+          computed as HMAC-H with the following inputs:
         </t>
         <artwork><![CDATA[
 seal-key   = HKDF-Expand(process-proof.merkle-root,
-                         "PoP-jitter-seal", 32)
+                         "PoP-jitter-seal", hash_len)
 seal-input = CBOR-encode(jitter-binding.intervals)
-jitter-seal = HMAC-SHA-256(seal-key, seal-input)
+jitter-seal = HMAC-H(seal-key, seal-input)
         ]]></artwork>
         <t>
           The jitter-seal binds the timing measurements to the checkpoint's
@@ -1434,12 +1448,12 @@ jitter-seal = HMAC-SHA-256(seal-key, seal-input)
           An adversary who skips fraction f of iterations will be detected with probability 1-(1-f)^k where k is the number of sampled proofs. With k=20 and f=0.1, detection probability exceeds 0.878. With k=100 and f=0.05, detection probability exceeds 0.994.
         </t>
         <t>
-          This bound holds under the random oracle model for SHA-256. The
-          Attester commits to the Merkle root before sample positions are
-          derived via the Fiat-Shamir transform. Finding a root that biases
-          all k samples away from skipped iterations requires inverting
-          SHA-256, which is computationally infeasible under standard
-          assumptions.
+          This bound holds under the random oracle model for the selected
+          hash function H. The Attester commits to the Merkle root before
+          sample positions are derived via the Fiat-Shamir transform. Finding
+          a root that biases all k samples away from skipped iterations
+          requires inverting H, which is computationally infeasible under
+          standard assumptions.
         </t>
       </section>
 
@@ -1637,7 +1651,7 @@ jitter-seal = HMAC-SHA-256(seal-key, seal-input)
           Implementations SHOULD report quantified forgery cost estimates in Attestation Results. For CORE profile (10,000 iterations, m=65536 KiB):
         </t>
         <ul>
-          <li>Sequential computation time: Argon2id with t=1, m=65536 KiB requires approximately 50-100ms on consumer hardware (DDR4, ~25 GB/s memory bandwidth). The subsequent SHA-256 iterations add negligible time (&lt;1ms for 10,000 iterations).</li>
+          <li>Sequential computation time: Argon2id with t=1, m=65536 KiB requires approximately 50-100ms on consumer hardware (DDR4, ~25 GB/s memory bandwidth). The subsequent hash iterations add negligible time (&lt;1ms for 10,000 iterations).</li>
           <li>Memory requirement: 64 MiB per concurrent chain</li>
           <li>Energy cost per checkpoint: approximately $0.00001 USD at consumer electricity rates</li>
         </ul>
@@ -1725,7 +1739,7 @@ jitter-seal = HMAC-SHA-256(seal-key, seal-input)
       <section anchor="priv-minimization">
         <name>Data Minimization</name>
         <t>
-          PoP Evidence Packets do not contain document content. Content binding uses cryptographic hashes (SHA-256) which are computationally irreversible. The author-salted mode (hash-salt-mode=1) provides additional protection by preventing rainbow-table correlation across documents.
+          PoP Evidence Packets do not contain document content. Content binding uses cryptographic hashes (H, as selected by hash-algorithm) which are computationally irreversible. The author-salted mode (hash-salt-mode=1) provides additional protection by preventing rainbow-table correlation across documents.
         </t>
       </section>
 
@@ -1950,11 +1964,11 @@ jitter-seal = HMAC-SHA-256(seal-key, seal-input)
       <t>
         The following test vectors validate SWF implementations.
       </t>
-      <t>NOTE: These test vectors use the construction from this specification revision. The salt is derived as SHA-256("PoP-salt" || seed). Implementers should verify their Argon2id output matches state_0 before proceeding with SHA-256 iterations.</t>
+      <t>NOTE: These test vectors use SHA-256 (hash-algorithm value 1) and the construction from this specification revision. The salt is derived as H("PoP-salt" || seed) where H is SHA-256 for these vectors. Implementers should verify their Argon2id output matches state_0 before proceeding with hash iterations.</t>
       <artwork><![CDATA[
 Seed: "witnessd-genesis-v1"
 Seed (hex): 7769746e657373642d67656e657369732d7631
-Salt: SHA-256("PoP-salt" || seed)
+Salt: H("PoP-salt" || seed)  [H = SHA-256 for this vector]
 
 Argon2id Parameters:
   Time Cost (t): 1
