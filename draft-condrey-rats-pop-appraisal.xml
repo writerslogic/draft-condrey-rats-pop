@@ -106,8 +106,8 @@
       </t>
       <ol>
         <li><em>Structural Validation:</em> The Verifier MUST reject with verdict invalid (4) any Evidence Packet that: (a) fails CBOR decoding, (b) lacks CBOR tag 1129336656, (c) has version != 1, (d) is missing mandatory fields (keys 1-6 in evidence-packet, keys 1-9 in each checkpoint), or (e) contains CBOR types that do not match the CDDL schema.</li>
-        <li><em>Chain Integrity:</em> Verify the SHA-256 hash link between all checkpoints. Any break invalidates the entire Evidence Packet. The Verifier MUST set the verdict to invalid (4). The warnings field SHOULD include the checkpoint sequence number where the break was detected.</li>
-        <li><em>Temporal Order:</em> For each process-proof, recompute Argon2id from the declared seed to obtain state_0, then verify sampled Merkle proofs against the committed root (process-proof key 4, merkle-root). Verify that claimed-duration is within [0.5x, 3.0x] of the expected wall-clock time for the declared proof-params on reference hardware (defined as a system with DDR4 memory providing approximately 25 GB/s sustained bandwidth). Expected times are defined in <xref target="PoP-Protocol"/>, Mandatory SWF Parameters section.</li>
+        <li><em>Chain Integrity:</em> Verify the hash link (using the Evidence Packet's selected hash function H, as defined in <xref target="PoP-Protocol"/>) between all checkpoints. Any break invalidates the entire Evidence Packet. The Verifier MUST set the verdict to invalid (4). The warnings field SHOULD include the checkpoint sequence number where the break was detected.</li>
+        <li><em>Temporal Order:</em> For each process-proof, recompute Argon2id from the declared seed to obtain state_0, then verify sampled Merkle proofs against the committed root (process-proof key 4, merkle-root). Verify that claimed-duration is within [0.5x, 3.0x] of the expected wall-clock time for the declared proof-params on reference hardware (defined as a system with DDR4 memory providing approximately 25 GB/s sustained bandwidth). Expected times are defined in <xref target="PoP-Protocol"/>, Mandatory SWF Parameters section. When comparing timestamps across devices or against external time sources, the clock skew tolerances defined in <xref target="clock-skew-tolerance"/> MUST be applied.</li>
         <li><em>Entropy Threshold:</em> Independently estimate entropy from the jitter-binding intervals array using a standard entropy estimator (e.g., NIST SP 800-90B most common value estimator). Verify the independent estimate meets or exceeds 3.0 bits per inter-keystroke interval. The Attester's self-reported entropy-estimate field MUST NOT be relied upon. Low-entropy segments (below threshold) MUST be flagged as "Non-Biological."</li>
         <li><em>Entanglement:</em> Verify the HMAC value (entangled-mac) over the combined document, jitter, and physical state.</li>
         <li><em>State Matching:</em> Verify that the final checkpoint's content-hash matches the document-ref content-hash. Verify that the cumulative char-count from edit-deltas is consistent with the document-ref char-count.</li>
@@ -119,6 +119,64 @@
         lacking these fields, the Verifier MUST skip Steps 4 and 5 and note
         in the WAR warnings that behavioral analysis was not performed.
       </t>
+
+      <section anchor="clock-skew-tolerance">
+        <name>Clock Skew Tolerance</name>
+        <t>
+          Distributed PoP deployments involve timestamp comparisons across
+          independently-clocked devices (Attester, Verifier, OOB presence
+          challenge device). Because no two clocks are perfectly
+          synchronized, Verifiers MUST apply the following tolerances
+          when evaluating temporal evidence:
+        </t>
+        <dl spacing="normal">
+          <dt>Intra-chain monotonicity (same device):</dt>
+          <dd>Checkpoint timestamps within a single Evidence Packet
+            originate from the same local clock. The Verifier MUST
+            require strict monotonic ordering (each timestamp strictly
+            greater than its predecessor). No skew tolerance is applied;
+            any non-monotonic timestamp indicates tampering or a broken
+            implementation and MUST result in verdict invalid (4).</dd>
+
+          <dt>Cross-device validation (OOB-PC):</dt>
+          <dd>When evaluating presence-challenge response-time values
+            against the corresponding checkpoint's time window, the
+            Verifier MUST allow a maximum clock skew tolerance of
+            ±5000 milliseconds (±5 seconds) between the Attester's
+            local clock and the secondary device's clock. A
+            response-time that falls outside the checkpoint's time
+            window but within the ±5000 ms tolerance MUST NOT be
+            treated as a failure. Deployments using tightly
+            synchronized time sources (e.g., GPS-disciplined clocks,
+            PTP) MAY reduce this tolerance to ±1000 milliseconds by
+            local policy.</dd>
+
+          <dt>Attester-to-Verifier comparison:</dt>
+          <dd>The Verifier MUST NOT reject Evidence solely because
+            Attester-generated pop-timestamp values differ from the
+            Verifier's own wall clock. Temporal validation is primarily
+            relative: the Verifier checks intra-chain ordering,
+            duration plausibility, and cross-checkpoint consistency. If
+            the Verifier independently compares Evidence timestamps
+            against an external time source (e.g., a trusted timestamp
+            authority or the Verifier's NTP-synchronized clock), a
+            maximum skew tolerance of ±5000 milliseconds SHOULD be
+            applied. Evidence exceeding this tolerance SHOULD generate
+            a warning in the Attestation Result but MUST NOT
+            automatically invalidate the Evidence.</dd>
+        </dl>
+        <t>
+          The ±5000 ms default tolerance is based on observed NTP
+          synchronization performance across consumer devices, which
+          typically maintain accuracy within ±100 ms under normal
+          conditions but may drift to several seconds under adverse
+          network conditions, virtual machine clock steering, or mobile
+          device sleep/wake cycles. Implementations targeting
+          environments with known poor clock discipline (e.g., embedded
+          IoT devices) SHOULD document their tolerance requirements in
+          the profile-uri metadata.
+        </t>
+      </section>
     </section>
 
     <section anchor="forensic-assessment">
@@ -140,7 +198,7 @@
         <dd>Verifiers SHOULD analyze error patterns for consistency with human cognitive processing <xref target="Salthouse1986"/>: localized corrections near recent insertions, fractal self-similarity in revision patterns, and deletion-to-insertion ratios consistent with natural composition. Evidence exhibiting unnaturally low error rates (below 1 correction per 500 characters) or randomly distributed errors lacking positional correlation SHOULD be flagged.</dd>
 
         <dt>QR Presence Challenge (OOB-PC):</dt>
-        <dd>When presence-challenge structures are present in the Evidence Packet, Verifiers MUST verify that the response-time is within the corresponding checkpoint's time window and MUST validate the device-signature. NOTE: The Attester-side procedure for issuing presence challenges is specified in <xref target="PoP-Protocol"/>.</dd>
+        <dd>When presence-challenge structures are present in the Evidence Packet, Verifiers MUST verify that the response-time is within the corresponding checkpoint's time window (subject to the cross-device clock skew tolerance defined in <xref target="clock-skew-tolerance"/>) and MUST validate the device-signature. NOTE: The Attester-side procedure for issuing presence challenges is specified in <xref target="PoP-Protocol"/>.</dd>
 
         <dt>Session Consistency Analysis:</dt>
         <dd>Verifiers MUST analyze cross-checkpoint behavioral trends. IKI distributions should exhibit gradual drift consistent with fatigue effects. An abrupt change is defined as a shift in mean IKI between consecutive checkpoints exceeding 2 standard deviations of the session-wide IKI distribution. Verifiers MUST flag transitions exceeding this threshold as potential data source switching. Jitter-binding intervals across consecutive checkpoints MUST be checked for statistical independence (cross-checkpoint correlation below 0.3). Edit-delta patterns SHOULD be checked for non-stationarity consistent with human creative flow.</dd>
@@ -150,10 +208,38 @@
       </dl>
       <t>
         A conforming Verifier MUST evaluate all forensic mechanisms for
-        which the Evidence Packet contains sufficient data. Any single
-        triggered flag is sufficient to assign the suspicious verdict.
-        Verifiers MAY implement additional analysis mechanisms beyond
-        those defined in this specification.
+        which the Evidence Packet contains sufficient data. Verifiers
+        MAY implement additional analysis mechanisms beyond those
+        defined in this specification.
+      </t>
+      <t>
+        Individual forensic flags MUST be recorded in the
+        forensic-summary structure and reported as warnings in the
+        Attestation Result, but a single triggered flag alone is NOT
+        sufficient to assign the suspicious verdict. To account for
+        legitimate human variance (e.g., pauses for thought, fatigue,
+        environmental interruptions), the Verifier MUST apply the
+        following composite assessment before elevating to a suspicious
+        verdict:
+      </t>
+      <ol>
+        <li><em>Multi-flag threshold:</em> If two or more independent
+          forensic mechanisms trigger flags, the Verifier MUST assign
+          the suspicious verdict regardless of checkpoint coverage.</li>
+        <li><em>Sustained single-flag threshold:</em> If exactly one
+          forensic mechanism triggers, the Verifier MUST assign the
+          suspicious verdict only when the flag is sustained across
+          more than 30% of evaluated checkpoints. A flag affecting
+          30% or fewer of checkpoints MUST be reported as a warning
+          but MUST NOT elevate the verdict beyond authentic.</li>
+      </ol>
+      <t>
+        The 30% threshold reflects the observation that transient
+        anomalies (single low-entropy windows, brief mechanical pacing
+        during copy-paste sequences) are common in legitimate authoring
+        sessions, while systematic anomalies spanning a substantial
+        portion of the session are strongly indicative of synthetic
+        generation.
       </t>
 
       <section anchor="state-space-reconstruction">
@@ -467,6 +553,7 @@ attestation-result = {
     ? 10 => [* tstr],             ; warnings
     11 => bstr,                   ; verifier-signature (COSE_Sign1)
     12 => pop-timestamp,           ; created (appraisal timestamp)
+    ? 13 => forensic-summary,     ; forensic assessment summary
     * int => any,                 ; extension fields
 }
 
@@ -476,6 +563,21 @@ verdict = &(
     suspicious: 3,                ; anomalies detected
     invalid: 4,                   ; chain broken or forged
 )
+
+forensic-summary = {
+    1 => uint,                    ; flags-triggered
+    2 => uint,                    ; flags-evaluated
+    3 => uint,                    ; affected-checkpoints
+    4 => uint,                    ; total-checkpoints
+    ? 5 => [+ forensic-flag],    ; per-flag detail
+}
+
+forensic-flag = {
+    1 => tstr,                    ; mechanism (e.g., "SNR", "CLC")
+    2 => bool,                    ; triggered
+    3 => uint,                    ; affected-windows
+    4 => uint,                    ; total-windows
+}
 
 entropy-report = {
     1 => float32,                 ; timing-entropy (bits/sample)
@@ -590,23 +692,29 @@ attestation-tier = &(
       <section anchor="verdict-assignment">
         <name>Verdict Assignment</name>
         <t>
-          The Verifier MUST assign the verdict based on the appraisal
-          outcome:
+          The Verifier MUST assign the verdict based on the composite
+          forensic assessment defined in
+          <xref target="forensic-assessment"/>:
         </t>
         <dl>
           <dt>authentic (1):</dt>
-          <dd>All verification steps passed. Evidence is consistent with
-            human authorship. No forensic flags triggered.</dd>
+          <dd>All verification steps passed. Either no forensic flags
+            were triggered, or a single flag was triggered across 30%
+            or fewer of evaluated checkpoints. In the latter case, the
+            triggered flag MUST be reported in the warnings field and
+            forensic-summary.</dd>
           <dt>inconclusive (2):</dt>
           <dd>Verification steps passed but insufficient behavioral data
             available for forensic assessment (e.g., CORE profile without
             jitter-binding).</dd>
           <dt>suspicious (3):</dt>
-          <dd>One or more forensic flags triggered (low entropy, failed
-            CLC correlation, mechanical pacing detected) but chain integrity
-            is intact. When multiple forensic checks produce contradictory
-            results, the Verifier MUST assign the more conservative verdict
-            (suspicious over authentic).</dd>
+          <dd>Two or more independent forensic flags triggered, OR a
+            single flag sustained across more than 30% of evaluated
+            checkpoints. Chain integrity is intact. The forensic-summary
+            MUST detail which mechanisms triggered and the checkpoint
+            coverage of each flag. When multiple forensic checks produce
+            contradictory results, the Verifier MUST assign the more
+            conservative verdict (suspicious over authentic).</dd>
           <dt>invalid (4):</dt>
           <dd>Chain integrity broken, SWF verification failed, or
             structural validation error. Evidence cannot be trusted.</dd>
