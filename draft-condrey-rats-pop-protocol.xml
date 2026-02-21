@@ -565,7 +565,66 @@
 ]]></artwork>
         </figure>
         <t>
-          Each checkpoint interval (default 30 seconds, MUST be between 10 and 120 seconds) produces one link in the hash chain. The SWF computation runs continuously during the interval, binding the author's behavioral entropy and the platform's physical state to the elapsed wall-clock time. At session end, the Attester seals the complete chain into a .cpop Evidence Packet for conveyance to the Verifier.
+          Each checkpoint interval (default 30 seconds, MUST be between 10 and 120 seconds) produces one link in the hash chain. The SWF computation runs continuously during the interval, binding the author's behavioral entropy and the platform's physical state to the elapsed wall-clock time. At session end or rollover boundary, the Attester seals the chain into a .cpop Evidence Packet. For long-running authoring projects, the Session Continuation mechanism (<xref target="session-continuation"/>) allows a series of Evidence Packets to be cryptographically linked.
+        </t>
+      </section>
+
+      <section anchor="session-continuation">
+        <name>Session Continuation</name>
+        <t>
+          Long-running authoring projects (e.g., books, dissertations,
+          multi-day reports) may produce checkpoint chains that exceed
+          practical memory and file-size limits. To support these
+          workflows, the Attester MAY partition the authoring process
+          into a series of Evidence Packets linked by the
+          previous-packet-ref field (evidence-packet key 14).
+        </t>
+        <t>
+          Attesters SHOULD roll over to a new Evidence Packet when the
+          checkpoint count within the current packet approaches the
+          implementation's resource limits. A maximum of 10,000
+          checkpoints per Evidence Packet is RECOMMENDED.
+        </t>
+        <t>
+          The following rules govern session continuation:
+        </t>
+        <ol>
+          <li>The first Evidence Packet in a series MUST omit the
+            previous-packet-ref field (key 14) and MUST set
+            packet-sequence (key 15) to 1, or omit both fields
+            entirely. Omission of both fields indicates a standalone
+            (non-continuation) Evidence Packet.</li>
+          <li>Each subsequent Evidence Packet MUST include
+            previous-packet-ref containing the hash (using the series'
+            hash-algorithm) of the complete CBOR-encoded preceding
+            Evidence Packet. packet-sequence MUST be set to one greater
+            than the preceding packet's packet-sequence value.</li>
+          <li>The document-ref (evidence-packet key 5) MUST be
+            identical across all packets in a series. Verifiers MUST
+            reject a continuation packet whose document-ref differs
+            from the initial packet's.</li>
+          <li>The first checkpoint in a continuation packet MUST set
+            its prev-hash to the final checkpoint-hash of the preceding
+            Evidence Packet (not to H(CBOR-encode(document-ref)),
+            which is reserved for the series' first checkpoint). This
+            cryptographically links the two packets into one logical
+            chain.</li>
+          <li>Checkpoint sequence numbers (checkpoint key 1) MUST be
+            globally monotonic across the series. The first checkpoint
+            in a continuation packet MUST have a sequence number
+            strictly greater than the last checkpoint in the preceding
+            packet.</li>
+          <li>The Attester MUST seal the current Evidence Packet
+            before beginning a new one. Concurrent open packets for
+            the same document-ref MUST NOT exist.</li>
+        </ol>
+        <t>
+          This mechanism preserves the full cryptographic chain
+          integrity of a single Evidence Packet while bounding per-file
+          resource consumption. A Verifier appraising a series
+          reconstructs the logical chain by following
+          previous-packet-ref links from the final packet back to the
+          initial packet.
         </t>
       </section>
     </section>
@@ -892,8 +951,10 @@ evidence-packet = {
     ? 9 => profile-declaration,   ; profile
     ? 10 => [+ presence-challenge], ; QR/OOB proofs
     ? 11 => channel-binding,      ; TLS EKM binding
-    ; keys 14-17 reserved for future use
     ? 13 => content-tier,          ; Evidence Content Tier
+    ? 14 => hash-value,            ; previous-packet-ref
+    ? 15 => uint,                  ; packet-sequence (1-based)
+    ; keys 16-17 reserved for future use
     ? 18 => physical-liveness,    ; physical-liveness markers
     * int => any,                  ; extension fields
 }
@@ -1138,7 +1199,7 @@ checkpoint-hash = H(
         <t>
           Where H is the Evidence Packet's selected hash function, || denotes concatenation, and CBOR-encode produces deterministic CBOR per Section 4.2.1 of <xref target="RFC8949"/>.
         </t>
-        <t>For the first checkpoint in a chain (sequence = 1), prev-hash MUST be set to H(CBOR-encode(document-ref)). This anchors the chain to the document identity.</t>
+        <t>For the first checkpoint in the initial Evidence Packet of a series (or a standalone packet), prev-hash MUST be set to H(CBOR-encode(document-ref)). This anchors the chain to the document identity. For the first checkpoint in a continuation packet (previous-packet-ref present), prev-hash MUST be set to the final checkpoint-hash of the preceding Evidence Packet (see <xref target="session-continuation"/>).</t>
         <t>When jitter-binding and physical-state fields are absent (CORE profile), the checkpoint-hash MUST be computed without those terms: checkpoint-hash = H(prev-hash || content-hash || CBOR-encode(edit-delta) || process-proof.merkle-root).</t>
         <t>
           All components except process-proof.merkle-root are either
