@@ -7,9 +7,9 @@
 ; CBOR tag 1129791826 ("CWAR").
 ;
 ; All map keys use integer encoding per IETF CBOR conventions.
-; All floating-point fields MUST use 32-bit IEEE 754 binary32.
-; pop-timestamp values MUST use floating-point encoding with
-; at least millisecond precision.
+; All temporal and entropy measurements use unsigned integers (uint).
+; Timestamps and durations are in milliseconds. Entropy estimates
+; are in centibits (1/100th of a bit).
 
 ; ============================================================
 ; CBOR Tag Wrappers
@@ -34,8 +34,10 @@ evidence-packet = {
     ? 9 => profile-declaration,   ; profile
     ? 10 => [+ presence-challenge], ; QR/OOB proofs
     ? 11 => channel-binding,      ; TLS EKM binding
-    ; keys 14-17 reserved for future use
     ? 13 => content-tier,         ; Evidence Content Tier
+    ? 14 => hash-value,           ; previous-packet-ref
+    ? 15 => uint,                 ; packet-sequence (1-based)
+    ; keys 16-17 reserved for future use
     ? 18 => physical-liveness,    ; physical-liveness markers
     * int => any,                 ; extension fields
 }
@@ -52,8 +54,9 @@ checkpoint = {
     9 => process-proof,           ; SWF proof
     ? 10 => jitter-binding,       ; behavioral-entropy (ENHANCED+)
     ? 11 => physical-state,       ; physical-state binding (ENHANCED+)
-    ? 12 => bstr .size 32,        ; entangled-mac (ENHANCED+)
+    ? 12 => hash-digest,          ; entangled-mac (ENHANCED+)
     ? 13 => [+ self-receipt],     ; cross-tool composition receipts
+    ? 14 => [+ active-probe],    ; active liveness probes
     * int => any,                 ; extension fields
 }
 
@@ -63,7 +66,7 @@ document-ref = {
     3 => uint,                    ; byte-length
     4 => uint,                    ; char-count
     ? 5 => hash-salt-mode,        ; salting mode
-    ? 6 => bstr .size 32,         ; salt-commitment
+    ? 6 => hash-digest,           ; salt-commitment
 }
 
 ; ============================================================
@@ -73,10 +76,10 @@ document-ref = {
 process-proof = {
     1 => proof-algorithm,         ; algorithm id
     2 => proof-params,            ; SWF params
-    3 => bstr .size 32,           ; input (seed)
-    4 => bstr .size 32,           ; merkle-root
+    3 => hash-digest,             ; input (seed)
+    4 => hash-digest,             ; merkle-root
     5 => [+ merkle-proof],        ; sampled proofs
-    6 => float32,                 ; claimed-duration (seconds)
+    6 => uint,                    ; claimed-duration (milliseconds)
 }
 
 proof-params = {
@@ -88,8 +91,8 @@ proof-params = {
 
 merkle-proof = {
     1 => uint,                    ; leaf-index
-    2 => [+ bstr .size 32],       ; sibling-path
-    3 => bstr .size 32,           ; leaf-value
+    2 => [+ hash-digest],        ; sibling-path
+    3 => hash-digest,             ; leaf-value
 }
 
 ; ============================================================
@@ -97,9 +100,9 @@ merkle-proof = {
 ; ============================================================
 
 jitter-binding = {
-    1 => [+ float32],             ; intervals (ms)
-    2 => float32,                 ; entropy-estimate (bits)
-    3 => bstr .size 32,           ; jitter-seal (HMAC)
+    1 => [+ uint],                ; intervals (milliseconds)
+    2 => uint,                    ; entropy-estimate (centibits)
+    3 => hash-digest,             ; jitter-seal (HMAC)
 }
 
 edit-delta = {
@@ -115,7 +118,7 @@ edit-position = [
 ]
 
 physical-state = {
-    1 => [+ float32],             ; thermal (relative)
+    1 => [+ int],                 ; thermal (relative, millidegrees)
     2 => int,                     ; entropy-delta (signed)
     ? 3 => bstr .size 32,         ; kernel-commitment
 }
@@ -127,7 +130,7 @@ physical-liveness = {
 
 thermal-sample = [
     pop-timestamp,                ; sample time
-    float32,                      ; temperature delta
+    int,                          ; temperature delta (millidegrees)
 ]
 
 ; ============================================================
@@ -158,20 +161,31 @@ channel-binding = {
 ; Self-Receipt (Cross-Tool Composition)
 ; ============================================================
 
-; Self-receipts bind a paste event to an Evidence Packet
-; produced by the author's prior authoring environment.
-; General Tool Receipts (requiring external tool signatures)
-; will use the same checkpoint field (key 13) when defined.
-
 self-receipt = {
     1 => tstr,                    ; tool-id (source environment)
-    2 => hash-value,              ; output-commit (content hash at transfer)
-    3 => hash-value,              ; evidence-ref (hash of source packet)
+    2 => hash-value / compact-ref, ; output-commit
+    3 => hash-value / compact-ref, ; evidence-ref (source packet)
     4 => pop-timestamp,           ; transfer-time
 }
 
-; NOTE: Cross-session linking (continuation tokens) is deferred
-; to a future revision. See draft-condrey-rats-pop-protocol.
+; ============================================================
+; Active Probes (Liveness Challenges)
+; ============================================================
+
+active-probe = {
+    1 => probe-type,              ; challenge category
+    2 => pop-timestamp,           ; stimulus-time
+    3 => pop-timestamp,           ; response-time
+    4 => bstr,                    ; stimulus-data (challenge payload)
+    5 => bstr,                    ; response-data (captured response)
+    ? 6 => uint,                  ; response-latency (milliseconds)
+}
+
+probe-type = &(
+    galton-board: 1,              ; Galton invariant challenge
+    reflex-gate: 2,               ; motor reflex timing gate
+    spatial-target: 3,            ; spatial accuracy challenge
+)
 
 ; ============================================================
 ; Attestation Result / WAR (Appraisal)
@@ -191,6 +205,7 @@ attestation-result = {
     ? 10 => [* tstr],             ; warnings
     11 => bstr,                   ; verifier-signature (COSE_Sign1)
     12 => pop-timestamp,          ; created (appraisal timestamp)
+    ? 13 => forensic-summary,     ; forensic assessment summary
     * int => any,                 ; extension fields
 }
 
@@ -200,6 +215,21 @@ verdict = &(
     suspicious: 3,                ; anomalies detected
     invalid: 4,                   ; chain broken or forged
 )
+
+forensic-summary = {
+    1 => uint,                    ; flags-triggered
+    2 => uint,                    ; flags-evaluated
+    3 => uint,                    ; affected-checkpoints
+    4 => uint,                    ; total-checkpoints
+    ? 5 => [+ forensic-flag],    ; per-flag detail
+}
+
+forensic-flag = {
+    1 => tstr,                    ; mechanism (e.g., "SNR", "CLC")
+    2 => bool,                    ; triggered
+    3 => uint,                    ; affected-windows
+    4 => uint,                    ; total-windows
+}
 
 entropy-report = {
     1 => float32,                 ; timing-entropy (bits/sample)
@@ -268,6 +298,7 @@ content-tier = &(
 proof-algorithm = &(
     ; 1 is reserved for future use
     swf-argon2id: 20,
+    swf-argon2id-entangled: 21,   ; Entangled VDF Mode
 )
 
 hash-salt-mode = &(
@@ -286,8 +317,16 @@ hash-algorithm = &(
 ; ============================================================
 
 uuid = bstr .size 16
-pop-timestamp = #6.1(float32)      ; CBOR tag 1 (epoch-based, float32)
+pop-timestamp = #6.1(uint)        ; CBOR tag 1 (epoch milliseconds)
+hash-digest = bstr .size 32 /     ; SHA-256
+              bstr .size 48 /     ; SHA-384
+              bstr .size 64       ; SHA-512
 hash-value = {
     1 => hash-algorithm,
     2 => bstr,
+}
+compact-ref = {
+    1 => hash-algorithm,          ; algorithm used for full hash
+    2 => bstr .size (8..32),      ; truncated-digest (8-32 bytes)
+    3 => uint,                    ; prefix-length (bytes in digest)
 }
