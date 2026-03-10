@@ -269,6 +269,7 @@ attestation-result = {
     12 => pop-timestamp,          ; created (appraisal timestamp)
     ? 13 => forensic-summary,     ; forensic assessment summary
     ? 14 => confidence-tier,      ; baseline confidence level
+    ? 15 => effort-attribution,   ; human-to-tool attribution
     * int => any,                 ; extension fields
 }
 
@@ -317,6 +318,18 @@ cost-unit = &(
     usd: 1,
     cpu-hours: 2,
 )
+
+; ============================================================
+; Effort Attribution (Appraisal)
+; ============================================================
+
+effort-attribution = {
+    1 => float32,                 ; human-fraction (0.0 to 1.0)
+    2 => uint,                    ; human-checkpoints
+    3 => uint,                    ; receipt-checkpoints
+    ? 4 => uint,                  ; tool-attributed-chars
+    ? 5 => uint,                  ; total-chars
+}
 
 ; ============================================================
 ; Absence Claims (Appraisal)
