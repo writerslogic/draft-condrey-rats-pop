@@ -1068,6 +1068,7 @@ evidence-packet = {
     ? 9 => profile-declaration,   ; profile
     ? 10 => [+ presence-challenge], ; QR/OOB proofs
     ? 11 => channel-binding,      ; TLS EKM binding
+    ; key 12 reserved for future use
     ? 13 => content-tier,          ; Evidence Content Tier
     ? 14 => hash-value,            ; previous-packet-ref
     ? 15 => uint,                  ; packet-sequence (1-based)
@@ -1275,13 +1276,13 @@ confidence-tier = &(
 
 ; Base types
 uuid = bstr .size 16
-pop-timestamp = #6.1(uint)           ; CBOR tag 1 (epoch milliseconds)
+pop-timestamp = uint                  ; epoch milliseconds (unsigned)
 hash-digest = bstr .size 32 /        ; SHA-256
               bstr .size 48 /        ; SHA-384
               bstr .size 64          ; SHA-512
 hash-value = {
     1 => hash-algorithm,
-    2 => bstr,
+    2 => hash-digest,              ; length MUST match algorithm output
 }
 compact-ref = {
     1 => hash-algorithm,          ; algorithm used for full hash
@@ -1300,7 +1301,13 @@ defined in {{PoP-Appraisal}}.
 
 To ensure cross-architecture determinism, all temporal and entropy measurements MUST be encoded as unsigned integers (`uint`). Timestamps and durations are expressed in milliseconds. Entropy estimates are expressed in centibits (1/100th of a bit).
 
-pop-timestamp values MUST be positive (greater than zero). Verifiers MUST reject Evidence containing zero timestamps.
+pop-timestamp is a bare unsigned integer representing milliseconds since
+the Unix epoch (1970-01-01T00:00:00Z). CBOR tag 1 is intentionally NOT
+used because RFC 8949 Section 3.4.2 defines tag 1 as epoch seconds;
+PoP requires millisecond precision for inter-keystroke interval (IKI)
+measurements and jitter-binding timestamps. pop-timestamp values MUST
+be positive (greater than zero). Verifiers MUST reject Evidence
+containing zero timestamps.
 
 When hash-salt-mode is author-salted (1), the author generates a
 random salt of at least 16 bytes. The salt-commitment field MUST
@@ -1327,9 +1334,13 @@ bytes). When this document writes H(...) in formulas, the hash
 function used MUST be the one identified by hash-algorithm.
 
 Encoders MUST use CBOR unsigned integer (major type 0) or
-negative integer (major type 1) encoding for all PoP numeric
-fields. Floating-point encodings (CBOR major type 7) MUST NOT
-be used.
+negative integer (major type 1) encoding for Evidence Packet
+fields typed as `uint` or `int` in the CDDL. Floating-point
+encodings (CBOR major type 7) MUST NOT be used for these
+fields. Fields explicitly typed as `float32` in the CDDL
+(streaming-stats, session-behavioral-summary, entropy-report,
+forgery-cost-estimate) MUST use IEEE 754 half- or
+single-precision encoding (CBOR additional info 25 or 26).
 
 The `compact-ref` type provides a space-efficient
 alternative to full `hash-value` references in

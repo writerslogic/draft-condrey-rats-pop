@@ -751,11 +751,14 @@ time-window = {
 
 ; Shared type definitions reproduced from [PoP-Protocol] for reader
 ; convenience. In case of conflict, [PoP-Protocol] is authoritative.
-pop-timestamp = #6.1(uint)         ; CBOR tag 1 (epoch milliseconds)
+pop-timestamp = uint                ; epoch milliseconds (no tag 1; see [PoP-Protocol])
 hash-value = {
     1 => hash-algorithm,
-    2 => bstr,
+    2 => hash-digest,              ; length MUST match algorithm output
 }
+hash-digest = bstr .size 32 /        ; SHA-256
+              bstr .size 48 /        ; SHA-384
+              bstr .size 64          ; SHA-512
 hash-algorithm = &(
     sha256: 1,
     sha384: 2,

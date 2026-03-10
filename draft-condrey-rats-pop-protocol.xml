@@ -627,6 +627,72 @@
           initial packet.
         </t>
       </section>
+
+      <section anchor="behavioral-baseline">
+        <name>Behavioral Baseline Verification</name>
+        <t>
+          The Attester MAY include a baseline-verification structure
+          (evidence-packet key 19) that enables Verifiers to assess
+          behavioral consistency across writing sessions by the same
+          author. This mechanism strengthens authorship attribution
+          by comparing a session's behavioral summary against an
+          accumulated baseline digest.
+        </t>
+        <t>
+          A baseline-verification structure contains a
+          session-behavioral-summary capturing the current session's
+          typing metrics (IKI histogram, coefficient of variation,
+          Hurst exponent, cognitive pause frequency, duration, and
+          keystroke count). Optionally, it includes a baseline-digest
+          summarizing the author's historical behavioral profile and
+          a COSE_Sign1 signature over the CBOR-encoded digest.
+        </t>
+        <t>
+          The baseline-digest aggregates per-session statistics using
+          Welford's online algorithm (streaming-stats) for numerically
+          stable incremental computation of mean and variance. The
+          identity-fingerprint field MUST equal SHA-256 of the author's
+          Ed25519 public key, binding the digest to the signing
+          identity. The session-merkle-root field contains the root of
+          a Merkle Mountain Range over hashes of all sessions
+          incorporated into the digest, enabling efficient append-only
+          proof of session inclusion.
+        </t>
+        <t>
+          The confidence-tier field indicates the maturity of the
+          baseline. Attesters and Verifiers use the following
+          thresholds:
+        </t>
+        <dl>
+          <dt>population-reference (1):</dt>
+          <dd>0-4 sessions observed. Comparison is limited to
+            population-level human-vs-machine discrimination.</dd>
+          <dt>emerging (2):</dt>
+          <dd>5-9 sessions. Meaningful per-author consistency
+            emerges.</dd>
+          <dt>established (3):</dt>
+          <dd>10-19 sessions. Author identity is distinguishable
+            from other authors.</dd>
+          <dt>mature (4):</dt>
+          <dd>20 or more sessions. Full authorship attribution
+            with high confidence.</dd>
+        </dl>
+        <t>
+          During initial enrollment (fewer than one prior session),
+          the Attester MUST omit the baseline-digest and
+          digest-signature fields, including only the
+          session-behavioral-summary. The Verifier treats enrollment
+          packets as contributing to baseline accumulation without
+          performing baseline comparison.
+        </t>
+        <t>
+          When a baseline-digest is present, the digest-signature
+          field MUST also be present. Verifiers MUST verify the
+          COSE_Sign1 signature over the CBOR-encoded baseline-digest
+          and MUST verify that the identity-fingerprint equals
+          SHA-256 of the Evidence Packet's signing key.
+        </t>
+      </section>
     </section>
 
     <section anchor="threat-model">
@@ -951,11 +1017,13 @@ evidence-packet = {
     ? 9 => profile-declaration,   ; profile
     ? 10 => [+ presence-challenge], ; QR/OOB proofs
     ? 11 => channel-binding,      ; TLS EKM binding
+    ; key 12 reserved for future use
     ? 13 => content-tier,          ; Evidence Content Tier
     ? 14 => hash-value,            ; previous-packet-ref
     ? 15 => uint,                  ; packet-sequence (1-based)
     ; keys 16-17 reserved for future use
     ? 18 => physical-liveness,    ; physical-liveness markers
+    ? 19 => baseline-verification, ; behavioral baseline
     * int => any,                  ; extension fields
 }
 
@@ -1109,15 +1177,61 @@ probe-type = &(
     spatial-target: 3,            ; spatial accuracy challenge
 )
 
+; Behavioral Baseline Verification
+baseline-verification = {
+    ? 1 => baseline-digest,       ; omitted during enrollment
+    2 => session-behavioral-summary, ; current session metrics
+    ? 3 => bstr,                  ; digest-signature (COSE_Sign1)
+}
+
+baseline-digest = {
+    1 => uint,                    ; version (MUST be 1)
+    2 => uint,                    ; session-count
+    3 => uint,                    ; total-keystrokes
+    4 => streaming-stats,         ; iki-stats
+    5 => streaming-stats,         ; cv-stats
+    6 => streaming-stats,         ; hurst-stats
+    7 => [9* float32],            ; aggregate-iki-histogram
+    8 => streaming-stats,         ; pause-stats
+    9 => bstr .size 32,           ; session-merkle-root (MMR)
+    10 => confidence-tier,        ; baseline maturity
+    11 => pop-timestamp,          ; computed-at
+    12 => bstr .size 32,          ; identity-fingerprint
+}
+
+session-behavioral-summary = {
+    1 => [9* float32],            ; iki-histogram
+    2 => float32,                 ; iki-cv
+    3 => float32,                 ; hurst
+    4 => float32,                 ; pause-frequency
+    5 => uint,                    ; duration-secs
+    6 => uint,                    ; keystroke-count
+}
+
+streaming-stats = {
+    1 => uint,                    ; count
+    2 => float32,                 ; mean
+    3 => float32,                 ; m2 (Welford)
+    4 => float32,                 ; min
+    5 => float32,                 ; max
+}
+
+confidence-tier = &(
+    population-reference: 1,      ; 0-4 sessions
+    emerging: 2,                  ; 5-9 sessions
+    established: 3,               ; 10-19 sessions
+    mature: 4,                    ; 20+ sessions
+)
+
 ; Base types
 uuid = bstr .size 16
-pop-timestamp = #6.1(uint)           ; CBOR tag 1 (epoch milliseconds)
+pop-timestamp = uint                  ; epoch milliseconds (unsigned)
 hash-digest = bstr .size 32 /        ; SHA-256
               bstr .size 48 /        ; SHA-384
               bstr .size 64          ; SHA-512
 hash-value = {
     1 => hash-algorithm,
-    2 => bstr,
+    2 => hash-digest,              ; length MUST match algorithm output
 }
 compact-ref = {
     1 => hash-algorithm,          ; algorithm used for full hash
@@ -1135,7 +1249,13 @@ hash-algorithm = &(
         defined in <xref target="PoP-Appraisal"/>.
       </t>
       <t>To ensure cross-architecture determinism, all temporal and entropy measurements MUST be encoded as unsigned integers (<tt>uint</tt>). Timestamps and durations are expressed in milliseconds. Entropy estimates are expressed in centibits (1/100th of a bit).</t>
-      <t>pop-timestamp values MUST be positive (greater than zero). Verifiers MUST reject Evidence containing zero timestamps.</t>
+      <t>pop-timestamp is a bare unsigned integer representing milliseconds
+        since the Unix epoch (1970-01-01T00:00:00Z). CBOR tag 1 is
+        intentionally NOT used because RFC 8949 Section 3.4.2 defines tag 1
+        as epoch seconds; PoP requires millisecond precision for
+        inter-keystroke interval (IKI) measurements and jitter-binding
+        timestamps. pop-timestamp values MUST be positive (greater than
+        zero). Verifiers MUST reject Evidence containing zero timestamps.</t>
       <t>
         When hash-salt-mode is author-salted (1), the author generates a
         random salt of at least 16 bytes. The salt-commitment field MUST
@@ -1163,9 +1283,13 @@ hash-algorithm = &(
       </t>
       <t>
         Encoders MUST use CBOR unsigned integer (major type 0) or
-        negative integer (major type 1) encoding for all PoP numeric
-        fields. Floating-point encodings (CBOR major type 7) MUST NOT
-        be used.
+        negative integer (major type 1) encoding for Evidence Packet
+        fields typed as uint or int in the CDDL. Floating-point
+        encodings (CBOR major type 7) MUST NOT be used for these
+        fields. Fields explicitly typed as float32 in the CDDL
+        (streaming-stats, session-behavioral-summary, entropy-report,
+        forgery-cost-estimate) MUST use IEEE 754 half- or
+        single-precision encoding (CBOR additional info 25 or 26).
       </t>
       <t>
         The <tt>compact-ref</tt> type provides a space-efficient
@@ -1228,6 +1352,20 @@ hash-algorithm = &(
         and MAXIMUM profiles. When both are present, Verifiers MUST verify
         that per-checkpoint thermal values are consistent with the session-wide
         trajectory.
+      </t>
+      <t>
+        The baseline-verification structure (evidence-packet key 19)
+        carries per-session behavioral metrics and, when available, a
+        signed digest of the author's accumulated behavioral baseline.
+        The session-behavioral-summary uses a fixed 9-bin IKI histogram
+        with bin edges at 0, 50, 100, 150, 200, 300, 500, 1000, and
+        2000 milliseconds. The streaming-stats type within
+        baseline-digest records count, mean, M2 (Welford's sum of
+        squared differences from the mean), min, and max for each
+        tracked metric. This representation supports numerically
+        stable incremental updates without retaining raw sample data.
+        Appraisal of baseline-verification data is specified in
+        <xref target="PoP-Appraisal"/>.
       </t>
 
       <section anchor="checkpoint-hash-computation">

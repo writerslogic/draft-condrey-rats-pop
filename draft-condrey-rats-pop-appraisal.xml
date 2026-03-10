@@ -661,6 +661,7 @@ attestation-result = {
     11 => bstr,                   ; verifier-signature (COSE_Sign1)
     12 => pop-timestamp,           ; created (appraisal timestamp)
     ? 13 => forensic-summary,     ; forensic assessment summary
+    ? 14 => confidence-tier,      ; baseline confidence level
     * int => any,                 ; extension fields
 }
 
@@ -727,15 +728,24 @@ time-window = {
 
 ; Shared type definitions reproduced from [PoP-Protocol] for reader
 ; convenience. In case of conflict, [PoP-Protocol] is authoritative.
-pop-timestamp = #6.1(float32)      ; CBOR tag 1 (epoch-based, float32)
+pop-timestamp = uint                ; epoch milliseconds (no tag 1; see [PoP-Protocol])
 hash-value = {
     1 => hash-algorithm,
-    2 => bstr,
+    2 => hash-digest,              ; length MUST match algorithm output
 }
+hash-digest = bstr .size 32 /        ; SHA-256
+              bstr .size 48 /        ; SHA-384
+              bstr .size 64          ; SHA-512
 hash-algorithm = &(
     sha256: 1,
     sha384: 2,
     sha512: 3,
+)
+confidence-tier = &(
+    population-reference: 1,      ; 0-4 sessions
+    emerging: 2,                  ; 5-9 sessions
+    established: 3,               ; 10-19 sessions
+    mature: 4,                    ; 20+ sessions
 )
 attestation-tier = &(
     software-only: 1,             ; T1: AAL1
@@ -826,6 +836,57 @@ attestation-tier = &(
           <dd>Chain integrity broken, SWF verification failed, or
             structural validation error. Evidence cannot be trusted.</dd>
         </dl>
+      </section>
+
+      <section anchor="baseline-appraisal">
+        <name>Baseline Appraisal</name>
+        <t>
+          When the Evidence Packet includes a baseline-verification
+          structure (evidence-packet key 19, defined in
+          <xref target="PoP-Protocol"/>), the Verifier MUST perform
+          the following checks before incorporating baseline data
+          into the verdict:
+        </t>
+        <ol>
+          <li>If baseline-digest is present, verify the
+            digest-signature (COSE_Sign1) over the CBOR-encoded
+            baseline-digest. Reject the baseline data if signature
+            verification fails.</li>
+          <li>Verify that the identity-fingerprint in the
+            baseline-digest equals SHA-256 of the Evidence Packet's
+            signing key. This binds the baseline to the author
+            identity.</li>
+          <li>Compare the session-behavioral-summary against the
+            baseline-digest using Gaussian similarity on the
+            streaming-stats fields (iki-stats, cv-stats, hurst-stats,
+            pause-stats). For each metric, compute the z-score of the
+            session value against the baseline mean and variance.</li>
+        </ol>
+        <t>
+          The Verifier SHOULD weight baseline comparison results by
+          the confidence-tier: population-reference baselines provide
+          weak evidence, while mature baselines provide strong
+          per-author discrimination. The Verifier MUST include the
+          assessed confidence-tier in the Attestation Result (key 14)
+          when baseline-verification data was present and valid.
+        </t>
+        <t>
+          When the baseline-digest is absent (enrollment phase),
+          the Verifier SHOULD still evaluate the
+          session-behavioral-summary against population-level
+          distributions for human-vs-machine discrimination.
+          The confidence-tier in the Attestation Result MUST be
+          set to population-reference (1) in this case.
+        </t>
+        <t>
+          Baseline comparison does not constitute an independent
+          forensic flag for the purposes of verdict assignment.
+          Instead, it modulates the Verifier's confidence in the
+          verdict. A mature baseline match strengthens an authentic
+          verdict; a significant baseline deviation SHOULD be
+          reported as a warning but does not by itself trigger a
+          suspicious verdict.
+        </t>
       </section>
     </section>
 
