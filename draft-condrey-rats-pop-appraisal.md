@@ -502,7 +502,7 @@ detection event is triggered when:
 * The low-perplexity segment spans more than 100
   consecutive inserted characters.
 
-All three conditions must hold simultaneously to trigger
+All three conditions MUST hold simultaneously to trigger
 the flag. Paste events accompanied by self-receipt structures
 are excluded from this analysis, as they represent
 documented cross-tool composition rather than undisclosed
@@ -1127,11 +1127,11 @@ The forensic assessments defined in this document produce probabilistic confiden
 
 ## Stylometric De-anonymization {#sec-stylometric-risk}
 
-High-resolution behavioral data (keystroke timing, pause patterns) can enable author identification even when document content is not disclosed. Implementations SHOULD support Evidence Quantization to reduce timing resolution while maintaining forensic utility. The trade-off between forensic confidence and privacy should be documented for Relying Parties.
+High-resolution behavioral data (keystroke timing, pause patterns) can enable author identification even when document content is not disclosed. Implementations SHOULD support Evidence Quantization to reduce timing resolution while maintaining forensic utility. The trade-off between forensic confidence and privacy SHOULD be documented for Relying Parties.
 
 ## Assistive Mode Abuse {#sec-assistive-bypass}
 
-Adversaries may falsely claim assistive technology usage to bypass behavioral entropy checks. Verifiers SHOULD require consistent assistive mode declarations across sessions and MAY request additional out-of-band verification for mode changes. The WAR should indicate when assistive modes were active, as specified in the accessibility section above.
+Adversaries may falsely claim assistive technology usage to bypass behavioral entropy checks. Verifiers SHOULD require consistent assistive mode declarations across sessions and MAY request additional out-of-band verification for mode changes. The WAR SHOULD indicate when assistive modes were active, as specified in the accessibility section above.
 
 --- back
 

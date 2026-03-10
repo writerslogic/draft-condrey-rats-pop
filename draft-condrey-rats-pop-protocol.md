@@ -892,7 +892,7 @@ Using specialized hardware to compute SWF proofs faster than consumer hardware. 
 
 ### AE Spoofing {#ae-spoofing}
 
-Presenting a virtualized or modified Attesting Environment as genuine. In T1/T2 tiers, this is possible and Evidence should be weighted accordingly. T3/T4 tiers require hardware attestation that is difficult to spoof without physical access to the Secure Element.
+Presenting a virtualized or modified Attesting Environment as genuine. In T1/T2 tiers, this is possible and Evidence SHOULD be weighted accordingly. T3/T4 tiers require hardware attestation that is difficult to spoof without physical access to the Secure Element.
 
 ### Diversion Attack {#diversion-attack}
 
@@ -1904,7 +1904,7 @@ Error Topology Analysis:
 Temporal Cost:
 : Even successful retype attacks require real-time effort. A 5,000-word document with 10-second checkpoint intervals requires 8+ hours of continuous typing effort to forge. The attack does not scale economically for high-volume forgery.
 
-Relying Parties should be aware that retype attacks remain viable for short documents or high-value targets willing to invest real time. PoP provides graduated assurance proportional to document length and checkpoint density.
+Relying Parties SHOULD be aware that retype attacks remain viable for short documents or high-value targets willing to invest real time. PoP provides graduated assurance proportional to document length and checkpoint density.
 
 ## Relay and Replay Attack Defenses {#sec-relay-replay}
 
@@ -1926,7 +1926,7 @@ As analyzed in {{swf-acceleration}}, specialized hardware attacks are mitigated 
 
 ## Trust Gradation by Tier {#sec-tier-trust}
 
-Relying Parties should interpret Evidence according to its Attestation Tier:
+Relying Parties SHOULD interpret Evidence according to its Attestation Tier:
 
 T1 (Software-Only):
 : Provides temporal ordering and content binding only. Adversarial Attester can forge all behavioral claims. Suitable only for low-stakes applications or as supplementary evidence.

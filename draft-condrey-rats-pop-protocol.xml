@@ -792,7 +792,7 @@
         <section anchor="ae-spoofing">
           <name>AE Spoofing</name>
           <t>
-            Presenting a virtualized or modified Attesting Environment as genuine. In T1/T2 tiers, this is possible and Evidence should be weighted accordingly. T3/T4 tiers require hardware attestation that is difficult to spoof without physical access to the Secure Element.
+            Presenting a virtualized or modified Attesting Environment as genuine. In T1/T2 tiers, this is possible and Evidence SHOULD be weighted accordingly. T3/T4 tiers require hardware attestation that is difficult to spoof without physical access to the Secure Element.
           </t>
         </section>
 
@@ -1896,7 +1896,7 @@ jitter-seal = HMAC-H(seal-key, seal-input)
           <dd>Even successful retype attacks require real-time effort. A 5,000-word document with 10-second checkpoint intervals requires 8+ hours of continuous typing effort to forge. The attack does not scale economically for high-volume forgery.</dd>
         </dl>
         <t>
-          Relying Parties should be aware that retype attacks remain viable for short documents or high-value targets willing to invest real time. PoP provides graduated assurance proportional to document length and checkpoint density.
+          Relying Parties SHOULD be aware that retype attacks remain viable for short documents or high-value targets willing to invest real time. PoP provides graduated assurance proportional to document length and checkpoint density.
         </t>
       </section>
 
@@ -1930,7 +1930,7 @@ jitter-seal = HMAC-H(seal-key, seal-input)
       <section anchor="sec-tier-trust">
         <name>Trust Gradation by Tier</name>
         <t>
-          Relying Parties should interpret Evidence according to its Attestation Tier:
+          Relying Parties SHOULD interpret Evidence according to its Attestation Tier:
         </t>
         <dl>
           <dt>T1 (Software-Only):</dt>
