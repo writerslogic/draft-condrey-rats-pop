@@ -576,38 +576,7 @@ This section provides an end-to-end overview of the PoP protocol, mapping the me
 
 ## Passport Model Message Flow {#passport-model}
 
-PoP follows the RATS passport model ({{RFC9334}}, Section 8.1; {{RATS-Models}}) in which Evidence flows directly from the Attester to the Verifier, and Attestation Results flow from the Verifier to the Relying Party:
-
-~~~ ascii-art
-                        +------------+
-                        |  Endorser  |
-                        |  (HW Mfg)  |
-                        +------+-----+
-                               |
-                               | Endorsements
-                               | (TPM/SE certs,
-                               |  T3/T4 only)
-                               v
-+----------+  .cpop file +-------+-------+  .cwar file +-----------+
-|          |  Evidence   |               |  Attestation|           |
-| Attester +------------>+   Verifier    +------------>+  Relying  |
-| (Author  |             |               |  Results    |   Party   |
-|  App/AE) |             |               |  (WAR)      |(Publisher,|
-+----------+             +-------+-------+             |  Reader)  |
-                                 ^                     +-----------+
-                                 |
-                                 | Reference Values
-                                 | (behavioral patterns,
-                                 |  SWF parameters)
-                         +-------+-------+
-                         |   Reference   |
-                         |     Value     |
-                         |   Provider    |
-                         +---------------+
-~~~
-{: #fig-passport-model title="PoP Passport Model Message Flow"}
-
-In this model:
+PoP follows the RATS passport model ({{RFC9334}}, Section 8.1; {{RATS-Models}}) in which Evidence flows directly from the Attester to the Verifier, and Attestation Results flow from the Verifier to the Relying Party. The PoP-specific message flow is:
 
 1. The Attester (authoring application running in the Attesting Environment) collects behavioral telemetry during content creation and generates an Evidence Packet (.cpop) containing SWF proofs, jitter bindings, and physical state markers.
 2. The Evidence Packet is conveyed to a Verifier, which appraises chain integrity, temporal ordering, behavioral entropy, and content binding per the procedures defined in {{PoP-Appraisal}}.
@@ -1960,19 +1929,14 @@ As analyzed in {{swf-acceleration}}, specialized hardware attacks are mitigated 
 
 ## Trust Gradation by Tier {#sec-tier-trust}
 
-Relying Parties SHOULD interpret Evidence according to its Attestation Tier:
+Relying Parties SHOULD interpret Evidence according to its Attestation Tier. Detailed per-tier verification constraints are defined in {{PoP-Appraisal}}.
 
-T1 (Software-Only):
-: Provides temporal ordering and content binding only. Adversarial Attester can forge all behavioral claims. Suitable only for low-stakes applications or as supplementary evidence.
-
-T2 (Attested Software):
-: Adds platform attestation hooks but degrades gracefully. Provides moderate assurance against casual forgery but not determined adversaries.
-
-T3 (Hardware-Bound):
-: Signing keys are hardware-protected. Forgery requires physical access to the Secure Element. Provides strong assurance for most applications.
-
-T4 (Hardware-Hardened):
-: Anti-tamper evidence and PUF binding. Forgery requires invasive hardware attacks. Suitable for high-stakes legal or financial applications.
+| Tier | Forgery Resistance | Suitability |
+|------|-------------------|-------------|
+| T1 | Temporal ordering only; behavioral claims forgeable | Low-stakes or supplementary |
+| T2 | Moderate; platform attestation hooks | Casual forgery deterrence |
+| T3 | Strong; requires physical SE access | Most applications |
+| T4 | Invasive hardware attack required | High-stakes legal/financial |
 
 ## Forgery Cost Bounds {#sec-economic-bounds}
 
