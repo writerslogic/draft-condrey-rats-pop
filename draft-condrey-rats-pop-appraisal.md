@@ -266,15 +266,11 @@ Attester-to-Verifier comparison:
   a warning in the Attestation Result but MUST NOT
   automatically invalidate the Evidence.
 
-The ±5000 ms default tolerance is based on observed NTP
-synchronization performance across consumer devices, which
-typically maintain accuracy within ±100 ms under normal
-conditions but may drift to several seconds under adverse
-network conditions, virtual machine clock steering, or mobile
-device sleep/wake cycles. Implementations targeting
-environments with known poor clock discipline (e.g., embedded
-IoT devices) SHOULD document their tolerance requirements in
-the profile-uri metadata.
+The ±5000 ms default accommodates NTP variance across consumer
+devices, including VM clock steering and mobile sleep/wake
+cycles. Implementations targeting environments with known poor
+clock discipline SHOULD document their tolerance requirements
+in the profile-uri metadata.
 
 # Forensic Assessment Mechanisms {#forensic-assessment}
 
@@ -903,24 +899,16 @@ The confidence-tier in the Attestation Result MUST be
 set to population-reference (1) in this case.
 
 The Verifier SHOULD compute the baseline similarity score
-as a weighted combination of the following comparisons:
+as a weighted combination:
 
-* *IKI histogram similarity (weight 0.4):* Compute the
-  Bhattacharyya coefficient between the session's 9-bin
-  IKI histogram and the baseline's aggregate IKI histogram.
-  A coefficient below 0.5 indicates significant divergence.
-* *Coefficient of variation (weight 0.2):* Compute the
-  z-score of the session's iki-cv against the baseline's
-  cv-stats (mean and variance from streaming-stats).
-* *Hurst exponent (weight 0.2):* Compute the z-score of
-  the session's hurst value against the baseline's
-  hurst-stats.
-* *Pause frequency (weight 0.2):* Compute the z-score of
-  the session's pause-frequency against the baseline's
-  pause-stats.
+| Metric | Weight | Method | Flag Threshold |
+|--------|--------|--------|----------------|
+| IKI histogram | 0.4 | Bhattacharyya coefficient (session vs. baseline 9-bin) | coefficient < 0.5 |
+| IKI CV | 0.2 | z-score of session iki-cv vs. baseline cv-stats | \|z\| > 3.0 |
+| Hurst exponent | 0.2 | z-score of session hurst vs. baseline hurst-stats | \|z\| > 3.0 |
+| Pause frequency | 0.2 | z-score of session pause-frequency vs. baseline pause-stats | \|z\| > 3.0 |
 
-For z-score comparisons, a z-score exceeding 3.0 in
-absolute value indicates significant deviation. When the
+When the
 baseline has fewer than 5 sessions (population-reference
 tier), variance estimates are unreliable and z-score
 comparisons SHOULD be treated as informational only.
@@ -1053,43 +1041,19 @@ section.
 
 # Adversary Model {#adversary-model}
 
-This document inherits the adversary model defined in the Threat Model section of {{PoP-Protocol}}. The appraisal procedures defined herein assume the adversarial Attester capabilities and constraints specified there. The primary threat is an adversarial Attester -- an author who controls the Attesting Environment and seeks to generate Evidence for content they did not authentically author.
+This document inherits the adversary model defined in the Threat Model section of {{PoP-Protocol}}. The appraisal-specific defenses at each tier are:
 
-The following adversary tiers characterize the appraisal-specific
-threat landscape. Each tier defines the adversary capabilities that
-the corresponding Attestation Tier is designed to resist:
+Tier 1 (Casual):
+: SWF time-binding provides the primary defense. The T1 appraisal policy accepts the risk of basic retype attacks.
 
-Tier 1 Adversary (Casual):
-: Can manipulate system clocks and intercept local IPC. Cannot
-  perform real-time behavioral simulation exceeding basic cadence
-  matching. The T1 appraisal policy accepts the risk of basic
-  retype attacks; SWF time-binding provides the primary defense.
+Tier 2 (Motivated):
+: Multi-dimensional behavioral analysis (SNR + CLC + mechanical turk detection).
 
-Tier 2 Adversary (Motivated):
-: Can invest computational resources up to the cost of a
-  high-end workstation and study the verification algorithm to
-  craft evidence targeting specific thresholds. The T2 appraisal
-  policy defends through multi-dimensional behavioral analysis
-  (SNR + CLC + mechanical turk detection).
+Tier 3 (Professional):
+: HAT cross-validation and advanced forensic metrics (CLC, IKI, error topology, and SNR dynamics).
 
-Tier 3 Adversary (Professional):
-: Has access to custom hardware (FPGAs, specialized ASICs) for
-  SWF acceleration and sophisticated behavioral models trained on
-  human authorship data. The T3 appraisal policy defends through
-  HAT cross-validation and advanced forensic metrics (CLC, IKI,
-  error topology, and SNR dynamics).
-
-Tier 4 Adversary (Nation-State):
-: Has all Tier 3 capabilities plus: can potentially compromise
-  hardware manufacturer endorsement chains, deploy large-scale
-  parallel computation, and employ teams of human operators for
-  sophisticated retype attacks. The T4 appraisal policy defends
-  through the combined cost of SWF sequentiality,
-  multi-dimensional behavioral evidence synthesis (d >= 7
-  correlated dimensions), and hardware attestation integrity.
-  Even a Tier 4 adversary faces a minimum forgery cost equal to
-  the claimed authorship duration plus the hardware compromise
-  cost.
+Tier 4 (Nation-State):
+: Combined cost of SWF sequentiality, multi-dimensional behavioral evidence synthesis (d >= 7 correlated dimensions), and hardware attestation integrity. Minimum forgery cost equals the claimed authorship duration plus the hardware compromise cost.
 
 # Privacy Considerations {#privacy-considerations}
 
@@ -1174,12 +1138,10 @@ variance than keyboard. Adjusted thresholds:
 ## Input Method Editor (IME) Mode {#ime-input}
 
 CJK and other non-Latin input methods produce a
-composition-commit cycle: rapid phonetic keystrokes
-(e.g., pinyin, romaji) followed by a candidate selection
-pause, then a commit event that inserts one or more
-characters. This cycle produces timing patterns distinct
-from both direct keyboard input and clipboard paste.
-Adjusted thresholds:
+composition-commit cycle (rapid phonetic keystrokes, candidate
+selection pause, commit) with timing patterns distinct from
+both direct keyboard input and clipboard paste. Adjusted
+thresholds:
 
 * IKI analysis: Verifiers MUST account for the bimodal
   distribution of IME input. Composition-phase keystrokes

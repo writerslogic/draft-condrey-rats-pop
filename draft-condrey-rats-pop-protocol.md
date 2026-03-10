@@ -258,9 +258,7 @@ informative:
 
 --- abstract
 
-This document specifies the Proof of Process (PoP) Evidence Framework, a specialized profile of Remote Attestation Procedures (RATS) designed to validate the provenance of effort in digital authorship. Unlike traditional provenance, which tracks file custody, PoP attests to the continuous physical process of creation.
-
-The protocol defines a cryptographic mechanism for generating Evidence Packets utilizing a composite Sequential Work Function (SWF) to enforce temporal monotonicity, jitter seals to bind behavioral entropy (human inter-keystroke timing) to the checkpoint chain, and entangled MACs to bind physical state to the document. Technical specifications for wire formats, sequential work functions, and hardware-anchored trust are provided.
+This document specifies the Proof of Process (PoP) Evidence Framework, a specialized profile of Remote Attestation Procedures (RATS) designed to validate the provenance of effort in digital authorship. Unlike traditional provenance, which tracks file custody, PoP attests to the continuous physical process of creation by entangling content hashes with temporal, behavioral, and physical constraints. Technical specifications for wire formats, sequential work functions, and hardware-anchored trust are provided.
 
 --- to_be_removed_note_Discussion_Venues
 
@@ -284,14 +282,11 @@ By entangling content hashes with these physical constraints, this protocol enab
 # Problem Statement {#problem-statement}
 
 Digital documents lack creation-process provenance. Existing
-cryptographic mechanisms address complementary but insufficient
-aspects of this gap: COSE signatures {{RFC9052}}
-prove key possession, trusted timestamps
-{{RFC3161}} prove that content existed at a given
-time, and media provenance standards such as C2PA
-{{C2PA}} track the custody and transformation of
-digital assets after creation. None of these mechanisms reveals
-how a document was produced or how it evolved during authorship.
+cryptographic mechanisms address complementary aspects -- COSE
+signatures {{RFC9052}} prove key possession, trusted timestamps
+{{RFC3161}} prove temporal existence, and media provenance
+standards {{C2PA}} track post-creation custody -- but none
+reveals how a document was produced or evolved during authorship.
 
 Non-cryptographic approaches have emerged to address this gap,
 but each carries fundamental limitations:
@@ -548,71 +543,32 @@ This section defines the PoP system model in terms of the RATS architecture {{RF
 
 ## RATS Entity Roles {#rats-entity-roles}
 
-PoP maps to RATS entity roles as follows:
+PoP maps to RATS entity roles {{RFC9334}} as follows. Verifier and Relying Party follow standard RATS definitions; the remaining roles have PoP-specific characteristics:
 
 Attester:
-: The authoring application and its host platform. The Attester generates Evidence Packets (.cpop) containing behavioral entropy, physical state markers, and SWF proofs. Unlike traditional RATS deployments, the Attester in PoP is operated by the entity whose claims are being verified (the author).
+: The authoring application and its host platform. Unlike traditional RATS deployments, the Attester is operated by the entity whose claims are being verified (the author).
 
 Attesting Environment (AE):
-: The software and hardware components that collect telemetry and generate cryptographic bindings. This includes the authoring application, operating system interfaces for entropy collection, and hardware Secure Elements (TPM/SE) when available.
-
-Verifier:
-: An entity that appraises Evidence Packets and produces Attestation Results. Verifiers may be operated by publishers, platforms, or independent third parties. Verifier logic is specified in {{PoP-Appraisal}}.
-
-Relying Party:
-: Consumers of Attestation Results who make trust decisions based on the appraisal. This includes publishers, readers, or automated systems that need authenticity assurance.
+: The authoring application, OS entropy interfaces, and hardware Secure Elements (TPM/SE) when available.
 
 Endorser:
-: Entities that vouch for the Attesting Environment's integrity by issuing Endorsements. In PoP, Endorsers include hardware manufacturers that issue TPM endorsement certificates and platform attestation credentials for T3/T4 tiers.
+: Hardware manufacturers that issue TPM endorsement certificates and platform attestation credentials for T3/T4 tiers.
 
 Reference Value Provider:
-: Entities that supply Reference Values for appraisal. In PoP, this includes the PoP specification itself (defining expected behavioral patterns and SWF parameters) and calibration services that provide updated forensic baselines.
+: The PoP specification itself (behavioral patterns, SWF parameters) and calibration services that provide updated forensic baselines.
 
 ## Compatibility with RATS Architecture {#rats-compatibility}
 
-PoP implements a specialized RATS profile with a critical trust inversion: in traditional remote attestation, the Attester is a device whose owner (Relying Party) wants assurance about its state. The adversary is typically external -- malware, network attackers, or supply chain threats.
+PoP extends RATS from device state attestation to process attestation, verifying that a physical process (human authorship) occurred as claimed. The fundamental problem structure is identical: an Attester generates Evidence, conveys it to a Verifier, and the Verifier produces Attestation Results for Relying Parties.
 
-In PoP, the Attester is operated by the author, and the Relying Party (publisher, reader) has no privileged access to the authoring environment. The primary adversary is the Attester operator themselves. This fundamental inversion shapes the entire security model:
+PoP implements a critical trust inversion: in traditional remote attestation, the adversary is external (malware, network attackers). In PoP, the Attester is operated by the author, and the primary adversary is the Attester operator themselves. This inversion shapes the security model:
 
 * Evidence must be unforgeable by the entity generating it
 * Temporal claims must be bound to physical constraints the Attester cannot circumvent
 * Behavioral entropy must be computationally expensive to simulate
 * Hardware attestation provides value only when the hardware root of trust is genuinely inaccessible to the Attester operator
 
-Despite this inversion, PoP maintains compatibility with RATS message flows and data formats, enabling integration with existing RATS infrastructure where appropriate.
-
-## Applicability to RATS Architecture {#rats-applicability}
-
-PoP extends the RATS framework beyond traditional device state
-attestation to process attestation, verifying that a physical
-process (human authorship) occurred as claimed. This extension
-is justified because the fundamental problem structure is
-identical: an Attester generates Evidence, conveys it to a
-Verifier, and the Verifier produces Attestation Results for
-Relying Parties. The RATS entity roles, message flows, and
-data format conventions apply directly.
-
-The adversarial Attester model
-(see {{adversarial-attester}}) inverts the
-standard RATS trust assumption. The RATS architecture
-accommodates this through its layered trust model and
-configurable Appraisal Policies
-({{RFC9334}}, Section 8). The Experimental
-category is appropriate for exploring this novel application
-of RATS.
-
-The protocol document defines Evidence format, collection,
-and conveyance, topics that
-align with the RATS charter. The companion appraisal document
-({{PoP-Appraisal}}) defines domain-specific
-verification procedures for PoP Evidence; while the RATS
-charter scopes out general appraisal policy formats, every
-RATS deployment requires domain-specific appraisal criteria
-to produce meaningful Attestation Results. The emerging SEAT
-working group ({{SEAT-EXPAT}}), which addresses
-integration of remote attestation with secure channel
-protocols, represents a complementary venue for the transport
-and channel-binding aspects of this work.
+The RATS architecture accommodates this through its layered trust model and configurable Appraisal Policies ({{RFC9334}}, Section 8). The companion appraisal document ({{PoP-Appraisal}}) defines domain-specific verification procedures. The Experimental category is appropriate for exploring this novel application of RATS.
 
 # Protocol Overview {#protocol-overview}
 
@@ -1349,15 +1305,11 @@ defined in {{PoP-Appraisal}}.
 To ensure cross-architecture determinism, all temporal and entropy measurements MUST be encoded as unsigned integers (`uint`). Timestamps and durations are expressed in milliseconds. Entropy estimates are expressed in centibits (1/100th of a bit).
 
 pop-timestamp is a bare unsigned integer representing milliseconds since
-the Unix epoch (1970-01-01T00:00:00Z). CBOR tag 1 is intentionally NOT
-used because RFC 8949 Section 3.4.2 defines tag 1 as epoch seconds;
-PoP requires millisecond precision for inter-keystroke interval (IKI)
-measurements and jitter-binding timestamps. The timestamp semantics
-are unambiguous because pop-timestamp appears only within typed map
-entries (evidence-packet key 4, checkpoint key 3, baseline-digest
-key 11, attestation-result key 12) where the CDDL schema defines the
-interpretation. pop-timestamp values MUST be positive (greater than
-zero). Verifiers MUST reject Evidence containing zero timestamps.
+the Unix epoch (1970-01-01T00:00:00Z). CBOR tag 1 is not used because
+RFC 8949 Section 3.4.2 defines it as epoch seconds; PoP requires
+millisecond precision for IKI measurements and jitter-binding
+timestamps. pop-timestamp values MUST be positive (greater than zero).
+Verifiers MUST reject Evidence containing zero timestamps.
 
 When hash-salt-mode is author-salted (1), the author generates a
 random salt of at least 16 bytes. The salt-commitment field MUST
@@ -1541,16 +1493,10 @@ This ordering ensures that each subsequent computation can reference the outputs
 ## Evidence Protection {#evidence-protection}
 
 For T3 and T4 Attestation Tiers, Evidence Packets MUST be wrapped
-in a COSE_Sign1 envelope. For T1 and T2 tiers, COSE_Sign1 wrapping
-is RECOMMENDED. The COSE_Sign1 envelope
-{{RFC9052}} provides cryptographic protection during
-transport. The COSE_Sign1 structure provides:
-
-* Payload: the CBOR-encoded evidence-packet (including CBOR tag
-  1129336656)
-* Protected headers: algorithm identifier (ES256 or EdDSA
-  RECOMMENDED)
-* Signature: computed using the Attester's signing key
+in a COSE_Sign1 envelope {{RFC9052}}. For T1 and T2 tiers, COSE_Sign1
+wrapping is RECOMMENDED. The COSE_Sign1 payload is the complete
+CBOR-encoded evidence-packet including tag 1129336656; ES256 or
+EdDSA is RECOMMENDED for the algorithm identifier.
 
 For T3/T4 tiers, the signing key MUST be bound to a hardware
 Secure Element (TPM or platform SE). For T1/T2 tiers, a
@@ -1646,8 +1592,7 @@ A minimum of 20 sampled proofs is REQUIRED for CORE profile. ENHANCED profile re
 ## Fiat-Shamir Sample Derivation {#fiat-shamir-sampling}
 
 Merkle proof sample positions MUST be derived deterministically
-using a Fiat-Shamir transform to prevent the Attester from
-selectively including only honestly-computed leaves:
+via Fiat-Shamir transform:
 
 ~~~
 sample_seed = H(merkle_root || process-proof.input)
