@@ -893,6 +893,29 @@ distributions for human-vs-machine discrimination.
 The confidence-tier in the Attestation Result MUST be
 set to population-reference (1) in this case.
 
+The Verifier SHOULD compute the baseline similarity score
+as a weighted combination of the following comparisons:
+
+* *IKI histogram similarity (weight 0.4):* Compute the
+  Bhattacharyya coefficient between the session's 9-bin
+  IKI histogram and the baseline's aggregate IKI histogram.
+  A coefficient below 0.5 indicates significant divergence.
+* *Coefficient of variation (weight 0.2):* Compute the
+  z-score of the session's iki-cv against the baseline's
+  cv-stats (mean and variance from streaming-stats).
+* *Hurst exponent (weight 0.2):* Compute the z-score of
+  the session's hurst value against the baseline's
+  hurst-stats.
+* *Pause frequency (weight 0.2):* Compute the z-score of
+  the session's pause-frequency against the baseline's
+  pause-stats.
+
+For z-score comparisons, a z-score exceeding 3.0 in
+absolute value indicates significant deviation. When the
+baseline has fewer than 5 sessions (population-reference
+tier), variance estimates are unreliable and z-score
+comparisons SHOULD be treated as informational only.
+
 Baseline comparison does not constitute an independent
 forensic flag for the purposes of verdict assignment.
 Instead, it modulates the Verifier's confidence in the
@@ -1128,6 +1151,30 @@ The forensic assessments defined in this document produce probabilistic confiden
 ## Stylometric De-anonymization {#sec-stylometric-risk}
 
 High-resolution behavioral data (keystroke timing, pause patterns) can enable author identification even when document content is not disclosed. Implementations SHOULD support Evidence Quantization to reduce timing resolution while maintaining forensic utility. The trade-off between forensic confidence and privacy SHOULD be documented for Relying Parties.
+
+## Baseline Biometric Re-identification {#sec-baseline-privacy}
+
+The baseline-digest accumulates a persistent behavioral
+biometric profile (IKI histogram, coefficient of variation,
+Hurst exponent, pause frequency statistics) bound to a stable
+identity-fingerprint. This profile can enable author
+re-identification across sessions even when document content
+is not disclosed. The 9-bin IKI histogram alone provides
+sufficient discriminative power to distinguish authors within
+populations of moderate size.
+
+Implementations SHOULD offer authors the option to omit the
+baseline-digest from exported Evidence Packets. When baseline
+data is included, the identity-fingerprint (SHA-256 of the
+signing key) acts as a persistent pseudonym; compromise of
+this pseudonym linkage enables correlation of all Evidence
+Packets by the same author.
+
+Verifiers that store baseline data for longitudinal analysis
+MUST apply the same data protection requirements as other
+biometric data under applicable regulations. Baseline data
+MUST NOT be shared between Verifiers without explicit author
+consent.
 
 ## Assistive Mode Abuse {#sec-assistive-bypass}
 

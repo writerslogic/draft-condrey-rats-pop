@@ -142,7 +142,7 @@ thermal-sample = [
 baseline-verification = {
     ? 1 => baseline-digest,       ; omitted during enrollment
     2 => session-behavioral-summary, ; current session metrics
-    ? 3 => bstr,                  ; digest-signature (COSE_Sign1)
+    ? 3 => bstr .cbor COSE_Sign1,  ; digest-signature
 }
 
 baseline-digest = {

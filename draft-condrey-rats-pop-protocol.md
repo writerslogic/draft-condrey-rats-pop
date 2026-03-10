@@ -788,7 +788,11 @@ Ed25519 public key, binding the digest to the signing
 identity. The session-merkle-root field contains the root of
 a Merkle Mountain Range over hashes of all sessions
 incorporated into the digest, enabling efficient append-only
-proof of session inclusion.
+proof of session inclusion. Attesters that have not yet
+implemented session-level MMR tracking MUST set
+session-merkle-root to 32 zero bytes. Verifiers MUST treat
+a zero session-merkle-root as providing no session inclusion
+proof and MUST NOT elevate the confidence-tier based on it.
 
 The confidence-tier field indicates the maturity of the
 baseline. Attesters and Verifiers use the following
@@ -893,6 +897,38 @@ Using specialized hardware to compute SWF proofs faster than consumer hardware. 
 ### AE Spoofing {#ae-spoofing}
 
 Presenting a virtualized or modified Attesting Environment as genuine. In T1/T2 tiers, this is possible and Evidence SHOULD be weighted accordingly. T3/T4 tiers require hardware attestation that is difficult to spoof without physical access to the Secure Element.
+
+### Baseline Forgery {#baseline-forgery}
+
+An adversarial Attester manufactures a synthetic baseline by
+performing enrollment sessions using the same synthetic
+behavioral patterns intended for subsequent forgery. This
+attack is feasible because the baseline-digest is accumulated
+and signed entirely within the Attesting Environment. The
+adversary can establish a "consistent" but entirely synthetic
+baseline, then present forgery sessions that match it.
+
+This attack is mitigated by:
+
+* *Baseline is non-verdict:* Baseline comparison modulates
+  Verifier confidence but does not constitute an independent
+  forensic flag (see {{PoP-Appraisal}}). The forensic
+  mechanisms (SNR, CLC, perplexity, cadence analysis) operate
+  independently of baseline data.
+* *Cross-metric consistency:* An adversary must simultaneously
+  maintain consistent IKI histograms, coefficient of
+  variation, Hurst exponent, and cognitive pause frequency
+  across all forged sessions. Synthesizing coherent values
+  for all four metrics is substantially harder than spoofing
+  any single metric.
+* *Hardware binding (T3/T4):* When the signing key is
+  hardware-bound, the adversary cannot create a separate
+  baseline under a different key and swap it in.
+
+Verifiers MUST NOT treat baseline consistency as independent
+evidence of authenticity. The confidence-tier field reflects
+statistical robustness of the baseline, not trustworthiness
+of the Attesting Environment.
 
 ### Diversion Attack {#diversion-attack}
 
@@ -1232,7 +1268,7 @@ probe-type = &(
 baseline-verification = {
     ? 1 => baseline-digest,       ; omitted during enrollment
     2 => session-behavioral-summary, ; current session metrics
-    ? 3 => bstr,                  ; digest-signature (COSE_Sign1)
+    ? 3 => bstr .cbor COSE_Sign1,  ; digest-signature
 }
 
 baseline-digest = {
@@ -1305,9 +1341,12 @@ pop-timestamp is a bare unsigned integer representing milliseconds since
 the Unix epoch (1970-01-01T00:00:00Z). CBOR tag 1 is intentionally NOT
 used because RFC 8949 Section 3.4.2 defines tag 1 as epoch seconds;
 PoP requires millisecond precision for inter-keystroke interval (IKI)
-measurements and jitter-binding timestamps. pop-timestamp values MUST
-be positive (greater than zero). Verifiers MUST reject Evidence
-containing zero timestamps.
+measurements and jitter-binding timestamps. The timestamp semantics
+are unambiguous because pop-timestamp appears only within typed map
+entries (evidence-packet key 4, checkpoint key 3, baseline-digest
+key 11, attestation-result key 12) where the CDDL schema defines the
+interpretation. pop-timestamp values MUST be positive (greater than
+zero). Verifiers MUST reject Evidence containing zero timestamps.
 
 When hash-salt-mode is author-salted (1), the author generates a
 random salt of at least 16 bytes. The salt-commitment field MUST
@@ -1338,9 +1377,13 @@ negative integer (major type 1) encoding for Evidence Packet
 fields typed as `uint` or `int` in the CDDL. Floating-point
 encodings (CBOR major type 7) MUST NOT be used for these
 fields. Fields explicitly typed as `float32` in the CDDL
-(streaming-stats, session-behavioral-summary, entropy-report,
-forgery-cost-estimate) MUST use IEEE 754 half- or
-single-precision encoding (CBOR additional info 25 or 26).
+MUST use IEEE 754 single-precision encoding (CBOR additional
+info 26). Half-precision (additional info 25) MUST NOT be
+used, as it provides insufficient precision for streaming
+variance computations. These float32 fields appear in both
+Evidence Packet structures (streaming-stats,
+session-behavioral-summary) and Attestation Result structures
+(entropy-report, forgery-cost-estimate).
 
 The `compact-ref` type provides a space-efficient
 alternative to full `hash-value` references in
