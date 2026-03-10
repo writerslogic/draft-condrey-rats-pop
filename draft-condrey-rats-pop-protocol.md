@@ -1,7 +1,7 @@
 ---
 v: 3
 docname: draft-condrey-rats-pop-protocol-latest
-title: "Proof of Process (PoP): Architecture and Evidence Format"
+title: "Cryptographic Proof of Process (PoP): Architecture and Evidence Format"
 abbrev: PoP Protocol
 category: exp
 ipr: trust200902
@@ -45,7 +45,7 @@ normative:
   RFC9106:
   RFC9334:
   PoP-Appraisal:
-    title: "Proof of Process (PoP): Forensic Appraisal and Security Model"
+    title: "Cryptographic Proof of Process (PoP): Forensic Appraisal and Security Model"
     author:
       - fullname: David Condrey
         initials: D.
@@ -258,7 +258,7 @@ informative:
 
 --- abstract
 
-This document specifies the Proof of Process (PoP) Evidence Framework, a specialized profile of Remote Attestation Procedures (RATS) designed to validate the provenance of effort in digital authorship. Unlike traditional provenance, which tracks file custody, PoP attests to the continuous physical process of creation by entangling content hashes with temporal, behavioral, and physical constraints. Technical specifications for wire formats, sequential work functions, and hardware-anchored trust are provided.
+This document specifies the Cryptographic Proof of Process (PoP) Evidence Framework, a specialized profile of Remote Attestation Procedures (RATS) designed to validate the provenance of effort in digital authorship. Unlike traditional provenance, which tracks file custody, PoP attests to the continuous physical process of creation by entangling content hashes with temporal, behavioral, and physical constraints. Technical specifications for wire formats, sequential work functions, and hardware-anchored trust are provided.
 
 --- to_be_removed_note_Discussion_Venues
 
@@ -269,7 +269,7 @@ Source for this draft and an issue tracker can be found at
 
 # Introduction {#introduction}
 
-The rapid proliferation of generative artificial intelligence has created an authenticity crisis in digital discourse. While traditional provenance tracks the "custody of pixels," it fails to attest to the human-driven process of creation. This document specifies the Proof of Process (PoP) protocol, which extends the RATS architecture {{RFC9334}} to validate the "provenance of effort."
+The rapid proliferation of generative artificial intelligence has created an authenticity crisis in digital discourse. While traditional provenance tracks the "custody of pixels," it fails to attest to the human-driven process of creation. This document specifies the Cryptographic Proof of Process (PoP) protocol, which extends the RATS architecture {{RFC9334}} to validate the "provenance of effort."
 
 Unlike traditional attestation which captures static system state, PoP attests to a continuous physical process. Its Sequential Work Function (SWF) enforces temporal monotonicity, jitter seals bind behavioral entropy (human inter-keystroke timing) to the checkpoint chain, and entangled MACs bind physical state (thermodynamics) to the document's evolution.
 
@@ -568,7 +568,7 @@ PoP implements a critical trust inversion: in traditional remote attestation, th
 * Behavioral entropy must be computationally expensive to simulate
 * Hardware attestation provides value only when the hardware root of trust is genuinely inaccessible to the Attester operator
 
-The RATS architecture accommodates this through its layered trust model and configurable Appraisal Policies ({{RFC9334}}, Section 8). The companion appraisal document ({{PoP-Appraisal}}) defines domain-specific verification procedures. The Experimental category is appropriate for exploring this novel application of RATS.
+The RATS architecture accommodates this through its layered trust model and configurable Appraisal Policies ({{RFC9334}}). The companion appraisal document ({{PoP-Appraisal}}) defines domain-specific verification procedures. The Experimental category is appropriate for exploring this novel application of RATS.
 
 # Protocol Overview {#protocol-overview}
 
@@ -599,7 +599,7 @@ The PoP-specific message flow is:
 
 1. The Attester (authoring application running in the Attesting Environment) collects behavioral telemetry during content creation and generates an Evidence Packet (.cpop) containing SWF proofs, jitter bindings, and physical state markers.
 2. The Evidence Packet is conveyed to a Verifier, which appraises chain integrity, temporal ordering, behavioral entropy, and content binding per the procedures defined in {{PoP-Appraisal}}.
-3. The Verifier produces a Writers Authenticity Report (.cwar) containing EAT claims, forensic assessment scores, and forgery cost estimates.
+3. The Verifier produces a Cryptographic Writers Authenticity Report (.cwar) containing EAT claims, forensic assessment scores, and forgery cost estimates.
 4. The Relying Party (publisher, reader, or automated platform) consumes the WAR to make trust decisions about the claimed authorship provenance.
 
 Endorsers (hardware manufacturers) supply TPM endorsement certificates and Secure Element attestations that Verifiers use to validate hardware-bound claims in T3/T4 Evidence. Reference Value Providers supply the expected behavioral patterns, SWF difficulty parameters, and profile specifications that Verifiers use as appraisal baselines.
@@ -911,7 +911,7 @@ Building on the threat model defined above, PoP operates on five primary constra
 
 # Protocol Rationale and Terminology {#rationale-and-terminology}
 
-The Proof of Process (PoP) framework follows the RATS architecture while introducing domain-specific extensions for physical process attestation.
+The Cryptographic Proof of Process (PoP) framework follows the RATS architecture while introducing domain-specific extensions for physical process attestation.
 
 PoP Evidence Packet (.cpop):
 : An Attester artifact containing SWF Merkle trees, jitter seals, and physical liveness markers (CBOR tag 1129336656, encoding ASCII "CPOP").

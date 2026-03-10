@@ -1,7 +1,7 @@
 ---
 v: 3
 docname: draft-condrey-rats-pop-appraisal-latest
-title: "Proof of Process (PoP): Forensic Appraisal and Security Model"
+title: "Cryptographic Proof of Process (PoP): Forensic Appraisal and Security Model"
 abbrev: PoP Appraisal
 category: exp
 ipr: trust200902
@@ -29,9 +29,8 @@ normative:
   RFC8610:
   RFC8949:
   RFC9334:
-  RFC5869:
   PoP-Protocol:
-    title: "Proof of Process (PoP): Architecture and Evidence Format"
+    title: "Cryptographic Proof of Process (PoP): Architecture and Evidence Format"
     author:
       - fullname: David Condrey
         initials: D.
@@ -41,10 +40,12 @@ normative:
       Internet-Draft: draft-condrey-rats-pop-protocol-06
 
 informative:
+  RFC5869:
+  RFC9106:
   RFC9052:
   Monrose2000:
     title: Keystroke dynamics as a biometric for authentication
-    target: https://doi.org/10.1145/351427.351438
+    target: https://doi.org/10.1016/S0167-739X(99)00059-X
     author:
       - fullname: F. Monrose
         initials: F.
@@ -53,27 +54,26 @@ informative:
         initials: A.
         surname: Rubin
     date: 2000
-  Goodman2007:
-    title: Using Stylometry for Biometric Keystroke Dynamics
-    target: https://doi.org/10.1007/978-3-540-77343-6_14
+  Monaco2018:
+    title: "SoK: Keylogging Side Channels"
+    target: https://doi.org/10.1109/SP.2018.00026
     author:
-      - fullname: A. Goodman
-        initials: A.
-        surname: Goodman
-      - fullname: V. Zabala
-        initials: V.
-        surname: Zabala
-    date: 2007
+      - fullname: John V. Monaco
+        initials: J.V.
+        surname: Monaco
+    date: 2018
+    seriesinfo:
+      "IEEE Symposium on Security and Privacy (SP)": "pp. 211-228"
   Salthouse1986:
     title: "Perceptual, Cognitive, and Motoric Aspects of Transcription Typing"
-    target: https://doi.org/10.1037/0033-295X.93.3.303
+    target: https://doi.org/10.1037/0033-2909.99.3.303
     author:
       - fullname: Timothy A. Salthouse
         initials: T.A.
         surname: Salthouse
     date: 1986
     seriesinfo:
-      "Psychological Review": "93(3), 303-319"
+      "Psychological Bulletin": "99(3), 303-319"
   Sardar-RATS:
     title: Security Considerations for Remote ATtestation procedureS (RATS)
     target: https://datatracker.ietf.org/doc/html/draft-sardar-rats-sec-cons-02
@@ -137,7 +137,7 @@ informative:
 
 --- abstract
 
-This document specifies the forensic appraisal methodology and quantitative security model for the Proof of Process (PoP) framework. It defines how Verifiers evaluate behavioral entropy, perform liveness detection, and calculate forgery cost bounds. Additionally, it establishes the taxonomy for Absence Proofs and the Writers Authenticity Report (WAR) format, as well as the Tool Receipt protocol for artificial intelligence (AI) attribution within the linear human authoring process.
+This document specifies the forensic appraisal methodology and quantitative security model for the Cryptographic Proof of Process (PoP) framework. It defines how Verifiers evaluate behavioral entropy, perform liveness detection, and calculate forgery cost bounds. Additionally, it establishes the taxonomy for Absence Proofs and the Cryptographic Writers Authenticity Report (WAR) format, as well as the Tool Receipt protocol for artificial intelligence (AI) attribution within the linear human authoring process.
 
 --- to_be_removed_note_Discussion_Venues
 
@@ -148,7 +148,7 @@ Source for this draft and an issue tracker can be found at
 
 # Introduction {#introduction}
 
-The value of Proof of Process (PoP) evidence lies in the Verifier's ability to distinguish biological effort from algorithmic simulation. While traditional RATS {{RFC9334}} appraisals verify system state, PoP appraisal verifies a continuous physical process. This document provides the normative framework for forensic appraisal, defining the logic required to generate a Writers Authenticity Report (WAR).
+The value of Cryptographic Proof of Process (PoP) evidence lies in the Verifier's ability to distinguish biological effort from algorithmic simulation. While traditional RATS {{RFC9334}} appraisals verify system state, PoP appraisal verifies a continuous physical process. This document provides the normative framework for forensic appraisal, defining the logic required to generate a Cryptographic Writers Authenticity Report (WAR).
 
 This document is a companion to {{PoP-Protocol}},
 which defines the Evidence Packet wire format and Attester
@@ -382,14 +382,14 @@ Typical ranges observed in human authorship:
 The Verifier SHOULD compute per-window SNR and session-wide SNR
 statistics (mean, variance, trend) as forensic indicators.
 
-## CLC and IKI Computation (Informative) {#clc-computation}
+## Compositional Divergence and IKI Computation (Informative) {#clc-computation}
 
-The Compositional Lyapunov Coefficient (CLC) measures the rate at
+The Compositional Divergence Rate (CDR) measures the rate at
 which writing complexity evolves over the session, analogous to
 Lyapunov exponents in dynamical systems:
 
 ~~~ artwork
-CLC = (1/n) * sum_{i=1}^{n} ln(|delta_IKI[i]| / |delta_IKI[i-1]|)
+CDR = (1/n) * sum_{i=1}^{n} ln(|delta_IKI[i]| / |delta_IKI[i-1]|)
 
 where:
   delta_IKI[i] = IKI_mean[i] - IKI_mean[i-1]
@@ -568,9 +568,14 @@ where:
   t_checkpoint = wall-clock time for one SWF computation
 ~~~
 
-The memory-hard nature of Argon2id ensures that an adversary with
-k parallel processors achieves at most O(sqrt(k)) speedup due to
-memory bandwidth constraints. The minimum forgery time equals the
+The memory-hard nature of Argon2id ensures that reducing memory
+per evaluation forces a disproportionate increase in computation
+time; the best known tradeoff attacks achieve at most a ~2x
+reduction in time-area product for single-pass Argon2id, decreasing
+to ~1.33x with multiple passes ({{RFC9106}}, Section 7). Beyond
+approximately 8 parallel threads, memory bandwidth saturation on
+commodity hardware yields diminishing returns. The minimum forgery
+time equals the
 sum of SWF claimed-durations across all checkpoints. At T1 tier
 without hardware binding, C_swf represents an economic cost only
 (the adversary must spend real time, but has no hardware constraint).
@@ -658,7 +663,7 @@ physical-state is absent.
 
 # Attestation Result Wire Format {#war-wire-format}
 
-The Writers Authenticity Report (WAR) is a CBOR-encoded
+The Cryptographic Writers Authenticity Report (WAR) is a CBOR-encoded
 {{RFC8949}} Attestation Result identified by semantic
 tag 1129791826 (encoding ASCII "CWAR"). The CDDL notation
 {{RFC8610}} defines the wire format:
@@ -1060,7 +1065,7 @@ Tier 4 (Nation-State):
 ## Evidence and Attestation Result Privacy {#privacy}
 
 High-resolution behavioral data poses a stylometric de-anonymization
-risk {{Goodman2007}}. Implementations SHOULD support
+risk {{Monaco2018}}. Implementations SHOULD support
 Evidence Quantization, reducing timing resolution to a level that
 maintains forensic confidence while breaking unique author fingerprints.
 
