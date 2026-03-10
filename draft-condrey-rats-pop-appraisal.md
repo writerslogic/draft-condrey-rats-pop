@@ -933,41 +933,123 @@ verdict; a significant baseline deviation SHOULD be
 reported as a warning but does not by itself trigger a
 suspicious verdict.
 
+# Effort Attribution {#effort-attribution}
+
+When an Evidence Packet contains receipt structures (checkpoint
+key 13), the Verifier MUST compute an effort-attribution and
+include it in the Attestation Result (key 15). When no receipts
+are present in any checkpoint, the Verifier MUST omit
+effort-attribution entirely; the absence of receipts does not
+imply the absence of tool use.
+
+The Verifier computes effort-attribution fields as follows:
+
+human-checkpoints:
+: The count of checkpoints that contain no receipt structures.
+
+receipt-checkpoints:
+: The count of checkpoints that contain one or more receipt
+  structures (either self-receipt or tool-receipt).
+
+tool-attributed-chars:
+: The sum of output-char-count values from all verified
+  tool-receipts. For tool-receipts lacking output-char-count,
+  the Verifier SHOULD estimate the contribution from the
+  enclosing checkpoint's edit-delta chars-added field.
+  Self-receipt contributions are excluded from this count
+  because their content is already attested by the referenced
+  Evidence Packet.
+
+total-chars:
+: MUST equal the char-count field from the Evidence Packet's
+  document-ref.
+
+human-fraction:
+: Computed as:
+
+      human-fraction = 1.0 - (tool-attributed-chars / total-chars)
+
+  The result MUST be clamped to the range \[0.0, 1.0\]. When
+  total-chars is zero, human-fraction MUST be 1.0.
+
+When a self-receipt references an Evidence Packet that is not
+available to the Verifier, the Verifier MUST still count the
+checkpoint as a receipt-checkpoint but MUST NOT include
+self-receipt content in tool-attributed-chars. The Verifier
+SHOULD emit a warning indicating that the referenced Evidence
+Packet could not be verified.
+
 # Tool Receipt Protocol {#tool-receipt-protocol}
 
-NOTE: This section is informational. The complete CDDL wire format for
-Tool Receipts, including signature algorithms and binding mechanisms,
-will be specified in a future revision. Implementations SHOULD treat
-this section as guidance only.
+Checkpoint key 13 carries receipt structures that attribute
+content to external sources. Two receipt types are defined:
+tool-receipt for external AI tool contributions and self-receipt
+for cross-tool PoP composition. Verifiers MUST process both
+types when present.
 
-When external tools (LLMs) contribute content, the framework enables a "compositional provenance" model:
+## AI Tool Receipt Verification {#ai-tool-receipt-verification}
 
-1. Receipt Signing: The Tool signs a "Receipt" containing its tool_id, an output_commit (SHA-256 hash of generated text), and an optional input_ref (SHA-256 hash of the prompt).
+When external tools (e.g., large language models) contribute
+content, the tool-receipt structure provides cryptographic
+attribution. The Attester records the tool-generated content as
+a paste event and binds the corresponding tool-receipt into the
+next checkpoint.
 
-2. Binding: The human Attester records a PASTE event in the transcript referencing the Tool Receipt's output_commit.
+Upon encountering a tool-receipt in checkpoint key 13, the
+Verifier MUST perform the following steps:
 
-3. Countersigning: The Attester binds the Receipt into the next human-driven checkpoint, anchoring the automated work into the linear human effort.
+1. Retrieve the tool provider's public key corresponding to the
+   tool-id URI. The mechanism for key discovery and trust
+   establishment will be specified in a companion document.
 
-Verifiers appraise the ratio of human-to-machine effort based on these receipts and the intervening SWF-proved intervals.
+2. Verify the COSE_Sign1 structure in the tool-signature field
+   (key 5) using the retrieved public key. The COSE_Sign1
+   payload MUST be the CBOR encoding of the map
+   `{1: tool-id, 2: output-commit, 4: issued-at}`. If
+   signature verification fails, the Verifier MUST mark the
+   checkpoint as invalid.
 
-The same mechanism supports cross-tool composition workflows
-where an author drafts content in one application and transfers
-it to another for formatting or publication. When the first
-authoring environment runs PoP, it produces an Evidence Packet
-covering the drafting phase. The second environment records the
-paste event with a self-receipt: a Tool Receipt whose tool_id
-identifies the first authoring environment and whose
-output_commit matches the content hash from the first Evidence
+3. Verify that the output-commit hash (key 2) matches the
+   content attributed to the tool in the checkpoint's
+   content-hash chain. The hash algorithm is identified by the
+   hash-algorithm field within the output-commit hash-value
+   structure.
+
+4. If input-ref (key 3) is present, record the prompt hash for
+   inclusion in the effort-attribution computation. The
+   Verifier MAY use input-ref to correlate tool invocations
+   across checkpoints.
+
+5. If output-char-count (key 6) is present, the Verifier MUST
+   use this value when computing tool-attributed-chars in the
+   effort-attribution structure. When absent, the Verifier
+   SHOULD estimate the tool contribution from the edit-delta
+   of the enclosing checkpoint.
+
+Checkpoints containing a verified tool-receipt are excluded from
+forensic mechanisms that assume continuous human authorship (see
+{{forensic-assessment}}).
+
+## Cross-Tool Composition {#cross-tool-composition}
+
+The same receipt mechanism supports cross-tool composition
+workflows where an author drafts content in one application and
+transfers it to another for formatting or publication. When the
+first authoring environment runs PoP, it produces an Evidence
+Packet covering the drafting phase. The second environment
+records the paste event with a self-receipt: a receipt whose
+tool-id identifies the first authoring environment and whose
+output-commit matches the content-hash from the first Evidence
 Packet's final checkpoint. The self-receipt additionally
-includes an evidence_ref field containing the SHA-256 hash of
-the first Evidence Packet. The Verifier chains the two packets:
-the first Evidence Packet proves the drafting process, the
-second proves the editing and formatting process, and the
-self-receipt's output_commit binds the paste to the first
-packet's terminal content state. When cross-tool composition
-without a self-receipt is detected, Verifiers SHOULD apply the
-cross-tool composition guidance defined in the Mechanical Turk
-Scoring section.
+includes an evidence-ref field containing the hash of the first
+Evidence Packet. The Verifier chains the two packets: the first
+Evidence Packet proves the drafting process, the second proves
+the editing and formatting process, and the self-receipt's
+output-commit binds the paste to the first packet's terminal
+content state. When cross-tool composition without a
+self-receipt is detected, Verifiers SHOULD apply the cross-tool
+composition guidance defined in the Mechanical Turk Scoring
+section.
 
 # Adversary Model {#adversary-model}
 
