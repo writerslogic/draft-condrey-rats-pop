@@ -1409,6 +1409,41 @@ retrieved and verified against the full hash. Verifiers
 encountering a compact-ref MUST resolve it to a full hash-value
 before performing integrity checks.
 
+Checkpoint key 13 accepts two receipt types, distinguished by the
+presence of key 5 (tool-signature):
+
+A `self-receipt` records cross-tool composition where content
+originates from another PoP-enabled authoring environment. The
+tool-id identifies the source environment, output-commit binds
+the pasted content, and evidence-ref references the source
+Evidence Packet. Self-receipt verification is specified in
+{{PoP-Appraisal}}.
+
+A `tool-receipt` records content contributed by an external tool
+(e.g., a large language model) that is not itself a PoP Attester.
+The tool-id MUST be a URI under the tool provider's control. The
+output-commit field contains a hash-value of the tool's generated
+content, using the Evidence Packet's hash algorithm. The optional
+input-ref field contains a hash-value of the prompt provided to
+the tool; inclusion is an author privacy decision. The
+tool-signature field MUST contain a COSE_Sign1 structure
+{{RFC9052}} whose payload is the CBOR encoding of the map
+`{1: tool-id, 2: output-commit, 4: issued-at}`. The signing key
+is the tool provider's, not the Attester's. The Verifier validates
+tool-signatures against trusted tool provider public keys.
+The optional output-char-count field records the character count
+of the tool's generated output, enabling effort attribution
+without requiring the Verifier to access the generated content.
+
+Compact references (compact-ref) MUST NOT be used in tool-receipt
+fields. All hash-value fields in a tool-receipt MUST use the
+Evidence Packet's hash algorithm per the consistency requirement
+above.
+
+The mechanism by which tool providers generate and sign receipts,
+including key discovery and trust establishment, will be specified
+in a companion document.
+
 Extension keys in evidence-packet and checkpoint structures MUST
 use integer values 100 or greater. Keys 0-99 are reserved for use
 by this specification and future revisions.
