@@ -209,14 +209,25 @@ channel-binding = {
 }
 
 ; ============================================================
-; Self-Receipt (Cross-Tool Composition)
+; Receipts (Composition and Tool Attribution)
 ; ============================================================
+
+receipt = self-receipt / tool-receipt
 
 self-receipt = {
     1 => tstr,                    ; tool-id (source environment)
     2 => hash-value / compact-ref, ; output-commit
     3 => hash-value / compact-ref, ; evidence-ref (source packet)
     4 => pop-timestamp,           ; transfer-time
+}
+
+tool-receipt = {
+    1 => tstr,                    ; tool-id (provider URI)
+    2 => hash-value,              ; output-commit
+    ? 3 => hash-value,            ; input-ref (prompt hash)
+    4 => pop-timestamp,           ; issued-at
+    5 => bstr .cbor COSE_Sign1,   ; tool-signature
+    ? 6 => uint,                  ; output-char-count
 }
 
 ; ============================================================
