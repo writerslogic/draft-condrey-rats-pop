@@ -57,7 +57,7 @@ checkpoint = {
     ? 10 => jitter-binding,       ; behavioral-entropy (ENHANCED+)
     ? 11 => physical-state,       ; physical-state binding (ENHANCED+)
     ? 12 => hash-digest,          ; entangled-mac (ENHANCED+)
-    ? 13 => [+ self-receipt],     ; cross-tool composition receipts
+    ? 13 => [+ receipt],          ; receipts (self or tool)
     ? 14 => [+ active-probe],    ; active liveness probes
     * int => any,                 ; extension fields
 }
