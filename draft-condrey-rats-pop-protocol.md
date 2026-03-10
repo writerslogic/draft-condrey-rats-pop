@@ -576,7 +576,26 @@ This section provides an end-to-end overview of the PoP protocol, mapping the me
 
 ## Passport Model Message Flow {#passport-model}
 
-PoP follows the RATS passport model ({{RFC9334}}, Section 8.1; {{RATS-Models}}) in which Evidence flows directly from the Attester to the Verifier, and Attestation Results flow from the Verifier to the Relying Party. The PoP-specific message flow is:
+PoP follows the RATS passport model ({{RFC9334}}, Section 8.1; {{RATS-Models}}):
+
+~~~ ascii-art
++----------+  .cpop   +-----------+  .cwar   +-----------+
+| Attester +--------->+  Verifier +--------->+  Relying  |
+| (Author/ |Evidence  |           |Attestation|   Party   |
+|    AE)   |          |           | Results  |(Publisher)|
++----------+          +-----+-----+          +-----------+
+                            ^
+              Endorsements  |  Reference Values
+             (TPM/SE certs) | (SWF params, baselines)
+                            |
+               +------------+------------+
+               |  Endorser / Ref. Value  |
+               |       Provider          |
+               +-------------------------+
+~~~
+{: #fig-passport-model title="PoP Passport Model Message Flow"}
+
+The PoP-specific message flow is:
 
 1. The Attester (authoring application running in the Attesting Environment) collects behavioral telemetry during content creation and generates an Evidence Packet (.cpop) containing SWF proofs, jitter bindings, and physical state markers.
 2. The Evidence Packet is conveyed to a Verifier, which appraises chain integrity, temporal ordering, behavioral entropy, and content binding per the procedures defined in {{PoP-Appraisal}}.
