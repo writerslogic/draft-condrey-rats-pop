@@ -1,8 +1,8 @@
-; Proof of Process (PoP) Evidence and Attestation Result Schema
+; Cryptographic Proof of Process (PoP) Evidence and Attestation Result Schema
 ; draft-condrey-rats-pop-protocol / draft-condrey-rats-pop-appraisal
 ;
 ; This schema defines the CBOR-encoded data structures for the
-; Proof of Process framework. Evidence Packets are identified by
+; Cryptographic Proof of Process framework. Evidence Packets are identified by
 ; CBOR tag 1129336656 ("CPOP") and Attestation Results by
 ; CBOR tag 1129791826 ("CWAR").
 ;
