@@ -287,7 +287,7 @@ Cognitive Load Correlation (CLC):
 : Verifiers MUST correlate timing patterns with semantic complexity. Human authors exhibit increased inter-keystroke intervals (IKI) and pause frequency during composition of semantically complex segments compared to simple connective text. Verifiers MUST compute the Pearson correlation between segment semantic complexity and mean IKI. Evidence with r < 0.2 (or r < 0.1 in assistive mode) MUST be flagged as a Semantic Mismatch.
 
 Mechanical Turk Detection:
-: Verifiers MUST compute C_intra (Pearson correlation between pause duration and subsequent edit complexity within each checkpoint). C_intra values below 0.15 MUST be flagged as indicating robotic pacing, where an automated system maintains a machine-clocked editing rate independent of content demands. Checkpoints containing self-receipt structures (key 13) MUST have their associated paste events excluded from C_intra computation.
+: Verifiers MUST compute C_intra (Pearson correlation between pause duration and subsequent edit complexity within each checkpoint). C_intra values below 0.15 MUST be flagged as indicating robotic pacing, where an automated system maintains a machine-clocked editing rate independent of content demands. Checkpoints containing receipt structures (key 13) MUST have their associated paste events excluded from C_intra computation.
 
 Error Topology Analysis:
 : Verifiers SHOULD analyze error patterns for consistency with human cognitive processing {{Salthouse1986}}: localized corrections near recent insertions, fractal self-similarity in revision patterns, and deletion-to-insertion ratios consistent with natural composition. Evidence exhibiting unnaturally low error rates (below 1 correction per 500 characters) or randomly distributed errors lacking positional correlation SHOULD be flagged.
@@ -302,7 +302,7 @@ Spatial-Temporal Divergence (Informative):
 : Advanced Verifiers MAY project the 1D `jitter-binding.intervals` array into an estimated 8-zone spatial keyboard model. By binning inter-keystroke intervals (IKI) into histograms representing spatial travel distances, Verifiers can compute the Kullback-Leibler (KL) divergence against biological baseline distributions. High KL divergence indicates structural timing anomalies invisible to raw entropy checks.
 
 Perplexity Scoring:
-: Verifiers SHOULD compute the character-level perplexity of text inserted during each checkpoint interval using a reference language model. Sudden drops in perplexity (highly predictable text) that correlate with rapid insertion rates (characters per second exceeding the session's 95th percentile) MUST be flagged as potential AI injection. A perplexity drop exceeding 50% relative to the session median, sustained for more than 100 consecutive inserted characters, constitutes a flag. Checkpoints containing self-receipt structures (key 13) MUST have their associated paste events excluded from perplexity scoring.
+: Verifiers SHOULD compute the character-level perplexity of text inserted during each checkpoint interval using a reference language model. Sudden drops in perplexity (highly predictable text) that correlate with rapid insertion rates (characters per second exceeding the session's 95th percentile) MUST be flagged as potential AI injection. A perplexity drop exceeding 50% relative to the session median, sustained for more than 100 consecutive inserted characters, constitutes a flag. Checkpoints containing receipt structures (key 13) MUST have their associated paste events excluded from perplexity scoring.
 
 Biological Cadence Analysis:
 : Verifiers MUST compute the Coefficient of Variation (CoV = standard deviation / mean) of inter-keystroke intervals within each checkpoint. Human typing exhibits characteristic CoV values reflecting biological motor variance. Evidence with per-checkpoint CoV consistently below 0.15 (mechanically regular) MUST be flagged as potentially non-biological. Evidence with per-checkpoint CoV consistently above 0.90 (chaotically irregular) SHOULD be flagged as potentially injected random noise. The session-wide CoV trend SHOULD exhibit gradual drift consistent with fatigue and warm-up effects.
@@ -446,7 +446,7 @@ paste-to-keystroke ratio reflects a single transfer event
 rather than repeated injections. When cross-tool composition
 is indicated, Verifiers SHOULD exclude the initial transfer
 from the mechanical turk score. When the paste event is
-accompanied by a self-receipt structure (checkpoint key 13),
+accompanied by a receipt structure (checkpoint key 13),
 the Verifier can cryptographically verify the provenance of
 the pasted content as described in
 {{tool-receipt-protocol}}.
@@ -503,10 +503,10 @@ detection event is triggered when:
   consecutive inserted characters.
 
 All three conditions MUST hold simultaneously to trigger
-the flag. Paste events accompanied by self-receipt structures
-are excluded from this analysis, as they represent
-documented cross-tool composition rather than undisclosed
-AI injection.
+the flag. Paste events accompanied by receipt structures
+(self-receipt or tool-receipt) are excluded from this
+analysis, as they represent documented composition rather
+than undisclosed AI injection.
 
 The choice of reference language model is a Verifier
 implementation decision and is not specified by this
