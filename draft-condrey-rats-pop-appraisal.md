@@ -1302,28 +1302,37 @@ The following constraints summarize the verification requirements defined in the
 2. Type 2 Claims: Weight by Attestation Tier (T1-T4).
 3. Type 3 Claims: Evaluate environmental assertions against physical-state markers.
 
-## Tool Receipt Validation (when present) {#tool-receipt-checks}
+## Tool Receipt Validation {#tool-receipt-checks}
 {:numbered="false"}
 
-NOTE: The Tool Receipt wire format is informational in this
-revision. The following validation steps apply when receipts
-are present.
+When checkpoint key 13 contains receipt structures, the
+Verifier MUST validate them as follows. Paste events
+accompanied by a verified receipt (either type) MUST be
+excluded from C_intra, perplexity scoring, and Mechanical
+Turk detection analysis.
 
-AI Tool Receipts:
+AI Tool Receipts (tool-receipt):
 
-1. Verify Tool signature over Receipt.
-2. Verify PASTE event references correct output_commit.
-3. Calculate human-to-machine effort ratio from SWF-proved intervals.
+1. Retrieve the tool provider's public key for the tool-id
+   URI.
+2. Verify the COSE_Sign1 structure in the tool-signature
+   field (key 5). The payload MUST be the CBOR encoding of
+   `{1: tool-id, 2: output-commit, 4: issued-at}`.
+3. Verify that output-commit (key 2) is consistent with
+   the checkpoint's content-hash chain.
+4. If output-char-count (key 6) is present, include it in
+   the effort-attribution computation.
 
-Self-Receipts (cross-tool composition):
+Self-Receipts (self-receipt):
 
-1. Verify that evidence-ref (field 3) identifies a valid
+1. Verify that evidence-ref (key 3) identifies a valid
    Evidence Packet.
-2. Verify that output-commit (field 2) matches the
+2. Verify that output-commit (key 2) matches the
    content-hash of the referenced Evidence Packet's final
    checkpoint.
-3. Exclude the associated paste event from Mechanical Turk
-   scoring.
+3. If the referenced Evidence Packet is unavailable, emit
+   a warning and exclude the self-receipt from
+   effort-attribution character counts.
 
 # Per-Tier Verification Constraints {#per-tier-constraints}
 {:numbered="false"}
