@@ -2182,6 +2182,7 @@ Selective disclosure:
 The following test vectors validate SWF implementations.
 
 ## swf-sha256 (Mode 10) Test Vector
+{:numbered="false"}
 
 NOTE: This vector uses SHA-256 (hash-algorithm value 1) and the `swf-sha256` construction: one Argon2id initialization followed by iterated SHA-256 hashing. The salt is derived as H("PoP-salt" \|\| seed) where H is SHA-256.
 
@@ -2220,6 +2221,7 @@ Intermediate States:
 ~~~
 
 ## swf-argon2id (Mode 20) Test Vector
+{:numbered="false"}
 
 NOTE: This vector uses SHA-256 (hash-algorithm value 1) and the `swf-argon2id` construction: iterated Argon2id evaluations. Each step feeds the previous state as the password input. The salt for step i >= 1 is H("PoP-salt" \|\| I2OSP(i, 4)). Implementers should verify state\_0 matches the `swf-sha256` vector above (identical Argon2id initialization), then verify state\_1 to confirm the iterated construction.
 
