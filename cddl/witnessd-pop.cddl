@@ -61,6 +61,7 @@ checkpoint = {
     ? 14 => [+ active-probe],    ; active liveness probes
     ? 15 => hat-proof,               ; HAT temporal proof (T3/T4)
     ? 16 => beacon-anchor,           ; public randomness anchor (optional)
+    ? 17 => bstr .size 32,           ; verifier-nonce (interactive mode)
     * int => any,                 ; extension fields
 }
 

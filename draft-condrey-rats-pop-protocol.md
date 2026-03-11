@@ -1126,6 +1126,7 @@ checkpoint = {
     ? 14 => [+ active-probe],        ; active liveness probes
     ? 15 => hat-proof,               ; HAT temporal proof (T3/T4)
     ? 16 => beacon-anchor,           ; public randomness anchor (optional)
+    ? 17 => bstr .size 32,           ; verifier-nonce (interactive mode)
     * int => any,                    ; extension fields
 }
 
@@ -1646,15 +1647,79 @@ The merkle-root field (process-proof key 4) MUST contain the Merkle tree root co
 
 ## Verification Protocol {#swf-verification}
 
+### Modes 20/21 Verification (Merkle-Sampled) {#verification-modes-20-21}
+
+For `swf-argon2id` (20) and `swf-argon2id-entangled` (21), the
+Verifier MUST:
+
+1. Recompute Argon2id from the declared seed to obtain state\_0.
+2. For each Fiat-Shamir sampled proof in the Merkle tree, verify
+   the sibling path against the committed root using tagged hashing
+   (see {{merkle-tree-construction}}) and recompute the state
+   transition: Argon2id(state\_i,
+   salt=H(0x01 \|\| "PoP-salt-v1" \|\| I2OSP(i+1, 4)),
+   t=t, m=m, p=1, len=hash\_len). Verify the result equals
+   state\_{i+1}.
+3. Verify the final state (state\_steps) by checking its Merkle
+   proof against the committed root (process-proof key 4,
+   merkle-root). If the final-leaf index is not included in the
+   Fiat-Shamir sample set, the Verifier MUST additionally derive
+   or request a proof for it.
+
+A minimum of 20 sampled proofs is REQUIRED for CORE profile.
+ENHANCED profile requires 50 proofs. MAXIMUM profile requires 100
+proofs.
+
+NOTE: Each sampled proof requires one Argon2id evaluation to
+verify. Verification cost is O(k) Argon2id evaluations, each
+requiring m KiB of memory. For CORE (k=20, m=65536 KiB),
+verification requires approximately 2 seconds on reference
+hardware. Verifiers MUST verify samples sequentially or limit
+concurrent evaluations to avoid excessive memory consumption.
+
+### Mode 10 Verification (Deterministic Full-Chain) {#verification-mode-10}
+
+For `swf-sha256` (10), the Verifier SHOULD perform deterministic
+full-chain verification rather than Merkle-sampled verification.
 The Verifier MUST:
 
-1. Recompute Argon2id from the declared seed to obtain state_0.
-2. For each sampled proof in the Merkle tree, verify the sibling path against the committed root using tagged hashing (see {{merkle-tree-construction}}) and recompute the state transition: for modes 20/21, recompute Argon2id(state\_i, salt=H(0x01 \|\| "PoP-salt-v1" \|\| I2OSP(i+1, 4)), t=t, m=m, p=1, len=hash\_len) and verify it equals state\_{i+1}; for mode 10, check whether (i+1) is a waypoint (i+1 mod W == 0 and waypoint-interval is declared): if so, recompute Argon2id(state\_i, salt=H(0x01 \|\| "PoP-salt-v1" \|\| I2OSP(i+1, 4)), t=1, m=m\_waypoint, p=1, len=hash\_len); otherwise, recompute H(state\_i) and verify it equals state\_{i+1}.
-3. Verify the final state (state\_steps) by checking its Merkle proof against the committed root (process-proof key 4, merkle-root). If the final-leaf index is not included in the Fiat-Shamir sample set, the Verifier SHOULD additionally derive or request a proof for it.
+1. Recompute state\_0 = Argon2id(seed,
+   salt=H(0x00 \|\| "PoP-salt-v1" \|\| seed),
+   t=t, m=m, p=1, len=32).
+2. Recompute the full chain sequentially: for i in 1..steps,
+   if i mod W == 0, compute state\_i =
+   Argon2id(state\_{i-1},
+   salt=H(0x01 \|\| "PoP-salt-v1" \|\| I2OSP(i, 4)),
+   t=1, m=m\_waypoint, p=1, len=32);
+   otherwise, compute state\_i = H(state\_{i-1}).
+3. Construct the Merkle tree from all recomputed states using
+   tagged hashing ({{merkle-tree-construction}}).
+4. Verify the computed Merkle root equals the committed root
+   (process-proof key 4).
 
-A minimum of 20 sampled proofs is REQUIRED for CORE profile. ENHANCED profile requires 50 proofs. MAXIMUM profile requires 100 proofs.
+Full-chain verification requires steps/W Argon2id evaluations
+plus steps SHA-256 evaluations. For CORE (W=1000, steps=10000),
+this costs approximately 10 Argon2id evaluations (~1 second) plus
+10,000 SHA-256 evaluations (~1 millisecond). This is comparable
+to or less than Mode 20 sampled verification cost.
 
-NOTE: For modes 20/21, each sampled proof requires one Argon2id evaluation to verify. Verification cost is O(k) Argon2id evaluations, each requiring m KiB of memory. For CORE (k=20, m=65536 KiB), verification requires approximately 2 seconds on reference hardware. Verifiers MUST verify samples sequentially or limit concurrent evaluations to avoid excessive memory consumption.
+Full-chain verification provides deterministic guarantees: all
+waypoints AND all SHA-256 transitions are verified with zero
+false negatives. Unlike Merkle-sampled verification, it is not
+subject to the waypoint sampling gap (where uniform random
+sampling under-represents the rare but expensive waypoint
+steps).
+
+When full-chain verification is impractical (e.g., constrained
+Verifier environments), the Verifier MAY fall back to
+Merkle-sampled verification per {{fiat-shamir-sampling}}. In
+this fallback mode, the Verifier MUST additionally verify all
+waypoint transitions by requesting Merkle proofs for index pairs
+(iW-1, iW) for i in 1..steps/W. This ensures memory-hard
+waypoints are always verified regardless of the Fiat-Shamir
+sample draw. The Attester MUST include these mandatory waypoint
+proofs in addition to the k Fiat-Shamir sampled proofs when the
+Verifier indicates sampled verification mode.
 
 ## Fiat-Shamir Sample Derivation {#fiat-shamir-sampling}
 
@@ -1663,6 +1728,7 @@ via Fiat-Shamir transform:
 
 ~~~
 sample_seed = H(
+    "PoP-Fiat-Shamir-v1" ||
     I2OSP(proof-algorithm, 2) ||
     CBOR-encode(proof-params) ||
     process-proof.input ||
@@ -1673,12 +1739,16 @@ for j in 0..k-1:
     index_j = OS2IP(okm_j) mod (steps + 1)
 ~~~
 
-The sample seed MUST incorporate the full proof context: the
-algorithm identifier, all parameters, the SWF input seed, and the
-Merkle root. This binding prevents cross-algorithm confusion attacks
-where an adversary exploits a seed that produces the same Merkle
-root under a cheaper algorithm. CBOR-encode produces deterministic
-CBOR per Section 4.2.1 of {{RFC8949}}.
+The sample seed MUST incorporate a versioned domain separation
+tag ("PoP-Fiat-Shamir-v1") followed by the full proof context:
+the algorithm identifier, all parameters, the SWF input seed, and
+the Merkle root. The DST prefix provides version agility
+consistent with all other hash constructions in the protocol and
+prevents cross-protocol confusion. The algorithm and parameter
+binding prevents cross-algorithm confusion attacks where an
+adversary exploits a seed that produces the same Merkle root under
+a cheaper algorithm. CBOR-encode produces deterministic CBOR per
+Section 4.2.1 of {{RFC8949}}.
 
 Where k is the number of required samples (20 for CORE, 50 for
 ENHANCED, 100 for MAXIMUM). HKDF-Expand is instantiated with H as
@@ -1747,6 +1817,13 @@ from the immediately preceding checkpoint's sequential work
 function computation. This creates a strict cryptographic
 dependency chain: each checkpoint's SWF cannot begin until the
 previous checkpoint's SWF has completed.
+
+When a verifier-nonce is present ({{verifier-nonce-binding}}),
+the nonce MUST be inserted into the seed derivation after
+prev-swf-output (for Mode 21) or after prev-hash (for Modes
+10/20), before any behavioral data. When both verifier-nonce and
+beacon-anchor are used, the verifier-nonce MUST precede the
+beacon value in the seed derivation.
 
 For the first checkpoint (sequence = 1), all modes use:
 
@@ -1972,6 +2049,64 @@ This mechanism transforms T1 temporal ordering from self-reported
 timestamps to externally verifiable time commitments. The beacon
 value is not predictable at checkpoint creation time, preventing
 retroactive fabrication of Evidence with backdated timestamps.
+
+## Verifier-Nonce Binding (Optional) {#verifier-nonce-binding}
+
+For interactive deployments where the Verifier is online during
+the authoring session, the Attester MAY incorporate a
+Verifier-supplied nonce into each checkpoint's SWF seed. This
+provides the strongest available anti-precomputation guarantee:
+the SWF cannot begin until the Verifier releases the nonce, and
+the Verifier chooses the nonce after the preceding checkpoint is
+submitted.
+
+### Protocol
+
+1. The Attester submits checkpoint N-1 to the Verifier.
+2. The Verifier responds with a 32-byte random nonce:
+   verifier-nonce = CSPRNG(32).
+3. The Attester incorporates the nonce into checkpoint N's SWF
+   seed derivation (see {{swf-seed-derivation}}):
+
+~~~
+seed = H(
+    "PoP-SWF-Seed-v1" ||
+    prev-hash ||
+    prev-swf-output ||          ; Mode 21 only
+    verifier-nonce ||
+    CBOR-encode(jitter-binding.intervals) ||
+    CBOR-encode(physical-state)
+)
+~~~
+
+4. The Attester includes the verifier-nonce in checkpoint key 17.
+5. The Verifier checks that the nonce in the submitted checkpoint
+   matches the nonce it issued.
+
+### Security Properties
+
+The verifier-nonce is strictly stronger than beacon anchoring
+because:
+
+* The nonce is chosen by the Verifier specifically for this
+  Attester and checkpoint, with full 256-bit entropy.
+* The Attester cannot predict the nonce (it is revealed only
+  after the preceding checkpoint is submitted).
+* The Attester cannot precompute the SWF because the seed
+  depends on the nonce.
+* No dependency on external beacon services or network
+  availability.
+
+The verifier-nonce creates a strict request-response dependency
+chain: the Verifier controls the pace of checkpoint production
+by controlling nonce release timing. This is appropriate for
+real-time supervised authoring but not for offline or
+asynchronous workflows.
+
+When both verifier-nonce and beacon-anchoring are used, the
+seed MUST incorporate both values. The two mechanisms are
+complementary: the nonce provides per-Attester freshness, while
+the beacon provides publicly verifiable temporal ordering.
 
 ## Security Bound {#swf-security}
 
@@ -2564,58 +2699,71 @@ Selective disclosure:
 
 The following test vectors validate SWF implementations.
 
-NOTE: These test vectors predate the introduction of type-tagged
-salt derivation (0x00/0x01 prefixes), tagged Merkle tree hashing
-(0x00/0x01/0x02 node prefixes), memory-hard waypoints for Mode 10,
-and the strengthened Fiat-Shamir binding. Updated test vectors
-incorporating these changes will be published in a future revision.
-Implementers SHOULD use these vectors to validate Argon2id and
-SHA-256 primitives, then apply the tagged constructions defined in
-{{swf-algorithm}} and {{merkle-tree-construction}}.
+These test vectors use the type-tagged salt derivation (0x00/0x01
+prefixes) and memory-hard waypoints for Mode 10 as specified in
+{{swf-algorithm}}. All vectors use SHA-256 (hash-algorithm value 1).
 
 ## swf-sha256 (Mode 10) Test Vector
 {:numbered="false"}
 
-NOTE: This vector uses SHA-256 (hash-algorithm value 1) and the `swf-sha256` construction: one Argon2id initialization followed by iterated SHA-256 hashing. The salt is derived as H("PoP-salt" \|\| seed) where H is SHA-256. Production implementations MUST use the type-tagged salt derivation H(0x00 \|\| "PoP-salt-v1" \|\| seed) as specified in {{swf-algorithm}}.
+NOTE: This vector uses the `swf-sha256` construction with
+memory-hard waypoints (W=1000, waypoint-memory=32768 KiB):
+Argon2id initialization, then iterated SHA-256 with Argon2id
+waypoints at every 1000th step. The initial salt uses the
+type-tagged derivation H(0x00 \|\| "PoP-salt-v1" \|\| seed).
+Waypoint salts use H(0x01 \|\| "PoP-salt-v1" \|\| I2OSP(i, 4)).
 
 ~~~
 Seed: "witnessd-genesis-v1"
 Seed (hex): 7769746e657373642d67656e657369732d7631
-Salt: H("PoP-salt" || seed)  [H = SHA-256 for this vector]
+Salt: H(0x00 || "PoP-salt-v1" || seed)  [H = SHA-256]
 
-Argon2id Parameters:
+Argon2id Parameters (initialization):
   Time Cost (t): 1
   Memory Cost (m): 65536 KiB
   Parallelism (p): 1
   Output Length: 32 bytes
 
-Steps: 10,000
+Argon2id Parameters (waypoints):
+  Time Cost (t): 1
+  Memory Cost (m): 32768 KiB
+  Parallelism (p): 1
+  Output Length: 32 bytes
 
-Salt (hex): c5de0ba53fa83ab477ead9013bfca978
-             339e5072882cafb3d0efc8cc40299155
+Steps: 10,000
+Waypoint Interval (W): 1000
+
+Salt (hex): 966efc16acdedf88bd3b841d9576d6b9
+             5b3a58dfba2d9b2087b6f02da126d296
 
 Intermediate States:
   state_0 (Argon2id):
-    a40e0f73832f88dc8bfe5f8956fff4a0
-    ad2fc4de5455e9d85497c6083b3b1802
-  state_1000 (SHA-256 chain):
-    c727ead9631eef95ca9a5976a947f71a
-    6f4f29a5c80aa2dc7f120f9a4193d7b4
-  state_5000:
-    d6cba1225d1a2d25dddecfcf2d473020
-    a19df736878f40ccdfb9334df5af58a5
-  state_9999:
-    d7482a780c9e89c787f1ff1e2c566b7b
-    536260e37d24c539e46de1598321aea2
-  state_10000 (final):
-    e445a3cdc8152d66c71366d22b2c5975
-    cff4d0c8ee6ec0e76515b04d143bd148
+    55518d63068b5f245d9dccf5919cbcdc
+    1fa1b3256e89a5c1eb7a7b37609b323f
+  state_1000 (waypoint, Argon2id):
+    f880ebfd403904f134c8ddaaa85e21dd
+    4803293a8e5eb95eafe7ec88944f28c6
+  state_5000 (waypoint, Argon2id):
+    f9884b1c4bd487cda521ee3476079ae1
+    8be449a086ec06ffbd4f8b09c75ad9f9
+  state_9999 (SHA-256):
+    b0ccd34431edab8f4fe568bee0fa4bdd
+    ac971a3d7057bf23d33097d87eb81968
+  state_10000 (waypoint, Argon2id, final):
+    19cbc991d4f154f47f912aa232a0c36b
+    c9f205c6cc1609984a142c9bd1f745a7
 ~~~
 
 ## swf-argon2id (Mode 20) Test Vector
 {:numbered="false"}
 
-NOTE: This vector uses SHA-256 (hash-algorithm value 1) and the `swf-argon2id` construction: iterated Argon2id evaluations. Each step feeds the previous state as the password input. The salt for step i >= 1 is H("PoP-salt" \|\| I2OSP(i, 4)). Implementers should verify state\_0 matches the `swf-sha256` vector above (identical Argon2id initialization), then verify state\_1 to confirm the iterated construction.
+NOTE: This vector uses the `swf-argon2id` construction: iterated
+Argon2id evaluations with type-tagged salts. Each step feeds the
+previous state as the password input. The salt for state\_0 is
+H(0x00 \|\| "PoP-salt-v1" \|\| seed). The salt for step i >= 1 is
+H(0x01 \|\| "PoP-salt-v1" \|\| I2OSP(i, 4)). Implementers should
+verify state\_0 matches the `swf-sha256` vector above (identical
+Argon2id initialization).
 
 ~~~
 Seed: "witnessd-genesis-v1"
@@ -2630,21 +2778,22 @@ Argon2id Parameters (per step):
 Steps: 3
 
 Intermediate States:
-  state_0 (Argon2id, seed as password):
-    a40e0f73832f88dc8bfe5f8956fff4a0
-    ad2fc4de5455e9d85497c6083b3b1802
+  state_0 (Argon2id, seed as password,
+           salt=H(0x00 || "PoP-salt-v1" || seed)):
+    55518d63068b5f245d9dccf5919cbcdc
+    1fa1b3256e89a5c1eb7a7b37609b323f
   state_1 (Argon2id, state_0 as password,
-           salt=H("PoP-salt" || I2OSP(1, 4))):
-    381cb3958af8f1cae818b56d52611ebf
-    63790f81c8fd25d31a4255ae861de62d
+           salt=H(0x01 || "PoP-salt-v1" || I2OSP(1, 4))):
+    6a6df1cfbce07c09036526e19f7b6e73
+    ef2ce911d1ea77a66bb23bde5b033a79
   state_2 (Argon2id, state_1 as password,
-           salt=H("PoP-salt" || I2OSP(2, 4))):
-    ba72607209114f46c076db653bf06d8a
-    8aa6038acb32293d1f1004d68ca24c1e
+           salt=H(0x01 || "PoP-salt-v1" || I2OSP(2, 4))):
+    bfa124c53651b2aedc79f48ec562342f
+    91efc8bc61cd8f833a5e63efbb41af44
   state_3 (Argon2id, state_2 as password,
-           salt=H("PoP-salt" || I2OSP(3, 4))):
-    d2c7c5589636bbd5d71c13e66be2d737
-    71b4bfbded2e3cdfd1a9a4c8c352e745
+           salt=H(0x01 || "PoP-salt-v1" || I2OSP(3, 4))):
+    bdd55e641b507d2d2d49cb67cb34c78d
+    92952ce025ef1b22a906f4721bcceb7c
 ~~~
 
 # Acknowledgements {#acknowledgements}
