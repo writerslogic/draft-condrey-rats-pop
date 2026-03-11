@@ -1180,6 +1180,15 @@ svg :is([fill="white"], [fill^="#fff"]) {
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
                 <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-compatibility-with-rats-arc" class="internal xref">Compatibility with RATS Architecture</a></p>
 </li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-adversarial-attester-as-rat" class="internal xref">Adversarial Attester as RATS Profile</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4">
+                <p id="section-toc.1-1.6.2.4.1"><a href="#section-6.4" class="auto internal xref">6.4</a>.  <a href="#name-evidence-format-and-eat-rel" class="internal xref">Evidence Format and EAT Relationship</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.5">
+                <p id="section-toc.1-1.6.2.5.1"><a href="#section-6.5" class="auto internal xref">6.5</a>.  <a href="#name-reference-value-trust-model" class="internal xref">Reference Value Trust Model</a></p>
+</li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
@@ -1834,6 +1843,56 @@ mandate that evidence be produced or consumed.<a href="#section-5-3" class="pilc
 <p id="section-6.2-4">The RATS architecture accommodates this through its layered trust model and configurable Appraisal Policies (<span>[<a href="#RFC9334" class="cite xref">RFC9334</a>]</span>). The companion appraisal document (<span>[<a href="#PoP-Appraisal" class="cite xref">PoP-Appraisal</a>]</span>) defines domain-specific verification procedures. The rationale for Experimental status is provided in <a href="#experimental-status-rationale" class="auto internal xref">Section 17</a>.<a href="#section-6.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
+<div id="adversarial-attester-profile">
+<section id="section-6.3">
+        <h3 id="name-adversarial-attester-as-rat">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-adversarial-attester-as-rat" class="section-name selfRef">Adversarial Attester as RATS Profile</a>
+        </h3>
+<p id="section-6.3-1">PoP constitutes a RATS profile in which the standard Attester-operator trust assumption is explicitly relaxed. RFC 9334 Section 3 defines Attester roles functionally (the entity producing Evidence) without requiring the operator to be trusted. PoP leverages this by treating the Attester operator as the primary adversary and relying on physics-based constraints, memory-hard functions, and hardware trust anchors (at T3/T4) rather than Attester honesty.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
+<p id="section-6.3-2">This profile is analogous to anti-cheat and DRM attestation patterns where the platform operator is adversarial, and differs from traditional RATS deployments (firmware integrity, supply chain verification) where external compromise is the primary threat. Implementations and Verifier policies <span class="bcp14">MUST</span> account for this trust model when interpreting PoP Evidence.<a href="#section-6.3-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="evidence-eat-relationship">
+<section id="section-6.4">
+        <h3 id="name-evidence-format-and-eat-rel">
+<a href="#section-6.4" class="section-number selfRef">6.4. </a><a href="#name-evidence-format-and-eat-rel" class="section-name selfRef">Evidence Format and EAT Relationship</a>
+        </h3>
+<p id="section-6.4-1">PoP Evidence Packets use a domain-specific CBOR structure (tag 1129336656) rather than CWT/JWT-wrapped EAT tokens. This design reflects the fundamental difference between PoP Evidence and traditional EAT claims:<a href="#section-6.4-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.4-2.1">
+            <p id="section-6.4-2.1.1">EAT (<span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>) models entity state as a set of claims at a point in time. PoP Evidence models a continuous physical process as an ordered sequence of checkpoints with SWF proofs, behavioral entropy, and physical state bindings.<a href="#section-6.4-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.4-2.2">
+            <p id="section-6.4-2.2.1">The checkpoint chain structure (sequential process-proofs, hash-linked deltas, jitter bindings) has no natural representation in the EAT claims model.<a href="#section-6.4-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.4-2.3">
+            <p id="section-6.4-2.3.1">Wrapping each checkpoint as a separate EAT would lose the cryptographic chain integrity that is central to PoP's security properties.<a href="#section-6.4-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-6.4-3">The EAT profile URI "urn:ietf:params:rats:eat:profile:pop:1.0" applies to the Attestation Result (WAR) format defined in <span>[<a href="#PoP-Appraisal" class="cite xref">PoP-Appraisal</a>]</span>, which carries EAT-compatible claims (verdict, attestation tier, forensic assessments). The Evidence Packet uses its own profile URI "urn:ietf:params:pop:profile:1.0" to identify the PoP Evidence format. Generic EAT tooling cannot parse PoP Evidence without PoP-specific support, but can consume WAR Attestation Results via the EAR compatibility mapping defined in <span>[<a href="#PoP-Appraisal" class="cite xref">PoP-Appraisal</a>]</span>.<a href="#section-6.4-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="reference-value-trust">
+<section id="section-6.5">
+        <h3 id="name-reference-value-trust-model">
+<a href="#section-6.5" class="section-number selfRef">6.5. </a><a href="#name-reference-value-trust-model" class="section-name selfRef">Reference Value Trust Model</a>
+        </h3>
+<p id="section-6.5-1">The Reference Value Provider role in PoP differs from traditional RATS deployments where RVPs supply known-good platform measurements from a trusted supply chain. In PoP, Reference Values take two forms:<a href="#section-6.5-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-6.5-2">
+          <dt id="section-6.5-2.1">Specification-defined values:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.5-2.2">
+            <p id="section-6.5-2.2.1">SWF parameters, forensic thresholds, and profile requirements defined in this document and <span>[<a href="#PoP-Appraisal" class="cite xref">PoP-Appraisal</a>]</span>. These are static and trusted by virtue of the specification itself.<a href="#section-6.5-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.5-2.3">Author-generated behavioral baselines:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.5-2.4">
+            <p id="section-6.5-2.4.1">Per-author behavioral profiles (baseline-digest) accumulated across sessions within the Attesting Environment. These are self-asserted by the Attester and <span class="bcp14">MUST NOT</span> be treated as trusted Reference Values. The baseline-digest is signed by the Evidence Packet's signing key and bound to the author identity via identity-fingerprint, but at T1/T2 tiers the signing key is software-controlled and the baseline could be synthetically constructed (see <a href="#baseline-forgery" class="auto internal xref">Section 8.3.6</a>).<a href="#section-6.5-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+<p id="section-6.5-3">Verifiers <span class="bcp14">MUST</span> treat behavioral baselines as corroborative evidence whose weight scales with the confidence-tier (population-reference through mature), not as independent attestation of authenticity. The forensic mechanisms (SNR, CLC, error topology) operate independently of baseline data and provide the primary discrimination between biological and synthetic authoring.<a href="#section-6.5-3" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 <div id="protocol-overview">
@@ -1887,6 +1946,7 @@ mandate that evidence be produced or consumed.<a href="#section-5-3" class="pilc
 </li>
         </ol>
 <p id="section-7.1-5">Endorsers (hardware manufacturers) supply TPM endorsement certificates and Secure Element attestations that Verifiers use to validate hardware-bound claims in T3/T4 Evidence. Reference Value Providers supply the expected behavioral patterns, SWF difficulty parameters, and profile specifications that Verifiers use as appraisal baselines.<a href="#section-7.1-5" class="pilcrow">¶</a></p>
+<p id="section-7.1-6">Note: In some deployments, the Relying Party (e.g., a content management system or publishing platform) may receive an Evidence Packet alongside content and forward it to a Verifier on behalf of the author. This is operationally similar to the RATS background-check model (<span>[<a href="#RFC9334" class="cite xref">RFC9334</a>]</span>, Section 8.2), where the Relying Party initiates verification. However, the Evidence Packet is still generated by the Attester and travels with the content as a self-contained credential, making this architecturally consistent with the passport model. Deployments using this pattern <span class="bcp14">SHOULD</span> ensure that the Relying Party does not modify the Evidence Packet before forwarding it to the Verifier.<a href="#section-7.1-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="evidence-lifecycle">
@@ -2096,6 +2156,55 @@ SHA-256 of the Evidence Packet's signing key.<a href="#section-7.4-7" class="pil
 <a href="#section-8" class="section-number selfRef">8. </a><a href="#name-threat-model" class="section-name selfRef">Threat Model</a>
       </h2>
 <p id="section-8-1">This section defines the adversary model following the methodology of <span>[<a href="#RFC3552" class="cite xref">RFC3552</a>]</span> and incorporating insights from RATS security analysis <span>[<a href="#Sardar-RATS" class="cite xref">Sardar-RATS</a>]</span>. The threat model assumes a Dolev-Yao style adversary <span>[<a href="#Dolev-Yao" class="cite xref">Dolev-Yao</a>]</span> with domain-specific constraints.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<p id="section-8-2">The following table maps PoP threat categories to the RATS threat analysis in <span>[<a href="#Sardar-RATS" class="cite xref">Sardar-RATS</a>]</span> and <span>[<a href="#RFC9334" class="cite xref">RFC9334</a>]</span> Section 12:<a href="#section-8-2" class="pilcrow">¶</a></p>
+<table class="center" id="table-1">
+        <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+<thead>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">RATS Threat Category</th>
+            <th class="text-left" rowspan="1" colspan="1">PoP Coverage</th>
+            <th class="text-left" rowspan="1" colspan="1">PoP Mechanism</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Compromised Attester</td>
+            <td class="text-left" rowspan="1" colspan="1">Primary threat (<a href="#adversarial-attester" class="auto internal xref">Section 8.1</a>)</td>
+            <td class="text-left" rowspan="1" colspan="1">SWF time-binding, behavioral entropy, hardware isolation (T3/T4)</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Spoofed Attestation Results</td>
+            <td class="text-left" rowspan="1" colspan="1">WAR signature verification</td>
+            <td class="text-left" rowspan="1" colspan="1">COSE_Sign1 over WAR, Verifier identity binding</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Evidence replay</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <a href="#replay-attack" class="auto internal xref">Section 8.3.2</a>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">Physical freshness anchors, entangled VDF mode</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Man-in-the-middle</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <a href="#diversion-attack" class="auto internal xref">Section 8.3.7</a>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">TLS channel binding (EKM), SEAT platform attestation</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Compromised Verifier</td>
+            <td class="text-left" rowspan="1" colspan="1">Out of scope (trusted Verifier assumption)</td>
+            <td class="text-left" rowspan="1" colspan="1">Relying Party <span class="bcp14">MAY</span> cross-verify with multiple Verifiers</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Supply chain attack on AE</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <a href="#ae-spoofing" class="auto internal xref">Section 8.3.5</a>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">T3/T4 hardware attestation; T1/T2 accept this risk</td>
+          </tr>
+        </tbody>
+      </table>
 <div id="adversarial-attester">
 <section id="section-8.1">
         <h3 id="name-adversarial-attester-model">
@@ -2429,8 +2538,8 @@ software-only signing.<a href="#section-12-3" class="pilcrow">¶</a></p>
 including NIST SP 800-63B Authenticator Assurance Levels (AAL),
 ISO/IEC 29115 Levels of Assurance (LoA), and Entity Attestation Token
 (EAT) security levels as defined in <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>.<a href="#section-13-1" class="pilcrow">¶</a></p>
-<table class="center" id="table-1">
-        <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+<table class="center" id="table-2">
+        <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
 <thead>
           <tr>
             <th class="text-left" rowspan="1" colspan="1">PoP Tier</th>
@@ -2463,7 +2572,13 @@ ISO/IEC 29115 Levels of Assurance (LoA), and Entity Attestation Token
       </table>
 <p id="section-13-3">T3 and T4 both map to EAT security level "hardware" (4) because the EAT
 specification does not distinguish PUF-level binding from standard
-TPM key binding.<a href="#section-13-3" class="pilcrow">¶</a></p>
+TPM key binding. EAT security level "secure-restricted" (3) is not used
+because PoP tiers define hardware binding in terms of key isolation and
+anti-tamper properties, not the firmware/software security boundary that
+"secure-restricted" describes. Relying Parties requiring finer-grained
+assurance distinctions <span class="bcp14">SHOULD</span> use the attestation-tier value (T1-T4)
+from the WAR Attestation Result rather than relying solely on EAT
+security-level.<a href="#section-13-3" class="pilcrow">¶</a></p>
 <div id="tier-t1-software">
 <section id="section-13.1">
         <h3 id="name-tier-t1-software-only">
@@ -2533,8 +2648,8 @@ TPM key binding.<a href="#section-13-3" class="pilcrow">¶</a></p>
 <a href="#section-14" class="section-number selfRef">14. </a><a href="#name-profile-architecture" class="section-name selfRef">Profile Architecture</a>
       </h2>
 <p id="section-14-1">The PoP specification defines three implementation profiles that establish Mandatory-to-Implement (MTI) requirements for interoperability.<a href="#section-14-1" class="pilcrow">¶</a></p>
-<table class="center" id="table-2">
-        <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
+<table class="center" id="table-3">
+        <caption><a href="#table-3" class="selfRef">Table 3</a></caption>
 <thead>
           <tr>
             <th class="text-left" rowspan="1" colspan="1">Feature ID</th>
@@ -2596,7 +2711,7 @@ TPM key binding.<a href="#section-13-3" class="pilcrow">¶</a></p>
 <a href="#section-14.1" class="section-number selfRef">14.1. </a><a href="#name-conformance-requirements" class="section-name selfRef">Conformance Requirements</a>
         </h3>
 <p id="section-14.1-1">A conforming Attester <span class="bcp14">MUST</span> implement at least the CORE profile. A conforming Verifier <span class="bcp14">MUST</span> be capable of validating all three profiles. Verifiers encountering unknown fields <span class="bcp14">MUST</span> ignore them and proceed with validation of known fields. Verifiers receiving an Evidence Packet with version greater than 1 <span class="bcp14">MUST</span> reject the packet unless they implement the corresponding protocol version.<a href="#section-14.1-1" class="pilcrow">¶</a></p>
-<p id="section-14.1-2">The profile-uri field in an Evidence Packet <span class="bcp14">MUST</span> be set to "urn:ietf:params:rats:eat:profile:pop:1.0" for Evidence conforming to this specification.<a href="#section-14.1-2" class="pilcrow">¶</a></p>
+<p id="section-14.1-2">The profile-uri field in an Evidence Packet <span class="bcp14">MUST</span> be set to "urn:ietf:params:pop:profile:1.0" for Evidence conforming to this specification. This URI identifies the PoP Evidence format and is distinct from the EAT profile URI "urn:ietf:params:rats:eat:profile:pop:1.0", which identifies PoP Attestation Results (see <a href="#evidence-eat-relationship" class="auto internal xref">Section 6.4</a>).<a href="#section-14.1-2" class="pilcrow">¶</a></p>
 <p id="section-14.1-3">In the document-ref structure, byte-length is the length in bytes of the UTF-8 encoded document, and char-count is the number of Unicode scalar values (code points).<a href="#section-14.1-3" class="pilcrow">¶</a></p>
 <p id="section-14.1-4">If the Evidence Packet omits the attestation-tier field, the Verifier
 <span class="bcp14">MUST</span> assess the tier from the evidence content: T1 if no hardware
@@ -3347,8 +3462,8 @@ against the committed root.<a href="#section-16.5-3" class="pilcrow">¶</a></p>
 <p id="section-16.6-1">Conforming Attesters <span class="bcp14">MUST</span> use the following minimum SWF parameters
 for each Evidence Content Tier.<a href="#section-16.6-1" class="pilcrow">¶</a></p>
 <p id="section-16.6-2">For <code>swf-argon2id</code> (20) and <code>swf-argon2id-entangled</code> (21):<a href="#section-16.6-2" class="pilcrow">¶</a></p>
-<table class="center" id="table-3">
-          <caption><a href="#table-3" class="selfRef">Table 3</a></caption>
+<table class="center" id="table-4">
+          <caption><a href="#table-4" class="selfRef">Table 4</a></caption>
 <thead>
             <tr>
               <th class="text-left" rowspan="1" colspan="1">Parameter</th>
@@ -3391,8 +3506,8 @@ for each Evidence Content Tier.<a href="#section-16.6-1" class="pilcrow">¶</a><
           </tbody>
         </table>
 <p id="section-16.6-4">For <code>swf-sha256</code> (10):<a href="#section-16.6-4" class="pilcrow">¶</a></p>
-<table class="center" id="table-4">
-          <caption><a href="#table-4" class="selfRef">Table 4</a></caption>
+<table class="center" id="table-5">
+          <caption><a href="#table-5" class="selfRef">Table 5</a></caption>
 <thead>
             <tr>
               <th class="text-left" rowspan="1" colspan="1">Parameter</th>
@@ -3674,7 +3789,7 @@ registry established by <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]
 <span class="break"></span><dl class="dlParallel" id="section-18.3-2">
           <dt id="section-18.3-2.1">Profile Name:</dt>
           <dd style="margin-left: 1.5em" id="section-18.3-2.2">
-            <p id="section-18.3-2.2.1">PoP Evidence Profile<a href="#section-18.3-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-18.3-2.2.1">PoP Attestation Result Profile<a href="#section-18.3-2.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-18.3-2.3">Profile URI:</dt>
@@ -3684,9 +3799,13 @@ registry established by <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]
           <dd class="break"></dd>
 <dt id="section-18.3-2.5">Description:</dt>
           <dd style="margin-left: 1.5em" id="section-18.3-2.6">
-            <p id="section-18.3-2.6.1">Profile for Cryptographic Proof of Process (PoP) Evidence
-Packets and Attestation Results as defined in this document
-and <span>[<a href="#PoP-Appraisal" class="cite xref">PoP-Appraisal</a>]</span>.<a href="#section-18.3-2.6.1" class="pilcrow">¶</a></p>
+            <p id="section-18.3-2.6.1">Profile for Cryptographic Proof of Process (PoP) Attestation
+Results (WAR format) as defined in <span>[<a href="#PoP-Appraisal" class="cite xref">PoP-Appraisal</a>]</span>. The
+PoP Evidence Packet format uses a domain-specific CBOR
+structure (tag 1129336656) that is not an EAT token; this
+profile URI identifies the Verifier output format. See
+<a href="#evidence-eat-relationship" class="auto internal xref">Section 6.4</a> for the architectural
+rationale.<a href="#section-18.3-2.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-18.3-2.7">Reference:</dt>
@@ -3962,8 +4081,8 @@ to enable interoperable extension.<a href="#section-18.6-2" class="pilcrow">¶</
 <a href="#section-19.5" class="section-number selfRef">19.5. </a><a href="#name-trust-gradation-by-tier" class="section-name selfRef">Trust Gradation by Tier</a>
         </h3>
 <p id="section-19.5-1">Relying Parties <span class="bcp14">SHOULD</span> interpret Evidence according to its Attestation Tier. Detailed per-tier verification constraints are defined in <span>[<a href="#PoP-Appraisal" class="cite xref">PoP-Appraisal</a>]</span>.<a href="#section-19.5-1" class="pilcrow">¶</a></p>
-<table class="center" id="table-5">
-          <caption><a href="#table-5" class="selfRef">Table 5</a></caption>
+<table class="center" id="table-6">
+          <caption><a href="#table-6" class="selfRef">Table 6</a></caption>
 <thead>
             <tr>
               <th class="text-left" rowspan="1" colspan="1">Tier</th>

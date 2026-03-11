@@ -82,36 +82,39 @@ Table of Contents
      8.1.  Entropy Report Computation
      8.2.  Verdict Assignment
      8.3.  Baseline Appraisal
-   9.  Effort Attribution
-   10. Tool Receipt Protocol
-     10.1.  AI Tool Receipt Verification
-     10.2.  Cross-Tool Composition
-   11. Adversary Model
-   12. Privacy Considerations
-     12.1.  Evidence and Attestation Result Privacy
-     12.2.  Evidence Quantization Requirements
-     12.3.  Data Retention and Behavioral Profiles
-   13. Accessibility and Alternative Input Modes
-     13.1.  Eye-Tracking Mode
-     13.2.  Dictation Mode
-     13.3.  Input Method Editor (IME) Mode
-     13.4.  Additional Accommodations
-   14. EAR Compatibility Mapping (Informative)
-     14.1.  Verdict to ear.status Mapping
-     14.2.  WAR Fields as EAR Extensions
-     14.3.  Migration Path
-   15. Experimental Status Rationale
-   16. IANA Considerations
-   17. Security Considerations
-     17.1.  Entropy Manipulation Attacks
-     17.2.  Verifier Trust Model
-     17.3.  Stylometric De-anonymization
-     17.4.  Baseline Biometric Re-identification
-     17.5.  Attestation Tier Downgrade Detection
-     17.6.  Assistive Mode Abuse
-   18. References
-     18.1.  Normative References
-     18.2.  Informative References
+   9.  Appraisal Policy Architecture
+     9.1.  Appraisal Policy for Evidence
+     9.2.  Appraisal Policy for Attestation Results
+   10. Effort Attribution
+   11. Tool Receipt Protocol
+     11.1.  AI Tool Receipt Verification
+     11.2.  Cross-Tool Composition
+   12. Adversary Model
+   13. Privacy Considerations
+     13.1.  Evidence and Attestation Result Privacy
+     13.2.  Evidence Quantization Requirements
+     13.3.  Data Retention and Behavioral Profiles
+   14. Accessibility and Alternative Input Modes
+     14.1.  Eye-Tracking Mode
+     14.2.  Dictation Mode
+     14.3.  Input Method Editor (IME) Mode
+     14.4.  Additional Accommodations
+   15. EAR Compatibility Mapping (Informative)
+     15.1.  Verdict to ear.status Mapping
+     15.2.  WAR Fields as EAR Extensions
+     15.3.  Migration Path
+   16. Experimental Status Rationale
+   17. IANA Considerations
+   18. Security Considerations
+     18.1.  Entropy Manipulation Attacks
+     18.2.  Verifier Trust Model
+     18.3.  Stylometric De-anonymization
+     18.4.  Baseline Biometric Re-identification
+     18.5.  Attestation Tier Downgrade Detection
+     18.6.  Assistive Mode Abuse
+   19. References
+     19.1.  Normative References
+     19.2.  Informative References
    Verification Constraint Summary
      Structural Integrity
      Behavioral Analysis (ENHANCED/MAXIMUM profiles)
@@ -188,7 +191,7 @@ Table of Contents
    Effort Attribution:  A quantitative breakdown of human versus tool-
       assisted content contribution within an Evidence Packet, expressed
       as a human-fraction and per-checkpoint counts.  Defined in
-      Section 9.
+      Section 10.
 
    Composite Assessment:  The multi-flag evaluation procedure that
       determines whether forensic anomalies warrant elevation to a
@@ -331,7 +334,7 @@ Table of Contents
    calibration values derived from empirical observation of human
    authoring behavior.  Refinement of these values based on
    implementation experience is an explicit goal of the Experimental
-   status of this specification (see Section 15).  The MUST-level
+   status of this specification (see Section 16).  The MUST-level
    flagging requirements ensure interoperable Verifier behavior for
    initial deployments; individual flags do not determine the verdict
    (see the composite assessment procedure below).
@@ -557,7 +560,7 @@ Table of Contents
    mechanical turk score.  When the paste event is accompanied by a
    receipt structure (checkpoint key 13), the Verifier can
    cryptographically verify the provenance of the pasted content as
-   described in Section 10.
+   described in Section 11.
 
    Verifiers should compute a mechanical turk probability score from 0.0
    (no indicators) to 1.0 (all indicators present).  A score exceeding
@@ -1098,7 +1101,94 @@ Table of Contents
    SHOULD be reported as a warning but does not by itself trigger a
    suspicious verdict.
 
-9.  Effort Attribution
+9.  Appraisal Policy Architecture
+
+   RFC 9334 Section 2.2 defines two types of Appraisal Policy: Appraisal
+   Policy for Evidence (used by the Verifier) and Appraisal Policy for
+   Attestation Results (used by the Relying Party).  This section maps
+   the PoP appraisal framework to these two policy types.
+
+9.1.  Appraisal Policy for Evidence
+
+   The Verifier's Appraisal Policy for Evidence is defined by the
+   verification procedure in Section 4, the forensic assessment
+   mechanisms in Section 5, and the per-tier verification constraints in
+   Appendix "Per-Tier Verification Constraints".  Collectively, these
+   specify how the Verifier evaluates an Evidence Packet to produce an
+   Attestation Result (WAR).
+
+   The policy inputs are:
+
+   *  The Evidence Packet itself (CBOR tag 1129336656)
+
+   *  The PoP specification (this document and [PoP-Protocol]), which
+      defines SWF parameters, forensic thresholds, and profile
+      requirements
+
+   *  Endorsements: TPM endorsement certificates and platform
+      attestation credentials (T3/T4 tiers only), supplied by hardware
+      manufacturers acting as Endorsers per [RFC9334]
+
+   *  Reference Values: specification-defined forensic thresholds and
+      behavioral baselines as described in [PoP-Protocol],
+      Section "Reference Value Trust Model"
+
+   *  Deployment-specific configuration: clock skew tolerances
+      (Section 4.1), entropy estimator selection, and optional forensic
+      mechanism enablement per Evidence Content Tier
+
+9.2.  Appraisal Policy for Attestation Results
+
+   The Relying Party's Appraisal Policy for Attestation Results
+   determines how WAR verdicts inform trust decisions.  This policy is
+   deployment-specific, but implementations SHOULD consider the
+   following framework:
+
+   Verdict interpretation:
+
+   *  authentic (1): The Relying Party MAY accept the claimed authorship
+      provenance.  The attestation-tier and confidence-tier fields
+      indicate the strength of the underlying evidence.
+
+   *  inconclusive (2): Insufficient behavioral data was available
+      (typically CORE profile Evidence).  The Relying Party SHOULD NOT
+      treat this as evidence of forgery.  Deployments requiring
+      behavioral assurance SHOULD require ENHANCED or MAXIMUM Evidence
+      Content Tiers.
+
+   *  suspicious (3): Forensic anomalies were detected.  The Relying
+      Party SHOULD request additional evidence or apply enhanced
+      scrutiny.  The forensic-summary field identifies which mechanisms
+      triggered and the affected checkpoint coverage.
+
+   *  invalid (4): The Evidence Packet is structurally or
+      cryptographically broken.  The Relying Party MUST NOT rely on any
+      claims from the associated content.
+
+   Tier-based acceptance:
+
+   *  Relying Parties SHOULD define minimum acceptable attestation tiers
+      and Evidence Content Tiers for their use case.  For example, a
+      legal evidentiary context might require T3 ENHANCED or higher,
+      while a blogging platform might accept T1 CORE.
+
+   *  The attestation-tier in the WAR reflects the Verifier's assessed
+      assurance level, which may differ from the Attester's claimed tier
+      if hardware attestation validation failed.
+
+   Forgery cost evaluation:
+
+   *  The forgery-cost-estimate field provides a quantified lower bound
+      on the resources required to forge the Evidence.  Relying Parties
+      MAY compare this against the economic value of the content to
+      assess whether forgery is economically rational.
+
+   Relying Parties MUST NOT make trust decisions based solely on the
+   verdict enum.  The attestation-tier, confidence-tier, forensic-
+   summary, and forgery-cost-estimate fields provide essential context
+   for informed trust decisions.
+
+10.  Effort Attribution
 
    When an Evidence Packet contains receipt structures (checkpoint key
    13), the Verifier MUST compute an effort-attribution and include it
@@ -1137,14 +1227,14 @@ Table of Contents
    content in tool-attributed-chars.  The Verifier SHOULD emit a warning
    indicating that the referenced Evidence Packet could not be verified.
 
-10.  Tool Receipt Protocol
+11.  Tool Receipt Protocol
 
    Checkpoint key 13 carries receipt structures that attribute content
    to external sources.  Two receipt types are defined: tool-receipt for
    external AI tool contributions and self-receipt for cross-tool PoP
    composition.  Verifiers MUST process both types when present.
 
-10.1.  AI Tool Receipt Verification
+11.1.  AI Tool Receipt Verification
 
    When external tools (e.g., large language models) contribute content,
    the tool-receipt structure provides cryptographic attribution.  The
@@ -1184,7 +1274,7 @@ Table of Contents
    forensic mechanisms that assume continuous human authorship (see
    Section 5).
 
-10.2.  Cross-Tool Composition
+11.2.  Cross-Tool Composition
 
    The same receipt mechanism supports cross-tool composition workflows
    where an author drafts content in one application and transfers it to
@@ -1203,7 +1293,7 @@ Table of Contents
    receipt is detected, Verifiers SHOULD apply the cross-tool
    composition guidance defined in the Mechanical Turk Scoring section.
 
-11.  Adversary Model
+12.  Adversary Model
 
    This document inherits the adversary model defined in the Threat
    Model section of [PoP-Protocol].  The appraisal-specific defenses at
@@ -1224,9 +1314,9 @@ Table of Contents
       cost equals the claimed authorship duration plus the hardware
       compromise cost.
 
-12.  Privacy Considerations
+13.  Privacy Considerations
 
-12.1.  Evidence and Attestation Result Privacy
+13.1.  Evidence and Attestation Result Privacy
 
    High-resolution behavioral data poses a stylometric de-anonymization
    risk [Monaco2018].  Implementations SHOULD support Evidence
@@ -1241,7 +1331,7 @@ Table of Contents
    entropy reports across multiple Attestation Results to identify or
    track authors.
 
-12.2.  Evidence Quantization Requirements
+13.2.  Evidence Quantization Requirements
 
    Attestation Results MUST quantize forensic indicator values to the
    following resolutions:
@@ -1265,7 +1355,7 @@ Table of Contents
    the already-quantized millisecond IKI values; Verifiers MUST NOT
    reconstruct sub-millisecond timing from spatial models.
 
-12.3.  Data Retention and Behavioral Profiles
+13.3.  Data Retention and Behavioral Profiles
 
    Verifiers MUST NOT maintain per-author behavioral profile databases.
    Attestation Results SHOULD NOT include raw forensic indicator values;
@@ -1275,7 +1365,7 @@ Table of Contents
    submission to prevent linking authorship sessions to real-world
    identities.
 
-13.  Accessibility and Alternative Input Modes
+14.  Accessibility and Alternative Input Modes
 
    Verifiers MUST NOT automatically reject evidence based solely on
    atypical timing patterns.  Implementations MUST support input mode
@@ -1289,7 +1379,7 @@ Table of Contents
    Packet.  When this indicator is present, Verifiers MUST apply
    adjusted thresholds as follows:
 
-13.1.  Eye-Tracking Mode
+14.1.  Eye-Tracking Mode
 
    Eye-tracking input produces IKI ranges of 500-3000 ms (versus 100-300
    ms for keyboard).  Adjusted thresholds:
@@ -1304,7 +1394,7 @@ Table of Contents
    *  Error topology: Adjusted for gaze drift corrections, which produce
       characteristic error patterns distinct from keyboard errors.
 
-13.2.  Dictation Mode
+14.2.  Dictation Mode
 
    Dictation input produces burst patterns with higher cadence variance
    than keyboard.  Adjusted thresholds:
@@ -1319,7 +1409,7 @@ Table of Contents
    *  Error topology: waived (dictation corrections follow speech-
       recognition patterns, not typing patterns)
 
-13.3.  Input Method Editor (IME) Mode
+14.3.  Input Method Editor (IME) Mode
 
    CJK and other non-Latin input methods produce a composition-commit
    cycle (rapid phonetic keystrokes, candidate selection pause, commit)
@@ -1351,7 +1441,7 @@ Table of Contents
       backspace, retype) and dictation corrections (word-level
       replacement).
 
-13.4.  Additional Accommodations
+14.4.  Additional Accommodations
 
    *  Switch-access input: minimum event count per checkpoint reduced to
       1 (from default of 5).
@@ -1371,7 +1461,7 @@ Table of Contents
    tracking), 3 (dictation), 4 (ime-input).  A future revision of
    [PoP-Protocol] will formalize this signaling mechanism.
 
-14.  EAR Compatibility Mapping (Informative)
+15.  EAR Compatibility Mapping (Informative)
 
    The RATS working group is developing a standard Attestation Result
    format called EAT Attestation Results (EAR) [EAR], which profiles the
@@ -1381,7 +1471,7 @@ Table of Contents
    fields and EAR claims to facilitate interoperability and future
    convergence.
 
-14.1.  Verdict to ear.status Mapping
+15.1.  Verdict to ear.status Mapping
 
    The WAR verdict enum maps to EAR's ear.status as follows:
 
@@ -1403,7 +1493,7 @@ Table of Contents
 
                                  Table 2
 
-14.2.  WAR Fields as EAR Extensions
+15.2.  WAR Fields as EAR Extensions
 
    When the WAR is expressed as an EAR, the attestation-result fields
    map as follows:
@@ -1421,65 +1511,91 @@ Table of Contents
 
    Per-appraisal EAR claims (within the submods entry):
 
-   *  ear.status: mapped from WAR verdict per Section 14.1
+   *  ear.status: mapped from WAR verdict per Section 15.1
 
    PoP-specific extension claims (registered via $$ear-appraisal-
    extension):
 
-    +=======================+============================+============+
-    | WAR field (key)       | Extension claim            | Type       |
-    +=======================+============================+============+
-    | evidence-ref (2)      | ear.pop.evidence-ref       | hash-value |
-    +-----------------------+----------------------------+------------+
-    | attestation-tier (4)  | ear.pop.attestation-tier   | uint (1-4) |
-    +-----------------------+----------------------------+------------+
-    | chain-length (5)      | ear.pop.chain-length       | uint       |
-    +-----------------------+----------------------------+------------+
-    | chain-duration (6)    | ear.pop.chain-duration     | uint       |
-    |                       |                            | (seconds)  |
-    +-----------------------+----------------------------+------------+
-    | entropy-report (7)    | ear.pop.entropy-report     | map        |
-    +-----------------------+----------------------------+------------+
-    | forgery-cost-estimate | ear.pop.forgery-cost       | map        |
-    | (8)                   |                            |            |
-    +-----------------------+----------------------------+------------+
-    | absence-claims (9)    | ear.pop.absence-claims     | array      |
-    +-----------------------+----------------------------+------------+
-    | warnings (10)         | ear.pop.warnings           | array of   |
-    |                       |                            | tstr       |
-    +-----------------------+----------------------------+------------+
-    | forensic-summary (13) | ear.pop.forensic-summary   | map        |
-    +-----------------------+----------------------------+------------+
-    | confidence-tier (14)  | ear.pop.confidence-tier    | uint (1-4) |
-    +-----------------------+----------------------------+------------+
-    | effort-attribution    | ear.pop.effort-attribution | map        |
-    | (15)                  |                            |            |
-    +-----------------------+----------------------------+------------+
+   +=======================+===============================+==========+
+   | WAR field (key)       | Extension claim               |Type      |
+   +=======================+===============================+==========+
+   | evidence-ref (2)      | ear.pop.evidence-ref          |hash-value|
+   +-----------------------+-------------------------------+----------+
+   | attestation-tier (4)  | ear.pop.attestation-tier      |uint (1-4)|
+   +-----------------------+-------------------------------+----------+
+   | chain-length (5)      | ear.pop.chain-length          |uint      |
+   +-----------------------+-------------------------------+----------+
+   | chain-duration (6)    | ear.pop.chain-duration        |uint      |
+   |                       |                               |(seconds) |
+   +-----------------------+-------------------------------+----------+
+   | entropy-report (7)    | ear.pop.entropy-report        |map       |
+   +-----------------------+-------------------------------+----------+
+   | forgery-cost-estimate | ear.pop.forgery-cost-estimate |map       |
+   | (8)                   |                               |          |
+   +-----------------------+-------------------------------+----------+
+   | absence-claims (9)    | ear.pop.absence-claims        |array     |
+   +-----------------------+-------------------------------+----------+
+   | warnings (10)         | ear.pop.warnings              |array of  |
+   |                       |                               |tstr      |
+   +-----------------------+-------------------------------+----------+
+   | forensic-summary (13) | ear.pop.forensic-summary      |map       |
+   +-----------------------+-------------------------------+----------+
+   | confidence-tier (14)  | ear.pop.confidence-tier       |uint (1-4)|
+   +-----------------------+-------------------------------+----------+
+   | effort-attribution    | ear.pop.effort-attribution    |map       |
+   | (15)                  |                               |          |
+   +-----------------------+-------------------------------+----------+
 
-                                  Table 3
+                                 Table 3
 
-14.3.  Migration Path
+15.3.  Migration Path
 
    A future revision of this document will adopt EAR as the native
    Attestation Result format when [EAR] reaches Working Group Last Call.
    The migration path is:
 
    1.  Replace the WAR CBOR tag (1129791826) with CWT or JWT wrapping
-       per EAR requirements.
+       per EAR requirements.  The verdict field maps to ear.status per
+       Section 15.1.
 
-   2.  Register the PoP-specific extension claims listed above via the
-       EAR extension point ($$ear-appraisal-extension).
+   2.  Register the PoP-specific extension claims listed in Section 15.2
+       via the EAR extension point ($$ear-appraisal-extension).  The
+       CDDL definitions for these claims are provided below to
+       facilitate early implementation:
+
+      $$ear-appraisal-extension //= (
+        "ear.pop.evidence-ref" => hash-value,
+        "ear.pop.attestation-tier" => uint .within (1..4),
+        "ear.pop.chain-length" => uint,
+        "ear.pop.chain-duration" => uint,
+        ? "ear.pop.entropy-report" => entropy-report,
+        ? "ear.pop.forgery-cost-estimate" => forgery-cost-estimate,
+        ? "ear.pop.absence-claims" => [+ absence-claim],
+        ? "ear.pop.warnings" => [* tstr],
+        ? "ear.pop.forensic-summary" => forensic-summary,
+        ? "ear.pop.confidence-tier" => uint .within (1..4),
+        ? "ear.pop.effort-attribution" => effort-attribution,
+      )
+
+       The attestation-tier and confidence-tier claims use uint .within
+       (1..4) rather than the named enums defined in Section 8.  The
+       numeric values are identical; implementers should consult the
+       attestation-tier and confidence-tier definitions in the WAR
+       format for the corresponding symbolic names.
 
    3.  Adopt the ear.verifier-id structure from [AR4SI] in place of the
        current verifier-signature field.
 
-   4.  Retain the PoP profile URI to distinguish PoP Attestation Results
-       from other EAR-conformant results.
+   4.  Retain the PoP profile URI
+       "urn:ietf:params:rats:eat:profile:pop:1.0" to distinguish PoP
+       Attestation Results from other EAR-conformant results.
 
    Until EAR stabilizes, the WAR format defined in Section 8 remains the
-   normative format for this specification.
+   normative format for this specification.  Implementers are encouraged
+   to support both the WAR format and the EAR extension claims defined
+   above to facilitate a smooth transition.
 
-15.  Experimental Status Rationale
+16.  Experimental Status Rationale
 
    This document is published with Experimental status for the following
    reasons:
@@ -1513,19 +1629,19 @@ Table of Contents
    calibration, false positive/negative rates, and adversarial evasion
    attempts to inform future revisions.
 
-16.  IANA Considerations
+17.  IANA Considerations
 
    This document has no IANA actions.  All IANA registrations for the
    PoP framework are defined in [PoP-Protocol].
 
-17.  Security Considerations
+18.  Security Considerations
 
    This document defines forensic appraisal procedures that inherit and
    extend the security model from [PoP-Protocol].  The broader RATS
    security considerations [Sardar-RATS] also apply.  Implementers
    should consider the following security aspects:
 
-17.1.  Entropy Manipulation Attacks
+18.1.  Entropy Manipulation Attacks
 
    An adversary may attempt to inject synthetic jitter patterns that
    satisfy entropy thresholds while lacking biological origin.  The use
@@ -1533,7 +1649,7 @@ Table of Contents
    single metrics provides defense-in-depth against high-fidelity
    simulation.
 
-17.2.  Verifier Trust Model
+18.2.  Verifier Trust Model
 
    The forensic assessments defined in this document produce
    probabilistic confidence scores, not binary determinations.  Relying
@@ -1542,7 +1658,7 @@ Table of Contents
    incorporate the declared Attestation Tier (T1-T4) and the specific
    absence proof types claimed.
 
-17.3.  Stylometric De-anonymization
+18.3.  Stylometric De-anonymization
 
    High-resolution behavioral data (keystroke timing, pause patterns)
    can enable author identification even when document content is not
@@ -1551,7 +1667,7 @@ Table of Contents
    trade-off between forensic confidence and privacy SHOULD be
    documented for Relying Parties.
 
-17.4.  Baseline Biometric Re-identification
+18.4.  Baseline Biometric Re-identification
 
    The baseline-digest accumulates a persistent behavioral biometric
    profile (IKI histogram, coefficient of variation, Hurst exponent,
@@ -1572,7 +1688,7 @@ Table of Contents
    under applicable regulations.  Baseline data MUST NOT be shared
    between Verifiers without explicit author consent.
 
-17.5.  Attestation Tier Downgrade Detection
+18.5.  Attestation Tier Downgrade Detection
 
    A Verifier that maintains state across sessions SHOULD detect tier
    downgrades — where an Attesting Environment that previously submitted
@@ -1583,7 +1699,7 @@ Table of Contents
    Result warnings field (key 10) and MAY assign a more conservative
    verdict.
 
-17.6.  Assistive Mode Abuse
+18.6.  Assistive Mode Abuse
 
    Adversaries may falsely claim assistive technology usage to bypass
    behavioral entropy checks.  Verifiers SHOULD require consistent
@@ -1592,9 +1708,9 @@ Table of Contents
    indicate when assistive modes were active, as specified in the
    accessibility section above.
 
-18.  References
+19.  References
 
-18.1.  Normative References
+19.1.  Normative References
 
    [PoP-Protocol]
               Condrey, D., "Cryptographic Proof of Process (PoP):
@@ -1644,7 +1760,7 @@ Table of Contents
               Architecture", RFC 9334, DOI 10.17487/RFC9334, January
               2023, <https://www.rfc-editor.org/rfc/rfc9334>.
 
-18.2.  Informative References
+19.2.  Informative References
 
    [AR4SI]    Fossati, T., Voit, E., and H. Birkholz, "Attestation
               Results for Secure Interactions", Work in Progress,
