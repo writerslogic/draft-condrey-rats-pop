@@ -118,33 +118,35 @@ Table of Contents
      16.9.  Jitter Seal Computation
      16.10. Security Bound
      16.11. Hardware-Anchored Time (HAT)
-   17. IANA Considerations
-     17.1.  CBOR Tags
-     17.2.  SMI Private Enterprise Number
-     17.3.  EAT Profile
-     17.4.  Media Types
-     17.5.  TLS Exporter Label
-   18. Security Considerations
-     18.1.  Primary Threat: Adversarial Attester
-     18.2.  Retype Attack Defenses
-     18.3.  Relay and Replay Attack Defenses
-     18.4.  SWF Acceleration Defenses
-     18.5.  Trust Gradation by Tier
-     18.6.  Forgery Cost Bounds
-     18.7.  Denial of Service
-     18.8.  MAC Field Security Limitations
-     18.9.  Physical Freshness by Tier
-     18.10. Implementation Security Requirements
-     18.11. Signing Key Lifecycle and Rotation
-   19. Privacy Considerations
-     19.1.  Data Minimization
-     19.2.  Behavioral Fingerprinting
-     19.3.  Physical State Leakage
-     19.4.  Unlinkability
-     19.5.  Privacy Budget
-   20. References
-     20.1.  Normative References
-     20.2.  Informative References
+   17. Experimental Status Rationale
+   18. IANA Considerations
+     18.1.  CBOR Tags
+     18.2.  Note on SMI Private Enterprise Number
+     18.3.  EAT Profile
+     18.4.  Media Types
+     18.5.  TLS Exporter Label
+     18.6.  Future Registry Considerations
+   19. Security Considerations
+     19.1.  Primary Threat: Adversarial Attester
+     19.2.  Retype Attack Defenses
+     19.3.  Relay and Replay Attack Defenses
+     19.4.  SWF Acceleration Defenses
+     19.5.  Trust Gradation by Tier
+     19.6.  Forgery Cost Bounds
+     19.7.  Denial of Service
+     19.8.  MAC Field Security Limitations
+     19.9.  Physical Freshness by Tier
+     19.10. Implementation Security Requirements
+     19.11. Signing Key Lifecycle and Rotation
+   20. Privacy Considerations
+     20.1.  Data Minimization
+     20.2.  Behavioral Fingerprinting
+     20.3.  Physical State Leakage
+     20.4.  Unlinkability
+     20.5.  Privacy Budget
+   21. References
+     21.1.  Normative References
+     21.2.  Informative References
    SWF Test Vectors
      swf-sha256 (Mode 10) Test Vector
      swf-argon2id (Mode 20) Test Vector
@@ -323,9 +325,9 @@ Table of Contents
 
    This use case requires particular attention to privacy.  Behavioral
    telemetry constitutes biometric data; the privacy protections defined
-   in Section 19 (jitter quantization, data minimization, and Verifier
+   in Section 20 (jitter quantization, data minimization, and Verifier
    data retention limits) are essential safeguards.  Institutions
-   deploying PoP SHOULD establish clear data governance policies and
+   deploying PoP should establish clear data governance policies and
    ensure students retain control over their Evidence Packets.
 
 4.3.  Journalism and News Provenance
@@ -394,7 +396,8 @@ Table of Contents
 5.  Scope and Applicability
 
    PoP is designed as a voluntary, author-initiated mechanism.  The
-   following constraints define its intended scope of use:
+   following normative constraints define its intended scope of use and
+   apply to all conforming implementations:
 
    *  Evidence collection MUST be initiated by the author.  The Attester
       operates under the author's control; no external party may
@@ -475,8 +478,8 @@ Table of Contents
    The RATS architecture accommodates this through its layered trust
    model and configurable Appraisal Policies ([RFC9334]).  The companion
    appraisal document ([PoP-Appraisal]) defines domain-specific
-   verification procedures.  The Experimental category is appropriate
-   for exploring this novel application of RATS.
+   verification procedures.  The rationale for Experimental status is
+   provided in Section 17.
 
 7.  Protocol Overview
 
@@ -761,7 +764,7 @@ Table of Contents
       entropy B, an adversary cannot efficiently generate synthetic
       entropy that is indistinguishable from biological origin.  The
       cost of generating synthetic behavioral data satisfying all
-      forensic constraints MUST exceed a defined threshold.
+      forensic constraints must exceed a defined threshold.
 
    Content Binding:  Evidence E is cryptographically bound to document D
       such that E cannot be repurposed to attest a different document
@@ -790,7 +793,7 @@ Table of Contents
       increased inter-keystroke intervals during high-complexity
       passages.  Retyping known text shows uniform timing regardless of
       content complexity.  Evidence with semantic-timing correlation r <
-      0.2 is flagged for additional scrutiny (see Section 18.2).
+      0.2 is flagged for additional scrutiny (see Section 19.2).
 
    *  _Error Topology:_ Authentic authoring exhibits characteristic
       error patterns (hesitations, deletions near recent insertions,
@@ -1140,9 +1143,12 @@ Table of Contents
    pop-evidence = #6.1129336656(evidence-packet)
    pop-war = #6.1129791826(attestation-result)
 
+   ; Stub: full attestation-result definition in [PoP-Appraisal]
+   attestation-result = {* int => any}
+
    ; Primary structures
    evidence-packet = {
-       1 => uint,                    ; version (MUST be 1)
+       1 => uint,                    ; version (must be 1)
        2 => tstr,                    ; profile-uri
        3 => uuid,                    ; packet-id
        4 => pop-timestamp,           ; created
@@ -1252,7 +1258,7 @@ Table of Contents
 
    edit-position = [
        uint,                         ; offset
-       int,                          ; change (+/-), MUST be non-zero
+       int,                          ; change (+/-), must be non-zero
    ]
 
    physical-state = {
@@ -1273,7 +1279,7 @@ Table of Contents
 
    presence-challenge = {
        1 => bstr .size (16..256),    ; challenge-nonce (128+ bits)
-       2 => bstr,                    ; device-signature (MUST be COSE_Sign1)
+       2 => bstr,                    ; device-signature (must be COSE_Sign1)
        3 => pop-timestamp,           ; response-time
    }
 
@@ -1332,7 +1338,7 @@ Table of Contents
    }
 
    baseline-digest = {
-       1 => uint,                    ; version (MUST be 1)
+       1 => uint,                    ; version (must be 1)
        2 => uint,                    ; session-count
        3 => uint,                    ; total-keystrokes
        4 => streaming-stats,         ; iki-stats
@@ -1378,7 +1384,7 @@ Table of Contents
                  bstr .size 64          ; SHA-512
    hash-value = {
        1 => hash-algorithm,
-       2 => hash-digest,              ; length MUST match algorithm output
+       2 => hash-digest,              ; length must match algorithm output
    }
    compact-ref = {
        1 => hash-algorithm,          ; algorithm used for full hash
@@ -1392,7 +1398,8 @@ Table of Contents
    )
 
    The attestation-result type used in the pop-war tag wrapper is
-   defined in [PoP-Appraisal].
+   defined as a stub above for CDDL completeness; the full definition
+   appears in [PoP-Appraisal].
 
    To ensure cross-architecture determinism, all temporal and entropy
    measurements MUST be encoded as unsigned integers (uint).  Timestamps
@@ -1968,7 +1975,7 @@ Table of Contents
    NOTE: In the adversarial Attester model, the Attester generates the
    SWF output and therefore knows the MAC key.  The entangled-mac
    provides internal consistency binding but does NOT prevent forgery by
-   a malicious Attester (see Section 18.8).
+   a malicious Attester (see Section 19.8).
 
 16.9.  Jitter Seal Computation
 
@@ -1983,7 +1990,7 @@ Table of Contents
    The jitter-seal binds the timing measurements to the checkpoint's SWF
    computation, preventing transplantation of jitter data from a
    different session.  It is subject to the same adversarial Attester
-   limitation as the entangled-mac (Section 18.8).
+   limitation as the entangled-mac (Section 19.8).
 
    NOTE: In the adversarial Attester model, the Attester generates both
    the SWF output (from which the MAC key is derived) and the MAC input
@@ -1991,7 +1998,7 @@ Table of Contents
    integrity binding but do not prevent an adversarial Attester from
    computing MACs over fabricated data.  Their security value is limited
    to ensuring internal consistency within an honestly-generated
-   checkpoint.  See Section 18.
+   checkpoint.  See Section 19.
 
 16.10.  Security Bound
 
@@ -2013,11 +2020,47 @@ Table of Contents
    temporal proof is bound to the hardware's internal perception of
    time.
 
-17.  IANA Considerations
+17.  Experimental Status Rationale
+
+   This document and its companion [PoP-Appraisal] are published with
+   Experimental status for the following reasons:
+
+   1.  _Novel RATS trust model:_ PoP inverts the standard RATS trust
+       assumption by treating the Attester as the primary adversary.
+       This adversarial Attester model has no precedent in IETF
+       attestation standards.  Implementation and deployment experience
+       is needed to validate the practical effectiveness of this trust
+       inversion.
+
+   2.  _Physical process attestation:_ Extending RATS from device state
+       attestation to continuous physical process attestation is a new
+       application area.  The efficacy of SWF-based temporal binding and
+       behavioral entropy capture as anti-forgery mechanisms requires
+       validation across diverse hardware platforms, authoring
+       workflows, and adversarial scenarios.
+
+   3.  _Calibration parameters:_ The SWF step counts, checkpoint
+       intervals, Merkle sample counts, and forensic thresholds defined
+       in this specification are initial values.  Field deployment may
+       reveal that adjustments are needed to balance security,
+       performance, and usability across the range of target
+       environments.
+
+   4.  _Ecosystem dependencies:_ The Tool Receipt protocol depends on a
+       tool provider key discovery mechanism that is deferred to a
+       companion document.  The EAT profile and SEAT integration points
+       reference specifications that are themselves in development.
+
+   Implementers are encouraged to report deployment experience,
+   particularly regarding SWF performance on diverse hardware, false
+   positive rates in forensic assessment, and adversarial evasion
+   attempts.
+
+18.  IANA Considerations
 
    This document requests the following IANA registrations:
 
-17.1.  CBOR Tags
+18.1.  CBOR Tags
 
    This document requests registration of two CBOR tags in the "CBOR
    Tags" registry per RFC 8949, Section 9.2:
@@ -2046,18 +2089,32 @@ Table of Contents
 
    Description of Semantics:  [this document], [PoP-Appraisal]
 
-17.2.  SMI Private Enterprise Number
+18.2.  Note on SMI Private Enterprise Number
 
-   No SMI Private Enterprise Number is required by this specification's
-   wire format.  WritersLogic Inc has requested PEN 65074 for
-   organizational identification purposes only.
+   This specification does not require or register an SMI Private
+   Enterprise Number.  WritersLogic Inc (PEN 65074) is the author's
+   organizational affiliation and is noted here for transparency; no
+   IANA action is requested for this PEN.
 
-17.3.  EAT Profile
+18.3.  EAT Profile
 
-   Registration of the EAT profile URI:
-   urn:ietf:params:rats:eat:profile:pop:1.0
+   This document requests registration of the following EAT profile in
+   the "EAT Profiles" registry (or its successor registry established by
+   [RFC9711] or the EAR specification):
 
-17.4.  Media Types
+   Profile Name:  PoP Evidence Profile
+
+   Profile URI:  urn:ietf:params:rats:eat:profile:pop:1.0
+
+   Description:  Profile for Cryptographic Proof of Process (PoP)
+      Evidence Packets and Attestation Results as defined in this
+      document and [PoP-Appraisal].
+
+   Reference:  [this document]
+
+   Change Controller:  David Condrey (david@writerslogic.com)
+
+18.4.  Media Types
 
    This document requests registration of the following media types per
    RFC 6838:
@@ -2074,7 +2131,7 @@ Table of Contents
 
    Encoding considerations:  binary (CBOR)
 
-   Security considerations:  See Section 18 of this document
+   Security considerations:  See Section 19 of this document
 
    Interoperability considerations:  See Section 15 of this document
 
@@ -2104,7 +2161,7 @@ Table of Contents
    Person and email address to contact:  David Condrey
       (david@writerslogic.com)
 
-17.5.  TLS Exporter Label
+18.5.  TLS Exporter Label
 
    This document registers the following TLS exporter label in the "TLS
    Exporter Labels" registry defined in [RFC5705]:
@@ -2117,14 +2174,32 @@ Table of Contents
 
    Reference:  [this document]
 
-18.  Security Considerations
+18.6.  Future Registry Considerations
+
+   This specification and its companion [PoP-Appraisal] define several
+   enumerated code points in their CDDL schemas.  Code points defined in
+   this document: proof-algorithm, attestation-tier, content-tier, hash-
+   algorithm, hash-salt-mode, binding-type, probe-type, and confidence-
+   tier.  Code points defined in [PoP-Appraisal]: verdict, absence-type,
+   and cost-unit.  During the Experimental phase, these values are
+   defined inline in the CDDL and do not require separate IANA
+   registries.  Extension keys in the evidence-packet and checkpoint
+   structures use integer values 100 or greater (keys 0-99 are reserved
+   for this specification).
+
+   If this specification advances beyond Experimental status, IANA
+   registries with "Specification Required" or "Expert Review" policies
+   will be established for these code points to enable interoperable
+   extension.
+
+19.  Security Considerations
 
    This section provides security analysis following [RFC3552]
    guidelines.  The threat model is defined in Section 8 with the
    adversarial Attester as the primary threat actor.  Detailed forensic
    security analysis is provided in [PoP-Appraisal].
 
-18.1.  Primary Threat: Adversarial Attester
+19.1.  Primary Threat: Adversarial Attester
 
    Unlike traditional remote attestation where external adversaries
    threaten system integrity, PoP's primary threat is the Attester
@@ -2146,7 +2221,7 @@ Table of Contents
    *  Trust in Evidence scales with the Attestation Tier and the cost of
       bypassing its guarantees
 
-18.2.  Retype Attack Defenses
+19.2.  Retype Attack Defenses
 
    The retype attack (see Section 8.3.1) is the canonical forgery
    vector.  Defenses are layered:
@@ -2172,7 +2247,7 @@ Table of Contents
    PoP provides graduated assurance proportional to document length and
    checkpoint density.
 
-18.3.  Relay and Replay Attack Defenses
+19.3.  Relay and Replay Attack Defenses
 
    As defined in Section 8.3.2 and Section 8.3.3, these attacks are
    defeated through Physical Freshness anchors binding Evidence to non-
@@ -2190,7 +2265,7 @@ Table of Contents
    stale, inconsistent with timestamps, or exhibit patterns suggesting
    simulation.
 
-18.4.  SWF Acceleration Defenses
+19.4.  SWF Acceleration Defenses
 
    As analyzed in Section 8.3.4, specialized hardware attacks are
    mitigated by:
@@ -2209,7 +2284,7 @@ Table of Contents
       probabilistically.  With k=100 samples, skipping 5% of steps has
       >99.4% detection probability.
 
-18.5.  Trust Gradation by Tier
+19.5.  Trust Gradation by Tier
 
    Relying Parties SHOULD interpret Evidence according to its
    Attestation Tier.  Detailed per-tier verification constraints are
@@ -2233,7 +2308,7 @@ Table of Contents
 
                                  Table 5
 
-18.6.  Forgery Cost Bounds
+19.6.  Forgery Cost Bounds
 
    Implementations SHOULD report quantified forgery cost estimates in
    Attestation Results.  For CORE profile with swf-argon2id (90 steps,
@@ -2261,7 +2336,7 @@ Table of Contents
    checkpoint count due to session consistency requirements across the
    behavioral dimensions.
 
-18.7.  Denial of Service
+19.7.  Denial of Service
 
    SWF verification is asymmetric: Merkle-sampled proofs verify in O(k)
    versus O(n) generation, where k is the sample count and n is the step
@@ -2272,7 +2347,7 @@ Table of Contents
    Implementations SHOULD implement rate limiting on Evidence
    submission.
 
-18.8.  MAC Field Security Limitations
+19.8.  MAC Field Security Limitations
 
    The entangled-mac and jitter-seal fields are HMAC values keyed from
    the SWF output.  In the adversarial Attester model, the Attester
@@ -2292,7 +2367,7 @@ Table of Contents
    *  In T3/T4 tiers, the packet-level hardware-bound signature (see
       Section 11) provides the actual integrity guarantee
 
-18.9.  Physical Freshness by Tier
+19.9.  Physical Freshness by Tier
 
    In T1 (Software-Only) and T2 (Attested Software) tiers, the Attester
    controls all software including the operating system.  Physical state
@@ -2307,7 +2382,7 @@ Table of Contents
    T3/T4 tiers where hardware attestation binds physical state readings
    to a trusted execution environment.
 
-18.10.  Implementation Security Requirements
+19.10.  Implementation Security Requirements
 
    Conforming implementations MUST:
 
@@ -2328,7 +2403,7 @@ Table of Contents
 
    *  Verify platform integrity before Evidence generation
 
-18.11.  Signing Key Lifecycle and Rotation
+19.11.  Signing Key Lifecycle and Rotation
 
    For T1/T2 tiers where signing keys are software-managed, the Attester
    SHOULD implement a key rotation policy to limit the impact of key
@@ -2363,11 +2438,11 @@ Table of Contents
    requires device re-provisioning, which is outside the scope of this
    specification.
 
-19.  Privacy Considerations
+20.  Privacy Considerations
 
    This section addresses privacy in accordance with [RFC6973].
 
-19.1.  Data Minimization
+20.1.  Data Minimization
 
    PoP Evidence Packets do not contain document content.  Content
    binding uses cryptographic hashes (H, as selected by hash-algorithm)
@@ -2375,7 +2450,7 @@ Table of Contents
    (hash-salt-mode=1) provides additional protection by preventing
    rainbow-table correlation across documents.
 
-19.2.  Behavioral Fingerprinting
+20.2.  Behavioral Fingerprinting
 
    Jitter sequences in ENHANCED and MAXIMUM profiles constitute
    behavioral biometrics.  To protect author privacy, Verifiers are
@@ -2392,7 +2467,7 @@ Table of Contents
    precision while preserving statistical validity.  A minimum
    quantization of 5ms is RECOMMENDED.
 
-19.3.  Physical State Leakage
+20.3.  Physical State Leakage
 
    Thermal trajectories and kernel entropy deltas in the physical-state
    field may reveal information about the Attester's hardware
@@ -2400,13 +2475,13 @@ Table of Contents
    relative deltas rather than absolute values to prevent device
    fingerprinting.
 
-19.4.  Unlinkability
+20.4.  Unlinkability
 
    Authors who wish to remain pseudonymous SHOULD use per-document
    signing keys and the author-salted content binding mode to prevent
    cross-document linkage.
 
-19.5.  Privacy Budget
+20.5.  Privacy Budget
 
    Each Evidence Packet released by an Attester discloses behavioral
    telemetry that incrementally reduces the author's anonymity set.
@@ -2438,16 +2513,9 @@ Table of Contents
       generate Evidence at the lowest tier sufficient for the use case,
       minimizing the behavioral data emitted.
 
-20.  References
+21.  References
 
-20.1.  Normative References
-
-   [PoP-Appraisal]
-              Condrey, D., "Cryptographic Proof of Process (PoP):
-              Forensic Appraisal and Security Model", Work in Progress,
-              Internet-Draft, draft-condrey-rats-pop-appraisal-04,
-              February 2026, <https://datatracker.ietf.org/doc/html/
-              draft-condrey-rats-pop-appraisal-04>.
+21.1.  Normative References
 
    [RFC2104]  Krawczyk, H., Bellare, M., and R. Canetti, "HMAC: Keyed-
               Hashing for Message Authentication", RFC 2104,
@@ -2508,7 +2576,12 @@ Table of Contents
               Architecture", RFC 9334, DOI 10.17487/RFC9334, January
               2023, <https://www.rfc-editor.org/rfc/rfc9334>.
 
-20.2.  Informative References
+   [RFC9711]  Lundblade, L., Mandyam, G., O'Donoghue, J., and C.
+              Wallace, "The Entity Attestation Token (EAT)", RFC 9711,
+              DOI 10.17487/RFC9711, April 2025,
+              <https://www.rfc-editor.org/rfc/rfc9711>.
+
+21.2.  Informative References
 
    [AG-Human-Authored]
               The Authors Guild, "Authors Guild Launches "Human
@@ -2562,6 +2635,13 @@ Table of Contents
               Register 2026-00206, January 2026,
               <https://www.regulations.gov/docket/NIST-2025-0035>.
 
+   [PoP-Appraisal]
+              Condrey, D., "Cryptographic Proof of Process (PoP):
+              Forensic Appraisal and Security Model", Work in Progress,
+              Internet-Draft, draft-condrey-rats-pop-appraisal-04,
+              February 2026, <https://datatracker.ietf.org/doc/html/
+              draft-condrey-rats-pop-appraisal-04>.
+
    [RATS-Models]
               Birkholz, H., Eckel, M., Pan, W., and E. Voit, "Reference
               Interaction Models for Remote Attestation Procedures",
@@ -2590,16 +2670,11 @@ Table of Contents
               DOI 10.17487/RFC9266, July 2022,
               <https://www.rfc-editor.org/rfc/rfc9266>.
 
-   [RFC9711]  Lundblade, L., Mandyam, G., O'Donoghue, J., and C.
-              Wallace, "The Entity Attestation Token (EAT)", RFC 9711,
-              DOI 10.17487/RFC9711, April 2025,
-              <https://www.rfc-editor.org/rfc/rfc9711>.
-
    [Salthouse1986]
               Salthouse, T.A., "Perceptual, Cognitive, and Motoric
               Aspects of Transcription Typing", Psychological
-              Review 93(3), 303-319, 1986,
-              <https://doi.org/10.1037/0033-295X.93.3.303>.
+              Bulletin 99(3), 303-319, 1986,
+              <https://doi.org/10.1037/0033-2909.99.3.303>.
 
    [Sardar-RATS]
               Sardar, M.U., "Security Considerations for Remote
@@ -2701,13 +2776,16 @@ swf-argon2id (Mode 20) Test Vector
        ad2fc4de5455e9d85497c6083b3b1802
      state_1 (Argon2id, state_0 as password,
               salt=H("PoP-salt" || I2OSP(1, 4))):
-       [TO BE COMPUTED BY REFERENCE IMPLEMENTATION]
+       381cb3958af8f1cae818b56d52611ebf
+       63790f81c8fd25d31a4255ae861de62d
      state_2 (Argon2id, state_1 as password,
               salt=H("PoP-salt" || I2OSP(2, 4))):
-       [TO BE COMPUTED BY REFERENCE IMPLEMENTATION]
+       ba72607209114f46c076db653bf06d8a
+       8aa6038acb32293d1f1004d68ca24c1e
      state_3 (Argon2id, state_2 as password,
               salt=H("PoP-salt" || I2OSP(3, 4))):
-       [TO BE COMPUTED BY REFERENCE IMPLEMENTATION]
+       d2c7c5589636bbd5d71c13e66be2d737
+       71b4bfbded2e3cdfd1a9a4c8c352e745
 
 Acknowledgements
 

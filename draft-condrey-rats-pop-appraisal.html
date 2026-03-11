@@ -7,7 +7,7 @@
 <title>Cryptographic Proof of Process (PoP): Forensic Appraisal and Security Model</title>
 <meta content="David Condrey" name="author">
 <meta content="
-       This document specifies the forensic appraisal methodology and quantitative security model for the Cryptographic Proof of Process (PoP) framework. It defines how Verifiers evaluate behavioral entropy, perform liveness detection, and calculate forgery cost bounds. Additionally, it establishes the taxonomy for Absence Proofs and the Cryptographic Writers Authenticity Report (WAR) format, as well as the Tool Receipt protocol for artificial intelligence (AI) attribution within the linear human authoring process. 
+       This document specifies the forensic appraisal methodology and quantitative security model for the Cryptographic Proof of Process (PoP) framework defined in the companion protocol document. It defines the Verifier's evaluation of behavioral entropy, forgery cost bounds, and the Cryptographic Writers Authenticity Report (WAR) wire format. It is intended for implementers of PoP Verifier components. 
     " name="description">
 <meta content="xml2rfc 3.31.0" name="generator">
 <meta content="attestation" name="keyword">
@@ -1083,7 +1083,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <h1 id="title">Cryptographic Proof of Process (PoP): Forensic Appraisal and Security Model</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document specifies the forensic appraisal methodology and quantitative security model for the Cryptographic Proof of Process (PoP) framework. It defines how Verifiers evaluate behavioral entropy, perform liveness detection, and calculate forgery cost bounds. Additionally, it establishes the taxonomy for Absence Proofs and the Cryptographic Writers Authenticity Report (WAR) format, as well as the Tool Receipt protocol for artificial intelligence (AI) attribution within the linear human authoring process.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document specifies the forensic appraisal methodology and quantitative security model for the Cryptographic Proof of Process (PoP) framework defined in the companion protocol document. It defines the Verifier's evaluation of behavioral entropy, forgery cost bounds, and the Cryptographic Writers Authenticity Report (WAR) wire format. It is intended for implementers of PoP Verifier components.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-discussion-venues">
@@ -1280,84 +1280,87 @@ svg :is([fill="white"], [fill^="#fff"]) {
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
-            <p id="section-toc.1-1.15.1"><a href="#section-15" class="auto internal xref">15</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+            <p id="section-toc.1-1.15.1"><a href="#section-15" class="auto internal xref">15</a>. <a href="#name-experimental-status-rationa" class="internal xref">Experimental Status Rationale</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16">
-            <p id="section-toc.1-1.16.1"><a href="#section-16" class="auto internal xref">16</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.1">
-                <p id="section-toc.1-1.16.2.1.1"><a href="#section-16.1" class="auto internal xref">16.1</a>.  <a href="#name-entropy-manipulation-attack" class="internal xref">Entropy Manipulation Attacks</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.2">
-                <p id="section-toc.1-1.16.2.2.1"><a href="#section-16.2" class="auto internal xref">16.2</a>.  <a href="#name-verifier-trust-model" class="internal xref">Verifier Trust Model</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.3">
-                <p id="section-toc.1-1.16.2.3.1"><a href="#section-16.3" class="auto internal xref">16.3</a>.  <a href="#name-stylometric-de-anonymizatio" class="internal xref">Stylometric De-anonymization</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.4">
-                <p id="section-toc.1-1.16.2.4.1"><a href="#section-16.4" class="auto internal xref">16.4</a>.  <a href="#name-baseline-biometric-re-ident" class="internal xref">Baseline Biometric Re-identification</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.5">
-                <p id="section-toc.1-1.16.2.5.1"><a href="#section-16.5" class="auto internal xref">16.5</a>.  <a href="#name-attestation-tier-downgrade-" class="internal xref">Attestation Tier Downgrade Detection</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.6">
-                <p id="section-toc.1-1.16.2.6.1"><a href="#section-16.6" class="auto internal xref">16.6</a>.  <a href="#name-assistive-mode-abuse" class="internal xref">Assistive Mode Abuse</a></p>
-</li>
-            </ul>
+            <p id="section-toc.1-1.16.1"><a href="#section-16" class="auto internal xref">16</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17">
-            <p id="section-toc.1-1.17.1"><a href="#section-17" class="auto internal xref">17</a>. <a href="#name-references" class="internal xref">References</a></p>
+            <p id="section-toc.1-1.17.1"><a href="#section-17" class="auto internal xref">17</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.1">
-                <p id="section-toc.1-1.17.2.1.1"><a href="#section-17.1" class="auto internal xref">17.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+                <p id="section-toc.1-1.17.2.1.1"><a href="#section-17.1" class="auto internal xref">17.1</a>.  <a href="#name-entropy-manipulation-attack" class="internal xref">Entropy Manipulation Attacks</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.2">
-                <p id="section-toc.1-1.17.2.2.1"><a href="#section-17.2" class="auto internal xref">17.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+                <p id="section-toc.1-1.17.2.2.1"><a href="#section-17.2" class="auto internal xref">17.2</a>.  <a href="#name-verifier-trust-model" class="internal xref">Verifier Trust Model</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.3">
+                <p id="section-toc.1-1.17.2.3.1"><a href="#section-17.3" class="auto internal xref">17.3</a>.  <a href="#name-stylometric-de-anonymizatio" class="internal xref">Stylometric De-anonymization</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.4">
+                <p id="section-toc.1-1.17.2.4.1"><a href="#section-17.4" class="auto internal xref">17.4</a>.  <a href="#name-baseline-biometric-re-ident" class="internal xref">Baseline Biometric Re-identification</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.5">
+                <p id="section-toc.1-1.17.2.5.1"><a href="#section-17.5" class="auto internal xref">17.5</a>.  <a href="#name-attestation-tier-downgrade-" class="internal xref">Attestation Tier Downgrade Detection</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.6">
+                <p id="section-toc.1-1.17.2.6.1"><a href="#section-17.6" class="auto internal xref">17.6</a>.  <a href="#name-assistive-mode-abuse" class="internal xref">Assistive Mode Abuse</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18">
-            <p id="section-toc.1-1.18.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-verification-constraint-sum" class="internal xref">Verification Constraint Summary</a></p>
+            <p id="section-toc.1-1.18.1"><a href="#section-18" class="auto internal xref">18</a>. <a href="#name-references" class="internal xref">References</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18.2.1">
-                <p id="section-toc.1-1.18.2.1.1"><a href="#appendix-A.1" class="auto internal xref"></a><a href="#name-structural-integrity" class="internal xref">Structural Integrity</a></p>
+                <p id="section-toc.1-1.18.2.1.1"><a href="#section-18.1" class="auto internal xref">18.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18.2.2">
-                <p id="section-toc.1-1.18.2.2.1"><a href="#appendix-A.2" class="auto internal xref"></a><a href="#name-behavioral-analysis-enhance" class="internal xref">Behavioral Analysis (ENHANCED/MAXIMUM profiles)</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18.2.3">
-                <p id="section-toc.1-1.18.2.3.1"><a href="#appendix-A.3" class="auto internal xref"></a><a href="#name-absence-proof-validation" class="internal xref">Absence Proof Validation</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18.2.4">
-                <p id="section-toc.1-1.18.2.4.1"><a href="#appendix-A.4" class="auto internal xref"></a><a href="#name-tool-receipt-validation" class="internal xref">Tool Receipt Validation</a></p>
+                <p id="section-toc.1-1.18.2.2.1"><a href="#section-18.2" class="auto internal xref">18.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.19">
-            <p id="section-toc.1-1.19.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-per-tier-verification-const" class="internal xref">Per-Tier Verification Constraints</a></p>
+            <p id="section-toc.1-1.19.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-verification-constraint-sum" class="internal xref">Verification Constraint Summary</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.19.2.1">
-                <p id="section-toc.1-1.19.2.1.1"><a href="#appendix-B.1" class="auto internal xref"></a><a href="#name-t1-software-only-constraint" class="internal xref">T1 (Software-Only) Constraints</a></p>
+                <p id="section-toc.1-1.19.2.1.1"><a href="#appendix-A.1" class="auto internal xref"></a><a href="#name-structural-integrity" class="internal xref">Structural Integrity</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.19.2.2">
-                <p id="section-toc.1-1.19.2.2.1"><a href="#appendix-B.2" class="auto internal xref"></a><a href="#name-t2-attested-software-constr" class="internal xref">T2 (Attested Software) Constraints</a></p>
+                <p id="section-toc.1-1.19.2.2.1"><a href="#appendix-A.2" class="auto internal xref"></a><a href="#name-behavioral-analysis-enhance" class="internal xref">Behavioral Analysis (ENHANCED/MAXIMUM profiles)</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.19.2.3">
-                <p id="section-toc.1-1.19.2.3.1"><a href="#appendix-B.3" class="auto internal xref"></a><a href="#name-t3-hardware-bound-constrain" class="internal xref">T3 (Hardware-Bound) Constraints</a></p>
+                <p id="section-toc.1-1.19.2.3.1"><a href="#appendix-A.3" class="auto internal xref"></a><a href="#name-absence-proof-validation" class="internal xref">Absence Proof Validation</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.19.2.4">
-                <p id="section-toc.1-1.19.2.4.1"><a href="#appendix-B.4" class="auto internal xref"></a><a href="#name-t4-hardware-hardened-constr" class="internal xref">T4 (Hardware-Hardened) Constraints</a></p>
+                <p id="section-toc.1-1.19.2.4.1"><a href="#appendix-A.4" class="auto internal xref"></a><a href="#name-tool-receipt-validation" class="internal xref">Tool Receipt Validation</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.20">
-            <p id="section-toc.1-1.20.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-composite-trust-score-infor" class="internal xref">Composite Trust Score (Informative)</a></p>
+            <p id="section-toc.1-1.20.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-per-tier-verification-const" class="internal xref">Per-Tier Verification Constraints</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.20.2.1">
+                <p id="section-toc.1-1.20.2.1.1"><a href="#appendix-B.1" class="auto internal xref"></a><a href="#name-t1-software-only-constraint" class="internal xref">T1 (Software-Only) Constraints</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.20.2.2">
+                <p id="section-toc.1-1.20.2.2.1"><a href="#appendix-B.2" class="auto internal xref"></a><a href="#name-t2-attested-software-constr" class="internal xref">T2 (Attested Software) Constraints</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.20.2.3">
+                <p id="section-toc.1-1.20.2.3.1"><a href="#appendix-B.3" class="auto internal xref"></a><a href="#name-t3-hardware-bound-constrain" class="internal xref">T3 (Hardware-Bound) Constraints</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.20.2.4">
+                <p id="section-toc.1-1.20.2.4.1"><a href="#appendix-B.4" class="auto internal xref"></a><a href="#name-t4-hardware-hardened-constr" class="internal xref">T4 (Hardware-Hardened) Constraints</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.21">
-            <p id="section-toc.1-1.21.1"><a href="#appendix-D" class="auto internal xref"></a><a href="#name-acknowledgements" class="internal xref">Acknowledgements</a></p>
+            <p id="section-toc.1-1.21.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-composite-trust-score-infor" class="internal xref">Composite Trust Score (Informative)</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.22">
-            <p id="section-toc.1-1.22.1"><a href="#appendix-E" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+            <p id="section-toc.1-1.22.1"><a href="#appendix-D" class="auto internal xref"></a><a href="#name-acknowledgements" class="internal xref">Acknowledgements</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.23">
+            <p id="section-toc.1-1.23.1"><a href="#appendix-E" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
 </li>
         </ul>
 </nav>
@@ -1414,6 +1417,26 @@ in <span>[<a href="#RFC9334" class="cite xref">RFC9334</a>]</span> and <span>[<a
 <dt id="section-2-2.11">SNR (Signal-to-Noise Ratio) Analysis:</dt>
         <dd style="margin-left: 1.5em" id="section-2-2.12">
           <p id="section-2-2.12.1">Spectral analysis of jitter intervals to distinguish biological motor noise patterns from synthetic injection.<a href="#section-2-2.12.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-2.13">Forensic Flag:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.14">
+          <p id="section-2-2.14.1">An indicator triggered when a specific forensic assessment mechanism detects anomalous behavior in the Evidence Packet. Multiple flags inform the composite verdict assignment.<a href="#section-2-2.14.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-2.15">Verdict:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.16">
+          <p id="section-2-2.16.1">The appraisal outcome assigned by the Verifier to an Evidence Packet: authentic (1), inconclusive (2), suspicious (3), or invalid (4). Defined in <a href="#verdict-assignment" class="auto internal xref">Section 8.2</a>.<a href="#section-2-2.16.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-2.17">Effort Attribution:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.18">
+          <p id="section-2-2.18.1">A quantitative breakdown of human versus tool-assisted content contribution within an Evidence Packet, expressed as a human-fraction and per-checkpoint counts. Defined in <a href="#effort-attribution" class="auto internal xref">Section 9</a>.<a href="#section-2-2.18.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-2.19">Composite Assessment:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-2.20">
+          <p id="section-2-2.20.1">The multi-flag evaluation procedure that determines whether forensic anomalies warrant elevation to a suspicious verdict. Defined in <a href="#forensic-assessment" class="auto internal xref">Section 5</a>.<a href="#section-2-2.20.1" class="pilcrow">¶</a></p>
 </dd>
       <dd class="break"></dd>
 </dl>
@@ -1544,86 +1567,96 @@ in the profile-uri metadata.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
 <a href="#section-5" class="section-number selfRef">5. </a><a href="#name-forensic-assessment-mechani" class="section-name selfRef">Forensic Assessment Mechanisms</a>
       </h2>
 <p id="section-5-1">The appraisal logic is designed to detect "Synthetic Authoring" -- content generated by AI and subsequently "back-filled" with timing and hardware attestation.<a href="#section-5-1" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-5-2">
-        <dt id="section-5-2.1">SNR (Signal-to-Noise Ratio) Analysis:</dt>
-        <dd style="margin-left: 1.5em" id="section-5-2.2">
-          <p id="section-5-2.2.1">Verifiers <span class="bcp14">MUST</span> compute the power spectral density of jitter intervals. Human motor signals exhibit characteristic noise patterns consistent with biological motor control <span>[<a href="#Monrose2000" class="cite xref">Monrose2000</a>]</span>. Evidence exhibiting spectral flatness greater than 0.9 (indicating white noise rather than biological 1/f-like noise) <span class="bcp14">MUST</span> be flagged as potentially synthetic.<a href="#section-5-2.2.1" class="pilcrow">¶</a></p>
+<p id="section-5-2">NOTE: The specific numeric thresholds in this section (e.g.,
+spectral flatness 0.9, CLC correlation r &lt; 0.2, CoV bounds)
+are initial calibration values derived from empirical
+observation of human authoring behavior. Refinement of these
+values based on implementation experience is an explicit goal
+of the Experimental status of this specification (see
+<a href="#experimental-status-rationale" class="auto internal xref">Section 15</a>). The <span class="bcp14">MUST</span>-level flagging
+requirements ensure interoperable Verifier behavior for
+initial deployments; individual flags do not determine the
+verdict (see the composite assessment procedure below).<a href="#section-5-2" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-5-3">
+        <dt id="section-5-3.1">SNR (Signal-to-Noise Ratio) Analysis:</dt>
+        <dd style="margin-left: 1.5em" id="section-5-3.2">
+          <p id="section-5-3.2.1">Verifiers <span class="bcp14">MUST</span> compute the power spectral density of jitter intervals. Human motor signals exhibit characteristic noise patterns consistent with biological motor control <span>[<a href="#Monrose2000" class="cite xref">Monrose2000</a>]</span>. Evidence exhibiting spectral flatness greater than 0.9 (indicating white noise rather than biological 1/f-like noise) <span class="bcp14">MUST</span> be flagged as potentially synthetic.<a href="#section-5-3.2.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="section-5-2.3">Cognitive Load Correlation (CLC):</dt>
-        <dd style="margin-left: 1.5em" id="section-5-2.4">
-          <p id="section-5-2.4.1">Verifiers <span class="bcp14">MUST</span> correlate timing patterns with semantic complexity. Human authors exhibit increased inter-keystroke intervals (IKI) and pause frequency during composition of semantically complex segments compared to simple connective text. Verifiers <span class="bcp14">MUST</span> compute the Pearson correlation between segment semantic complexity and mean IKI. Evidence with r &lt; 0.2 (or r &lt; 0.1 in assistive mode) <span class="bcp14">MUST</span> be flagged as a Semantic Mismatch.<a href="#section-5-2.4.1" class="pilcrow">¶</a></p>
+<dt id="section-5-3.3">Cognitive Load Correlation (CLC):</dt>
+        <dd style="margin-left: 1.5em" id="section-5-3.4">
+          <p id="section-5-3.4.1">Verifiers <span class="bcp14">MUST</span> correlate timing patterns with semantic complexity. Human authors exhibit increased inter-keystroke intervals (IKI) and pause frequency during composition of semantically complex segments compared to simple connective text. Verifiers <span class="bcp14">MUST</span> compute the Pearson correlation between segment semantic complexity and mean IKI. Evidence with r &lt; 0.2 (or r &lt; 0.1 in assistive mode) <span class="bcp14">MUST</span> be flagged as a Semantic Mismatch.<a href="#section-5-3.4.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="section-5-2.5">Mechanical Turk Detection:</dt>
-        <dd style="margin-left: 1.5em" id="section-5-2.6">
-          <p id="section-5-2.6.1">Verifiers <span class="bcp14">MUST</span> compute C_intra (Pearson correlation between pause duration and subsequent edit complexity within each checkpoint). C_intra values below 0.15 <span class="bcp14">MUST</span> be flagged as indicating robotic pacing, where an automated system maintains a machine-clocked editing rate independent of content demands. Checkpoints containing receipt structures (key 13) <span class="bcp14">MUST</span> have their associated paste events excluded from C_intra computation.<a href="#section-5-2.6.1" class="pilcrow">¶</a></p>
+<dt id="section-5-3.5">Mechanical Turk Detection:</dt>
+        <dd style="margin-left: 1.5em" id="section-5-3.6">
+          <p id="section-5-3.6.1">Verifiers <span class="bcp14">MUST</span> compute C_intra (Pearson correlation between pause duration and subsequent edit complexity within each checkpoint). C_intra values below 0.15 <span class="bcp14">MUST</span> be flagged as indicating robotic pacing, where an automated system maintains a machine-clocked editing rate independent of content demands. Checkpoints containing receipt structures (key 13) <span class="bcp14">MUST</span> have their associated paste events excluded from C_intra computation.<a href="#section-5-3.6.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="section-5-2.7">Error Topology Analysis:</dt>
-        <dd style="margin-left: 1.5em" id="section-5-2.8">
-          <p id="section-5-2.8.1">Verifiers <span class="bcp14">SHOULD</span> analyze error patterns for consistency with human cognitive processing <span>[<a href="#Salthouse1986" class="cite xref">Salthouse1986</a>]</span>: localized corrections near recent insertions, fractal self-similarity in revision patterns, and deletion-to-insertion ratios consistent with natural composition. Evidence exhibiting unnaturally low error rates (below 1 correction per 500 characters) or randomly distributed errors lacking positional correlation <span class="bcp14">SHOULD</span> be flagged.<a href="#section-5-2.8.1" class="pilcrow">¶</a></p>
+<dt id="section-5-3.7">Error Topology Analysis:</dt>
+        <dd style="margin-left: 1.5em" id="section-5-3.8">
+          <p id="section-5-3.8.1">Verifiers <span class="bcp14">SHOULD</span> analyze error patterns for consistency with human cognitive processing <span>[<a href="#Salthouse1986" class="cite xref">Salthouse1986</a>]</span>: localized corrections near recent insertions, fractal self-similarity in revision patterns, and deletion-to-insertion ratios consistent with natural composition. Evidence exhibiting unnaturally low error rates (below 1 correction per 500 characters) or randomly distributed errors lacking positional correlation <span class="bcp14">SHOULD</span> be flagged.<a href="#section-5-3.8.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="section-5-2.9">QR Presence Challenge (OOB-PC):</dt>
-        <dd style="margin-left: 1.5em" id="section-5-2.10">
-          <p id="section-5-2.10.1">When presence-challenge structures are present in the Evidence Packet, Verifiers <span class="bcp14">MUST</span> verify that the response-time is within the corresponding checkpoint's time window (subject to the cross-device clock skew tolerance defined in <a href="#clock-skew-tolerance" class="auto internal xref">Section 4.1</a>) and <span class="bcp14">MUST</span> validate the device-signature. NOTE: The Attester-side procedure for issuing presence challenges is specified in <span>[<a href="#PoP-Protocol" class="cite xref">PoP-Protocol</a>]</span>.<a href="#section-5-2.10.1" class="pilcrow">¶</a></p>
+<dt id="section-5-3.9">QR Presence Challenge (OOB-PC):</dt>
+        <dd style="margin-left: 1.5em" id="section-5-3.10">
+          <p id="section-5-3.10.1">When presence-challenge structures are present in the Evidence Packet, Verifiers <span class="bcp14">MUST</span> verify that the response-time is within the corresponding checkpoint's time window (subject to the cross-device clock skew tolerance defined in <a href="#clock-skew-tolerance" class="auto internal xref">Section 4.1</a>) and <span class="bcp14">MUST</span> validate the device-signature. NOTE: The Attester-side procedure for issuing presence challenges is specified in <span>[<a href="#PoP-Protocol" class="cite xref">PoP-Protocol</a>]</span>.<a href="#section-5-3.10.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="section-5-2.11">Session Consistency Analysis:</dt>
-        <dd style="margin-left: 1.5em" id="section-5-2.12">
-          <p id="section-5-2.12.1">Verifiers <span class="bcp14">MUST</span> analyze cross-checkpoint behavioral trends. IKI distributions should exhibit gradual drift consistent with fatigue effects. An abrupt change is defined as a shift in mean IKI between consecutive checkpoints exceeding 2 standard deviations of the session-wide IKI distribution. Verifiers <span class="bcp14">MUST</span> flag transitions exceeding this threshold as potential data source switching. Jitter-binding intervals across consecutive checkpoints <span class="bcp14">MUST</span> be checked for statistical independence (cross-checkpoint correlation below 0.3). Edit-delta patterns <span class="bcp14">SHOULD</span> be checked for non-stationarity consistent with human creative flow.<a href="#section-5-2.12.1" class="pilcrow">¶</a></p>
+<dt id="section-5-3.11">Session Consistency Analysis:</dt>
+        <dd style="margin-left: 1.5em" id="section-5-3.12">
+          <p id="section-5-3.12.1">Verifiers <span class="bcp14">MUST</span> analyze cross-checkpoint behavioral trends. IKI distributions should exhibit gradual drift consistent with fatigue effects. An abrupt change is defined as a shift in mean IKI between consecutive checkpoints exceeding 2 standard deviations of the session-wide IKI distribution. Verifiers <span class="bcp14">MUST</span> flag transitions exceeding this threshold as potential data source switching. Jitter-binding intervals across consecutive checkpoints <span class="bcp14">MUST</span> be checked for statistical independence (cross-checkpoint correlation below 0.3). Edit-delta patterns <span class="bcp14">SHOULD</span> be checked for non-stationarity consistent with human creative flow.<a href="#section-5-3.12.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="section-5-2.13">Spatial-Temporal Divergence (Informative):</dt>
-        <dd style="margin-left: 1.5em" id="section-5-2.14">
-          <p id="section-5-2.14.1">Advanced Verifiers <span class="bcp14">MAY</span> project the 1D <code>jitter-binding.intervals</code> array into an estimated 8-zone spatial keyboard model. By binning inter-keystroke intervals (IKI) into histograms representing spatial travel distances, Verifiers can compute the Kullback-Leibler (KL) divergence against biological baseline distributions. High KL divergence indicates structural timing anomalies invisible to raw entropy checks.<a href="#section-5-2.14.1" class="pilcrow">¶</a></p>
+<dt id="section-5-3.13">Spatial-Temporal Divergence (Informative):</dt>
+        <dd style="margin-left: 1.5em" id="section-5-3.14">
+          <p id="section-5-3.14.1">Advanced Verifiers <span class="bcp14">MAY</span> project the 1D <code>jitter-binding.intervals</code> array into an estimated 8-zone spatial keyboard model. By binning inter-keystroke intervals (IKI) into histograms representing spatial travel distances, Verifiers can compute the Kullback-Leibler (KL) divergence against biological baseline distributions. High KL divergence indicates structural timing anomalies invisible to raw entropy checks.<a href="#section-5-3.14.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="section-5-2.15">Perplexity Scoring:</dt>
-        <dd style="margin-left: 1.5em" id="section-5-2.16">
-          <p id="section-5-2.16.1">Verifiers <span class="bcp14">SHOULD</span> compute the character-level perplexity of text inserted during each checkpoint interval using a reference language model. Sudden drops in perplexity (highly predictable text) that correlate with rapid insertion rates (characters per second exceeding the session's 95th percentile) <span class="bcp14">MUST</span> be flagged as potential AI injection. A perplexity drop exceeding 50% relative to the session median, sustained for more than 100 consecutive inserted characters, constitutes a flag. Checkpoints containing receipt structures (key 13) <span class="bcp14">MUST</span> have their associated paste events excluded from perplexity scoring.<a href="#section-5-2.16.1" class="pilcrow">¶</a></p>
+<dt id="section-5-3.15">Perplexity Scoring:</dt>
+        <dd style="margin-left: 1.5em" id="section-5-3.16">
+          <p id="section-5-3.16.1">Verifiers <span class="bcp14">SHOULD</span> compute the character-level perplexity of text inserted during each checkpoint interval using a reference language model. Sudden drops in perplexity (highly predictable text) that correlate with rapid insertion rates (characters per second exceeding the session's 95th percentile) <span class="bcp14">MUST</span> be flagged as potential AI injection. A perplexity drop exceeding 50% relative to the session median, sustained for more than 100 consecutive inserted characters, constitutes a flag. Checkpoints containing receipt structures (key 13) <span class="bcp14">MUST</span> have their associated paste events excluded from perplexity scoring.<a href="#section-5-3.16.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="section-5-2.17">Biological Cadence Analysis:</dt>
-        <dd style="margin-left: 1.5em" id="section-5-2.18">
-          <p id="section-5-2.18.1">Verifiers <span class="bcp14">MUST</span> compute the Coefficient of Variation (CoV = standard deviation / mean) of inter-keystroke intervals within each checkpoint. Human typing exhibits characteristic CoV values reflecting biological motor variance. Evidence with per-checkpoint CoV consistently below 0.15 (mechanically regular) <span class="bcp14">MUST</span> be flagged as potentially non-biological. Evidence with per-checkpoint CoV consistently above 0.90 (chaotically irregular) <span class="bcp14">SHOULD</span> be flagged as potentially injected random noise. The session-wide CoV trend <span class="bcp14">SHOULD</span> exhibit gradual drift consistent with fatigue and warm-up effects.<a href="#section-5-2.18.1" class="pilcrow">¶</a></p>
+<dt id="section-5-3.17">Biological Cadence Analysis:</dt>
+        <dd style="margin-left: 1.5em" id="section-5-3.18">
+          <p id="section-5-3.18.1">Verifiers <span class="bcp14">MUST</span> compute the Coefficient of Variation (CoV = standard deviation / mean) of inter-keystroke intervals within each checkpoint. Human typing exhibits characteristic CoV values reflecting biological motor variance. Evidence with per-checkpoint CoV consistently below 0.15 (mechanically regular) <span class="bcp14">MUST</span> be flagged as potentially non-biological. Evidence with per-checkpoint CoV consistently above 0.90 (chaotically irregular) <span class="bcp14">SHOULD</span> be flagged as potentially injected random noise. The session-wide CoV trend <span class="bcp14">SHOULD</span> exhibit gradual drift consistent with fatigue and warm-up effects.<a href="#section-5-3.18.1" class="pilcrow">¶</a></p>
 </dd>
       <dd class="break"></dd>
 </dl>
-<p id="section-5-3">A conforming Verifier <span class="bcp14">MUST</span> evaluate all forensic mechanisms for
+<p id="section-5-4">A conforming Verifier <span class="bcp14">MUST</span> evaluate all forensic mechanisms for
 which the Evidence Packet contains sufficient data. Verifiers
 <span class="bcp14">MAY</span> implement additional analysis mechanisms beyond those
-defined in this specification.<a href="#section-5-3" class="pilcrow">¶</a></p>
-<p id="section-5-4">Individual forensic flags <span class="bcp14">MUST</span> be recorded in the
+defined in this specification.<a href="#section-5-4" class="pilcrow">¶</a></p>
+<p id="section-5-5">Individual forensic flags <span class="bcp14">MUST</span> be recorded in the
 forensic-summary structure and reported as warnings in the
 Attestation Result, but a single triggered flag alone is NOT
 sufficient to assign the suspicious verdict. To account for
 legitimate human variance (e.g., pauses for thought, fatigue,
 environmental interruptions), the Verifier <span class="bcp14">MUST</span> apply the
 following composite assessment before elevating to a suspicious
-verdict:<a href="#section-5-4" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-5-5">
-<li id="section-5-5.1">
-          <p id="section-5-5.1.1"><em>Multi-flag threshold:</em> If two or more independent
+verdict:<a href="#section-5-5" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5-6">
+<li id="section-5-6.1">
+          <p id="section-5-6.1.1"><em>Multi-flag threshold:</em> If two or more independent
 forensic mechanisms trigger flags, the Verifier <span class="bcp14">MUST</span> assign
-the suspicious verdict regardless of checkpoint coverage.<a href="#section-5-5.1.1" class="pilcrow">¶</a></p>
+the suspicious verdict regardless of checkpoint coverage.<a href="#section-5-6.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li id="section-5-5.2">
-          <p id="section-5-5.2.1"><em>Sustained single-flag threshold:</em> If exactly one
+        <li id="section-5-6.2">
+          <p id="section-5-6.2.1"><em>Sustained single-flag threshold:</em> If exactly one
 forensic mechanism triggers, the Verifier <span class="bcp14">MUST</span> assign the
 suspicious verdict only when the flag is sustained across
 more than 30% of evaluated checkpoints. A flag affecting
 30% or fewer of checkpoints <span class="bcp14">MUST</span> be reported as a warning
-but <span class="bcp14">MUST NOT</span> elevate the verdict beyond authentic.<a href="#section-5-5.2.1" class="pilcrow">¶</a></p>
+but <span class="bcp14">MUST NOT</span> elevate the verdict beyond authentic.<a href="#section-5-6.2.1" class="pilcrow">¶</a></p>
 </li>
       </ol>
-<p id="section-5-6">The 30% threshold reflects the observation that transient
+<p id="section-5-7">The 30% threshold reflects the observation that transient
 anomalies (single low-entropy windows, brief mechanical pacing
 during copy-paste sequences) are common in legitimate authoring
 sessions, while systematic anomalies spanning a substantial
 portion of the session are strongly indicative of synthetic
-generation.<a href="#section-5-6" class="pilcrow">¶</a></p>
+generation.<a href="#section-5-7" class="pilcrow">¶</a></p>
 <div id="state-space-reconstruction">
 <section id="section-5.1">
         <h3 id="name-state-space-reconstruction-">
@@ -1674,16 +1707,16 @@ cognitive processing cycles.<a href="#section-5.2-4.1.1" class="pilcrow">¶</a><
 above +15 dB due to minimal pause behavior.<a href="#section-5.2-4.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.2-4.3">
-            <p id="section-5.2-4.3.1">Sessions above +20 dB across all windows <span class="bcp14">SHOULD</span> be flagged
+            <p id="section-5.2-4.3.1">Sessions above +20 dB across all windows should be flagged
 as potentially non-human.<a href="#section-5.2-4.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.2-4.4">
             <p id="section-5.2-4.4.1">Sessions below -10 dB across all windows indicate predominantly
-idle behavior and <span class="bcp14">SHOULD</span> be flagged as potentially fabricated
+idle behavior and should be flagged as potentially fabricated
 padding.<a href="#section-5.2-4.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-5.2-5">The Verifier <span class="bcp14">SHOULD</span> compute per-window SNR and session-wide SNR
+<p id="section-5.2-5">The Verifier should compute per-window SNR and session-wide SNR
 statistics (mean, variance, trend) as forensic indicators.<a href="#section-5.2-5" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1753,7 +1786,7 @@ it to another (e.g., drafting in a text editor and pasting
 into a typesetting or markup system) produce a distinct
 pattern: one or few paste events concentrated at session
 start, followed by sustained editing (reformatting, adding
-markup, inserting citations). Verifiers <span class="bcp14">SHOULD</span> distinguish
+markup, inserting citations). Verifiers should distinguish
 this cross-tool composition pattern from prompt-copy-paste
 workflows by evaluating whether: (1) paste events are
 concentrated at session start rather than distributed
@@ -1762,15 +1795,15 @@ signals (IKI variance, CLC correlation, error topology
 consistent with human editing); and (3) the session's
 paste-to-keystroke ratio reflects a single transfer event
 rather than repeated injections. When cross-tool composition
-is indicated, Verifiers <span class="bcp14">SHOULD</span> exclude the initial transfer
+is indicated, Verifiers should exclude the initial transfer
 from the mechanical turk score. When the paste event is
 accompanied by a receipt structure (checkpoint key 13),
 the Verifier can cryptographically verify the provenance of
 the pasted content as described in
 <a href="#tool-receipt-protocol" class="auto internal xref">Section 10</a>.<a href="#section-5.4-3" class="pilcrow">¶</a></p>
-<p id="section-5.4-4">Verifiers <span class="bcp14">SHOULD</span> compute a mechanical turk probability score
+<p id="section-5.4-4">Verifiers should compute a mechanical turk probability score
 from 0.0 (no indicators) to 1.0 (all indicators present). A
-score exceeding 0.6 <span class="bcp14">SHOULD</span> trigger a recommendation for tool
+score exceeding 0.6 should trigger a recommendation for tool
 receipt documentation.<a href="#section-5.4-4" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1841,16 +1874,16 @@ session median perplexity, AND<a href="#section-5.6-4.1.1" class="pilcrow">¶</a
 consecutive inserted characters.<a href="#section-5.6-4.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-5.6-5">All three conditions <span class="bcp14">MUST</span> hold simultaneously to trigger
+<p id="section-5.6-5">All three conditions must hold simultaneously to trigger
 the flag. Paste events accompanied by receipt structures
 (self-receipt or tool-receipt) are excluded from this
 analysis, as they represent documented composition rather
 than undisclosed AI injection.<a href="#section-5.6-5" class="pilcrow">¶</a></p>
 <p id="section-5.6-6">The choice of reference language model is a Verifier
 implementation decision and is not specified by this
-document. Verifiers <span class="bcp14">SHOULD</span> use a model trained on general
+document. Verifiers should use a model trained on general
 prose to avoid domain-specific bias. The reference model
-<span class="bcp14">MUST NOT</span> be disclosed to the Attester to prevent adversarial
+should not be disclosed to the Attester to prevent adversarial
 tuning.<a href="#section-5.6-6" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1893,11 +1926,11 @@ lacking the structured variability of biological motor
 control.<a href="#section-5.7-4.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-5.7-5">The Verifier <span class="bcp14">SHOULD</span> compute per-checkpoint CoV and track
+<p id="section-5.7-5">The Verifier should compute per-checkpoint CoV and track
 the session-wide CoV trajectory. A monotonically decreasing
 CoV trend across the session is consistent with motor
 warm-up effects in human typing. Abrupt CoV shifts between
-consecutive checkpoints (exceeding 0.20) <span class="bcp14">SHOULD</span> be
+consecutive checkpoints (exceeding 0.20) should be
 evaluated in conjunction with Session Consistency Analysis
 for potential data source switching.<a href="#section-5.7-5" class="pilcrow">¶</a></p>
 </section>
@@ -1947,7 +1980,7 @@ without hardware binding, C_swf represents an economic cost only
           <h4 id="name-adaptive-swf-calibration-in">
 <a href="#section-6.1.1" class="section-number selfRef">6.1.1. </a><a href="#name-adaptive-swf-calibration-in" class="section-name selfRef">Adaptive SWF Calibration (Informative)</a>
           </h4>
-<p id="section-6.1.1-1">Attesters <span class="bcp14">SHOULD</span> dynamically calibrate the <code>steps</code>
+<p id="section-6.1.1-1">Attesters should dynamically calibrate the <code>steps</code>
 parameter during the <code>initial-jitter-sample</code> phase to
 consistently hit the target duty cycle, compensating for
 local hardware variance. By running a short calibration pass
@@ -2070,7 +2103,7 @@ tag 1129791826 (encoding ASCII "CWAR"). The CDDL notation
 pop-war = #6.1129791826(attestation-result)
 
 attestation-result = {
-    1 =&gt; uint,                    ; version (MUST be 1)
+    1 =&gt; uint,                    ; version (must be 1)
     2 =&gt; hash-value,              ; evidence-ref
     3 =&gt; verdict,                 ; appraisal verdict
     4 =&gt; attestation-tier,        ; assessed assurance level
@@ -2165,7 +2198,7 @@ baseline-verification = {
 }
 
 baseline-digest = {
-    1 =&gt; uint,                    ; version (MUST be 1)
+    1 =&gt; uint,                    ; version (must be 1)
     2 =&gt; uint,                    ; session-count
     3 =&gt; uint,                    ; total-keystrokes
     4 =&gt; streaming-stats,         ; iki-stats
@@ -2220,7 +2253,7 @@ tool-receipt = {
 pop-timestamp = uint                ; epoch milliseconds (no tag 1; see [PoP-Protocol])
 hash-value = {
     1 =&gt; hash-algorithm,
-    2 =&gt; hash-digest,              ; length MUST match algorithm output
+    2 =&gt; hash-digest,              ; length must match algorithm output
 }
 hash-digest = bstr .size 32 /        ; SHA-256
               bstr .size 48 /        ; SHA-384
@@ -3035,104 +3068,150 @@ specification.<a href="#section-14.3-3" class="pilcrow">¶</a></p>
 </div>
 </section>
 </div>
-<div id="iana-considerations">
+<div id="experimental-status-rationale">
 <section id="section-15">
-      <h2 id="name-iana-considerations">
-<a href="#section-15" class="section-number selfRef">15. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      <h2 id="name-experimental-status-rationa">
+<a href="#section-15" class="section-number selfRef">15. </a><a href="#name-experimental-status-rationa" class="section-name selfRef">Experimental Status Rationale</a>
       </h2>
-<p id="section-15-1">This document has no IANA actions. All IANA registrations for the PoP framework are defined in <span>[<a href="#PoP-Protocol" class="cite xref">PoP-Protocol</a>]</span>.<a href="#section-15-1" class="pilcrow">¶</a></p>
+<p id="section-15-1">This document is published with Experimental status for the
+following reasons:<a href="#section-15-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-15-2">
+<li id="section-15-2.1">
+          <p id="section-15-2.1.1"><em>Novel application of RATS:</em> PoP extends the RATS
+architecture from device state attestation to physical
+process attestation, with a trust inversion (adversarial
+Attester) that has no established precedent in IETF
+standards. Implementation experience is needed to validate
+this model.<a href="#section-15-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-15-2.2">
+          <p id="section-15-2.2.1"><em>Empirically-derived thresholds:</em> The forensic assessment
+thresholds specified in <a href="#forensic-assessment" class="auto internal xref">Section 5</a> (spectral
+flatness, CLC correlation coefficients, CoV bounds, entropy
+minimums) are calibrated from published behavioral research
+but have not been validated across the diversity of
+authoring workflows, languages, input methods, and
+assistive technologies that a deployed system would
+encounter. These values are expected to be refined based on
+implementation experience.<a href="#section-15-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-15-2.3">
+          <p id="section-15-2.3.1"><em>Evolving forensic landscape:</em> The adversarial capabilities
+of AI systems for synthesizing behavioral data are rapidly
+advancing. The specific forensic mechanisms and their
+relative effectiveness may need revision as the threat
+landscape evolves.<a href="#section-15-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-15-2.4">
+          <p id="section-15-2.4.1"><em>Companion specification dependency:</em> This document depends
+on the companion protocol specification <span>[<a href="#PoP-Protocol" class="cite xref">PoP-Protocol</a>]</span>,
+which is also Experimental. Both documents should advance
+together based on coordinated implementation feedback.<a href="#section-15-2.4.1" class="pilcrow">¶</a></p>
+</li>
+      </ol>
+<p id="section-15-3">Implementers are encouraged to report experience with threshold
+calibration, false positive/negative rates, and adversarial
+evasion attempts to inform future revisions.<a href="#section-15-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="iana-considerations">
+<section id="section-16">
+      <h2 id="name-iana-considerations">
+<a href="#section-16" class="section-number selfRef">16. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-16-1">This document has no IANA actions. All IANA registrations for the PoP framework are defined in <span>[<a href="#PoP-Protocol" class="cite xref">PoP-Protocol</a>]</span>.<a href="#section-16-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-considerations">
-<section id="section-16">
+<section id="section-17">
       <h2 id="name-security-considerations">
-<a href="#section-16" class="section-number selfRef">16. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+<a href="#section-17" class="section-number selfRef">17. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
       </h2>
-<p id="section-16-1">This document defines forensic appraisal procedures that inherit and extend the security model from <span>[<a href="#PoP-Protocol" class="cite xref">PoP-Protocol</a>]</span>. The broader RATS security considerations <span>[<a href="#Sardar-RATS" class="cite xref">Sardar-RATS</a>]</span> also apply. Implementers should consider the following security aspects:<a href="#section-16-1" class="pilcrow">¶</a></p>
+<p id="section-17-1">This document defines forensic appraisal procedures that inherit and extend the security model from <span>[<a href="#PoP-Protocol" class="cite xref">PoP-Protocol</a>]</span>. The broader RATS security considerations <span>[<a href="#Sardar-RATS" class="cite xref">Sardar-RATS</a>]</span> also apply. Implementers should consider the following security aspects:<a href="#section-17-1" class="pilcrow">¶</a></p>
 <div id="sec-entropy-manipulation">
-<section id="section-16.1">
+<section id="section-17.1">
         <h3 id="name-entropy-manipulation-attack">
-<a href="#section-16.1" class="section-number selfRef">16.1. </a><a href="#name-entropy-manipulation-attack" class="section-name selfRef">Entropy Manipulation Attacks</a>
+<a href="#section-17.1" class="section-number selfRef">17.1. </a><a href="#name-entropy-manipulation-attack" class="section-name selfRef">Entropy Manipulation Attacks</a>
         </h3>
-<p id="section-16.1-1">An adversary may attempt to inject synthetic jitter patterns that satisfy entropy thresholds while lacking biological origin. The use of multi-dimensional analysis (SNR, CLC, Error Topology) rather than single metrics provides defense-in-depth against high-fidelity simulation.<a href="#section-16.1-1" class="pilcrow">¶</a></p>
+<p id="section-17.1-1">An adversary may attempt to inject synthetic jitter patterns that satisfy entropy thresholds while lacking biological origin. The use of multi-dimensional analysis (SNR, CLC, Error Topology) rather than single metrics provides defense-in-depth against high-fidelity simulation.<a href="#section-17.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-verifier-trust">
-<section id="section-16.2">
+<section id="section-17.2">
         <h3 id="name-verifier-trust-model">
-<a href="#section-16.2" class="section-number selfRef">16.2. </a><a href="#name-verifier-trust-model" class="section-name selfRef">Verifier Trust Model</a>
+<a href="#section-17.2" class="section-number selfRef">17.2. </a><a href="#name-verifier-trust-model" class="section-name selfRef">Verifier Trust Model</a>
         </h3>
-<p id="section-16.2-1">The forensic assessments defined in this document produce probabilistic confidence scores, not binary determinations. Relying Parties <span class="bcp14">MUST</span> understand that forgery cost bounds represent economic estimates, not cryptographic guarantees. Trust decisions <span class="bcp14">SHOULD</span> incorporate the declared Attestation Tier (T1-T4) and the specific absence proof types claimed.<a href="#section-16.2-1" class="pilcrow">¶</a></p>
+<p id="section-17.2-1">The forensic assessments defined in this document produce probabilistic confidence scores, not binary determinations. Relying Parties <span class="bcp14">MUST</span> understand that forgery cost bounds represent economic estimates, not cryptographic guarantees. Trust decisions <span class="bcp14">SHOULD</span> incorporate the declared Attestation Tier (T1-T4) and the specific absence proof types claimed.<a href="#section-17.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-stylometric-risk">
-<section id="section-16.3">
+<section id="section-17.3">
         <h3 id="name-stylometric-de-anonymizatio">
-<a href="#section-16.3" class="section-number selfRef">16.3. </a><a href="#name-stylometric-de-anonymizatio" class="section-name selfRef">Stylometric De-anonymization</a>
+<a href="#section-17.3" class="section-number selfRef">17.3. </a><a href="#name-stylometric-de-anonymizatio" class="section-name selfRef">Stylometric De-anonymization</a>
         </h3>
-<p id="section-16.3-1">High-resolution behavioral data (keystroke timing, pause patterns) can enable author identification even when document content is not disclosed. Implementations <span class="bcp14">SHOULD</span> support Evidence Quantization to reduce timing resolution while maintaining forensic utility. The trade-off between forensic confidence and privacy <span class="bcp14">SHOULD</span> be documented for Relying Parties.<a href="#section-16.3-1" class="pilcrow">¶</a></p>
+<p id="section-17.3-1">High-resolution behavioral data (keystroke timing, pause patterns) can enable author identification even when document content is not disclosed. Implementations <span class="bcp14">SHOULD</span> support Evidence Quantization to reduce timing resolution while maintaining forensic utility. The trade-off between forensic confidence and privacy <span class="bcp14">SHOULD</span> be documented for Relying Parties.<a href="#section-17.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-baseline-privacy">
-<section id="section-16.4">
+<section id="section-17.4">
         <h3 id="name-baseline-biometric-re-ident">
-<a href="#section-16.4" class="section-number selfRef">16.4. </a><a href="#name-baseline-biometric-re-ident" class="section-name selfRef">Baseline Biometric Re-identification</a>
+<a href="#section-17.4" class="section-number selfRef">17.4. </a><a href="#name-baseline-biometric-re-ident" class="section-name selfRef">Baseline Biometric Re-identification</a>
         </h3>
-<p id="section-16.4-1">The baseline-digest accumulates a persistent behavioral
+<p id="section-17.4-1">The baseline-digest accumulates a persistent behavioral
 biometric profile (IKI histogram, coefficient of variation,
 Hurst exponent, pause frequency statistics) bound to a stable
 identity-fingerprint. This profile can enable author
 re-identification across sessions even when document content
 is not disclosed. The 9-bin IKI histogram alone provides
 sufficient discriminative power to distinguish authors within
-populations of moderate size.<a href="#section-16.4-1" class="pilcrow">¶</a></p>
-<p id="section-16.4-2">Implementations <span class="bcp14">SHOULD</span> offer authors the option to omit the
+populations of moderate size.<a href="#section-17.4-1" class="pilcrow">¶</a></p>
+<p id="section-17.4-2">Implementations <span class="bcp14">SHOULD</span> offer authors the option to omit the
 baseline-digest from exported Evidence Packets. When baseline
 data is included, the identity-fingerprint (SHA-256 of the
 signing key) acts as a persistent pseudonym; compromise of
 this pseudonym linkage enables correlation of all Evidence
-Packets by the same author.<a href="#section-16.4-2" class="pilcrow">¶</a></p>
-<p id="section-16.4-3">Verifiers that store baseline data for longitudinal analysis
+Packets by the same author.<a href="#section-17.4-2" class="pilcrow">¶</a></p>
+<p id="section-17.4-3">Verifiers that store baseline data for longitudinal analysis
 <span class="bcp14">MUST</span> apply the same data protection requirements as other
 biometric data under applicable regulations. Baseline data
 <span class="bcp14">MUST NOT</span> be shared between Verifiers without explicit author
-consent.<a href="#section-16.4-3" class="pilcrow">¶</a></p>
+consent.<a href="#section-17.4-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-tier-downgrade">
-<section id="section-16.5">
+<section id="section-17.5">
         <h3 id="name-attestation-tier-downgrade-">
-<a href="#section-16.5" class="section-number selfRef">16.5. </a><a href="#name-attestation-tier-downgrade-" class="section-name selfRef">Attestation Tier Downgrade Detection</a>
+<a href="#section-17.5" class="section-number selfRef">17.5. </a><a href="#name-attestation-tier-downgrade-" class="section-name selfRef">Attestation Tier Downgrade Detection</a>
         </h3>
-<p id="section-16.5-1">A Verifier that maintains state across sessions <span class="bcp14">SHOULD</span> detect
+<p id="section-17.5-1">A Verifier that maintains state across sessions <span class="bcp14">SHOULD</span> detect
 tier downgrades — where an Attesting Environment that previously
 submitted Evidence at tier T(n) submits Evidence at tier T(n-k)
 where k &gt; 0. Tier downgrades <span class="bcp14">MAY</span> indicate key compromise,
 environment tampering, or an attempt to evade hardware-bound
 verification. A Verifier that detects a tier downgrade <span class="bcp14">SHOULD</span>
 include a warning in the Attestation Result warnings field
-(key 10) and <span class="bcp14">MAY</span> assign a more conservative verdict.<a href="#section-16.5-1" class="pilcrow">¶</a></p>
+(key 10) and <span class="bcp14">MAY</span> assign a more conservative verdict.<a href="#section-17.5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-assistive-bypass">
-<section id="section-16.6">
+<section id="section-17.6">
         <h3 id="name-assistive-mode-abuse">
-<a href="#section-16.6" class="section-number selfRef">16.6. </a><a href="#name-assistive-mode-abuse" class="section-name selfRef">Assistive Mode Abuse</a>
+<a href="#section-17.6" class="section-number selfRef">17.6. </a><a href="#name-assistive-mode-abuse" class="section-name selfRef">Assistive Mode Abuse</a>
         </h3>
-<p id="section-16.6-1">Adversaries may falsely claim assistive technology usage to bypass behavioral entropy checks. Verifiers <span class="bcp14">SHOULD</span> require consistent assistive mode declarations across sessions and <span class="bcp14">MAY</span> request additional out-of-band verification for mode changes. The WAR <span class="bcp14">SHOULD</span> indicate when assistive modes were active, as specified in the accessibility section above.<a href="#section-16.6-1" class="pilcrow">¶</a></p>
+<p id="section-17.6-1">Adversaries may falsely claim assistive technology usage to bypass behavioral entropy checks. Verifiers <span class="bcp14">SHOULD</span> require consistent assistive mode declarations across sessions and <span class="bcp14">MAY</span> request additional out-of-band verification for mode changes. The WAR <span class="bcp14">SHOULD</span> indicate when assistive modes were active, as specified in the accessibility section above.<a href="#section-17.6-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
 </div>
 <div id="sec-combined-references">
-<section id="section-17">
+<section id="section-18">
       <h2 id="name-references">
-<a href="#section-17" class="section-number selfRef">17. </a><a href="#name-references" class="section-name selfRef">References</a>
+<a href="#section-18" class="section-number selfRef">18. </a><a href="#name-references" class="section-name selfRef">References</a>
       </h2>
 <div id="sec-normative-references">
-<section id="section-17.1">
+<section id="section-18.1">
         <h3 id="name-normative-references">
-<a href="#section-17.1" class="section-number selfRef">17.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+<a href="#section-18.1" class="section-number selfRef">18.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
         </h3>
 <dl class="references">
 <dt id="PoP-Protocol">[PoP-Protocol]</dt>
@@ -3142,6 +3221,10 @@ include a warning in the Attestation Result warnings field
 <dt id="RFC2119">[RFC2119]</dt>
         <dd>
 <span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC5869">[RFC5869]</dt>
+        <dd>
+<span class="refAuthor">Krawczyk, H.</span> and <span class="refAuthor">P. Eronen</span>, <span class="refTitle">"HMAC-based Extract-and-Expand Key Derivation Function (HKDF)"</span>, <span class="seriesInfo">RFC 5869</span>, <span class="seriesInfo">DOI 10.17487/RFC5869</span>, <time datetime="2010-05" class="refDate">May 2010</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc5869">https://www.rfc-editor.org/rfc/rfc5869</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC8174">[RFC8174]</dt>
         <dd>
@@ -3159,6 +3242,10 @@ include a warning in the Attestation Result warnings field
         <dd>
 <span class="refAuthor">Schaad, J.</span>, <span class="refTitle">"CBOR Object Signing and Encryption (COSE): Structures and Process"</span>, <span class="seriesInfo">STD 96</span>, <span class="seriesInfo">RFC 9052</span>, <span class="seriesInfo">DOI 10.17487/RFC9052</span>, <time datetime="2022-08" class="refDate">August 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9052">https://www.rfc-editor.org/rfc/rfc9052</a>&gt;</span>. </dd>
 <dd class="break"></dd>
+<dt id="RFC9106">[RFC9106]</dt>
+        <dd>
+<span class="refAuthor">Biryukov, A.</span>, <span class="refAuthor">Dinu, D.</span>, <span class="refAuthor">Khovratovich, D.</span>, and <span class="refAuthor">S. Josefsson</span>, <span class="refTitle">"Argon2 Memory-Hard Function for Password Hashing and Proof-of-Work Applications"</span>, <span class="seriesInfo">RFC 9106</span>, <span class="seriesInfo">DOI 10.17487/RFC9106</span>, <time datetime="2021-09" class="refDate">September 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9106">https://www.rfc-editor.org/rfc/rfc9106</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="RFC9334">[RFC9334]</dt>
       <dd>
 <span class="refAuthor">Birkholz, H.</span>, <span class="refAuthor">Thaler, D.</span>, <span class="refAuthor">Richardson, M.</span>, <span class="refAuthor">Smith, N.</span>, and <span class="refAuthor">W. Pan</span>, <span class="refTitle">"Remote ATtestation procedureS (RATS) Architecture"</span>, <span class="seriesInfo">RFC 9334</span>, <span class="seriesInfo">DOI 10.17487/RFC9334</span>, <time datetime="2023-01" class="refDate">January 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9334">https://www.rfc-editor.org/rfc/rfc9334</a>&gt;</span>. </dd>
@@ -3167,9 +3254,9 @@ include a warning in the Attestation Result warnings field
 </section>
 </div>
 <div id="sec-informative-references">
-<section id="section-17.2">
+<section id="section-18.2">
         <h3 id="name-informative-references">
-<a href="#section-17.2" class="section-number selfRef">17.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+<a href="#section-18.2" class="section-number selfRef">18.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
 <dt id="AR4SI">[AR4SI]</dt>
@@ -3187,14 +3274,6 @@ include a warning in the Attestation Result warnings field
 <dt id="Monrose2000">[Monrose2000]</dt>
         <dd>
 <span class="refAuthor">Monrose, F.</span> and <span class="refAuthor">A. Rubin</span>, <span class="refTitle">"Keystroke dynamics as a biometric for authentication"</span>, <time datetime="2000" class="refDate">2000</time>, <span>&lt;<a href="https://doi.org/10.1016/S0167-739X(99)00059-X">https://doi.org/10.1016/S0167-739X(99)00059-X</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC5869">[RFC5869]</dt>
-        <dd>
-<span class="refAuthor">Krawczyk, H.</span> and <span class="refAuthor">P. Eronen</span>, <span class="refTitle">"HMAC-based Extract-and-Expand Key Derivation Function (HKDF)"</span>, <span class="seriesInfo">RFC 5869</span>, <span class="seriesInfo">DOI 10.17487/RFC5869</span>, <time datetime="2010-05" class="refDate">May 2010</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc5869">https://www.rfc-editor.org/rfc/rfc5869</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC9106">[RFC9106]</dt>
-        <dd>
-<span class="refAuthor">Biryukov, A.</span>, <span class="refAuthor">Dinu, D.</span>, <span class="refAuthor">Khovratovich, D.</span>, and <span class="refAuthor">S. Josefsson</span>, <span class="refTitle">"Argon2 Memory-Hard Function for Password Hashing and Proof-of-Work Applications"</span>, <span class="seriesInfo">RFC 9106</span>, <span class="seriesInfo">DOI 10.17487/RFC9106</span>, <time datetime="2021-09" class="refDate">September 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9106">https://www.rfc-editor.org/rfc/rfc9106</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9711">[RFC9711]</dt>
         <dd>
@@ -3226,7 +3305,7 @@ include a warning in the Attestation Result warnings field
       <h2 id="name-verification-constraint-sum">
 <a href="#name-verification-constraint-sum" class="section-name selfRef">Verification Constraint Summary</a>
       </h2>
-<p id="appendix-A-1">The following constraints summarize the verification requirements defined in the preceding sections:<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<p id="appendix-A-1">This appendix is normative. The following constraints summarize the verification requirements defined in the preceding sections:<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 <div id="structural-checks">
 <section id="appendix-A.1">
         <h3 id="name-structural-integrity">
@@ -3346,10 +3425,10 @@ effort-attribution character counts.<a href="#appendix-A.4-5.3.1" class="pilcrow
       <h2 id="name-per-tier-verification-const">
 <a href="#name-per-tier-verification-const" class="section-name selfRef">Per-Tier Verification Constraints</a>
       </h2>
-<p id="appendix-B-1">This appendix summarizes the verification thresholds and
-constraints for each Attestation Tier. These values are the
-normative defaults; deployment profiles <span class="bcp14">MAY</span> adjust them within
-the ranges specified.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+<p id="appendix-B-1">This appendix is normative. It summarizes the verification
+thresholds and constraints for each Attestation Tier. These
+values are the normative defaults; deployment profiles <span class="bcp14">MAY</span>
+adjust them within the ranges specified.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
 <div id="constraints-t1">
 <section id="appendix-B.1">
         <h3 id="name-t1-software-only-constraint">
@@ -3548,10 +3627,10 @@ outcome (fraction of flags not triggered)<a href="#appendix-C-4.3.1" class="pilc
 </li>
         <li class="normal" id="appendix-C-4.4">
           <p id="appendix-C-4.4.1">w_r, w_s, w_b are Relying Party-configured weights
-that <span class="bcp14">MUST</span> sum to 1.0 (example: 0.3, 0.3, 0.4)<a href="#appendix-C-4.4.1" class="pilcrow">¶</a></p>
+that must sum to 1.0 (example: 0.3, 0.3, 0.4)<a href="#appendix-C-4.4.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="appendix-C-5">This formula is non-normative. Relying Parties <span class="bcp14">SHOULD</span>
+<p id="appendix-C-5">This formula is non-normative. Relying Parties should
 adjust weights based on their threat model and the
 Attestation Tier of the Evidence. For example, a Relying
 Party that trusts hardware-bound attestation (T3/T4) may
