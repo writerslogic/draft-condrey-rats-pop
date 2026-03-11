@@ -44,6 +44,9 @@ normative:
   RFC9052:
   RFC9106:
   RFC9334:
+  RFC9711:
+
+informative:
   PoP-Appraisal:
     title: "Cryptographic Proof of Process (PoP): Forensic Appraisal and Security Model"
     author:
@@ -53,13 +56,10 @@ normative:
     date: 2026-02
     seriesinfo:
       Internet-Draft: draft-condrey-rats-pop-appraisal-04
-
-informative:
   RFC3161:
   RFC3552:
   RFC6973:
   RFC9266:
-  RFC9711:
   Boneh2018:
     title: "Verifiable Delay Functions"
     target: "https://doi.org/10.1007/978-3-319-96884-1_25"
@@ -94,14 +94,14 @@ informative:
       "IEEE Transactions on Information Theory": "29(2), 198-208"
   Salthouse1986:
     title: "Perceptual, Cognitive, and Motoric Aspects of Transcription Typing"
-    target: "https://doi.org/10.1037/0033-295X.93.3.303"
+    target: "https://doi.org/10.1037/0033-2909.99.3.303"
     author:
       - fullname: Timothy A. Salthouse
         initials: T.A.
         surname: Salthouse
     date: 1986
     seriesinfo:
-      "Psychological Review": "93(3), 303-319"
+      "Psychological Bulletin": "99(3), 303-319"
   Sardar-RATS:
     title: "Security Considerations for Remote ATtestation procedureS (RATS)"
     target: "https://datatracker.ietf.org/doc/html/draft-sardar-rats-sec-cons-02"
@@ -435,7 +435,7 @@ protections defined in
 {{privacy-considerations}} (jitter
 quantization, data minimization, and Verifier data
 retention limits) are essential safeguards. Institutions
-deploying PoP SHOULD establish clear data governance policies
+deploying PoP should establish clear data governance policies
 and ensure students retain control over their Evidence
 Packets.
 
@@ -510,7 +510,8 @@ on a binary authentic-or-not classification.
 # Scope and Applicability {#scope-and-applicability}
 
 PoP is designed as a voluntary, author-initiated mechanism.
-The following constraints define its intended scope of use:
+The following normative constraints define its intended scope
+of use and apply to all conforming implementations:
 
 * Evidence collection MUST be initiated by the author.
   The Attester operates under the author's control; no
@@ -568,7 +569,7 @@ PoP implements a critical trust inversion: in traditional remote attestation, th
 * Behavioral entropy must be computationally expensive to simulate
 * Hardware attestation provides value only when the hardware root of trust is genuinely inaccessible to the Attester operator
 
-The RATS architecture accommodates this through its layered trust model and configurable Appraisal Policies ({{RFC9334}}). The companion appraisal document ({{PoP-Appraisal}}) defines domain-specific verification procedures. The Experimental category is appropriate for exploring this novel application of RATS.
+The RATS architecture accommodates this through its layered trust model and configurable Appraisal Policies ({{RFC9334}}). The companion appraisal document ({{PoP-Appraisal}}) defines domain-specific verification procedures. The rationale for Experimental status is provided in {{experimental-status-rationale}}.
 
 # Protocol Overview {#protocol-overview}
 
@@ -802,7 +803,7 @@ Temporal Authenticity:
 : Given Evidence claiming authorship duration D, an adversary cannot produce valid Evidence in time significantly less than D. Formally: Adv_temporal = Pr\[Verify(E) = accept AND Time(Generate(E)) < D - epsilon\] is negligible for meaningful epsilon.
 
 Behavioral Authenticity:
-: Given Evidence containing behavioral entropy B, an adversary cannot efficiently generate synthetic entropy that is indistinguishable from biological origin. The cost of generating synthetic behavioral data satisfying all forensic constraints MUST exceed a defined threshold.
+: Given Evidence containing behavioral entropy B, an adversary cannot efficiently generate synthetic entropy that is indistinguishable from biological origin. The cost of generating synthetic behavioral data satisfying all forensic constraints must exceed a defined threshold.
 
 Content Binding:
 : Evidence E is cryptographically bound to document D such that E cannot be repurposed to attest a different document D'. This property is unconditional given collision resistance of H.
@@ -1035,9 +1036,12 @@ Evidence Packets are CBOR-encoded {{RFC8949}} and identified by semantic tag 112
 pop-evidence = #6.1129336656(evidence-packet)
 pop-war = #6.1129791826(attestation-result)
 
+; Stub: full attestation-result definition in [PoP-Appraisal]
+attestation-result = {* int => any}
+
 ; Primary structures
 evidence-packet = {
-    1 => uint,                    ; version (MUST be 1)
+    1 => uint,                    ; version (must be 1)
     2 => tstr,                    ; profile-uri
     3 => uuid,                    ; packet-id
     4 => pop-timestamp,           ; created
@@ -1147,7 +1151,7 @@ edit-delta = {
 
 edit-position = [
     uint,                         ; offset
-    int,                          ; change (+/-), MUST be non-zero
+    int,                          ; change (+/-), must be non-zero
 ]
 
 physical-state = {
@@ -1168,7 +1172,7 @@ thermal-sample = [
 
 presence-challenge = {
     1 => bstr .size (16..256),    ; challenge-nonce (128+ bits)
-    2 => bstr,                    ; device-signature (MUST be COSE_Sign1)
+    2 => bstr,                    ; device-signature (must be COSE_Sign1)
     3 => pop-timestamp,           ; response-time
 }
 
@@ -1227,7 +1231,7 @@ baseline-verification = {
 }
 
 baseline-digest = {
-    1 => uint,                    ; version (MUST be 1)
+    1 => uint,                    ; version (must be 1)
     2 => uint,                    ; session-count
     3 => uint,                    ; total-keystrokes
     4 => streaming-stats,         ; iki-stats
@@ -1273,7 +1277,7 @@ hash-digest = bstr .size 32 /        ; SHA-256
               bstr .size 64          ; SHA-512
 hash-value = {
     1 => hash-algorithm,
-    2 => hash-digest,              ; length MUST match algorithm output
+    2 => hash-digest,              ; length must match algorithm output
 }
 compact-ref = {
     1 => hash-algorithm,          ; algorithm used for full hash
@@ -1288,7 +1292,8 @@ hash-algorithm = &(
 ~~~
 
 The attestation-result type used in the pop-war tag wrapper is
-defined in {{PoP-Appraisal}}.
+defined as a stub above for CDDL completeness; the full
+definition appears in {{PoP-Appraisal}}.
 
 To ensure cross-architecture determinism, all temporal and entropy measurements MUST be encoded as unsigned integers (`uint`). Timestamps and durations are expressed in milliseconds. Entropy estimates are expressed in centibits (1/100th of a bit).
 
@@ -1825,6 +1830,43 @@ standard assumptions.
 
 In T3/T4 tiers, the AE MUST anchor the SWF seed to the TPM Monotonic Counter. This prevents "SWF Speed-up" attacks by ensuring that the temporal proof is bound to the hardware's internal perception of time.
 
+# Experimental Status Rationale {#experimental-status-rationale}
+
+This document and its companion {{PoP-Appraisal}} are published
+with Experimental status for the following reasons:
+
+1. *Novel RATS trust model:* PoP inverts the standard RATS
+   trust assumption by treating the Attester as the primary
+   adversary. This adversarial Attester model has no precedent
+   in IETF attestation standards. Implementation and deployment
+   experience is needed to validate the practical effectiveness
+   of this trust inversion.
+
+2. *Physical process attestation:* Extending RATS from device
+   state attestation to continuous physical process attestation
+   is a new application area. The efficacy of SWF-based temporal
+   binding and behavioral entropy capture as anti-forgery
+   mechanisms requires validation across diverse hardware
+   platforms, authoring workflows, and adversarial scenarios.
+
+3. *Calibration parameters:* The SWF step counts, checkpoint
+   intervals, Merkle sample counts, and forensic thresholds
+   defined in this specification are initial values. Field
+   deployment may reveal that adjustments are needed to balance
+   security, performance, and usability across the range of
+   target environments.
+
+4. *Ecosystem dependencies:* The Tool Receipt protocol depends
+   on a tool provider key discovery mechanism that is deferred
+   to a companion document. The EAT profile and SEAT integration
+   points reference specifications that are themselves in
+   development.
+
+Implementers are encouraged to report deployment experience,
+particularly regarding SWF performance on diverse hardware,
+false positive rates in forensic assessment, and adversarial
+evasion attempts.
+
 # IANA Considerations {#iana-considerations}
 
 This document requests the following IANA registrations:
@@ -1868,15 +1910,35 @@ Point of Contact:
 Description of Semantics:
 : \[this document\], {{PoP-Appraisal}}
 
-## SMI Private Enterprise Number {#iana-smi-pen}
+## Note on SMI Private Enterprise Number {#iana-smi-pen}
 
-No SMI Private Enterprise Number is required by this specification's
-wire format. WritersLogic Inc has requested PEN 65074 for
-organizational identification purposes only.
+This specification does not require or register an SMI Private
+Enterprise Number. WritersLogic Inc (PEN 65074) is the
+author's organizational affiliation and is noted here for
+transparency; no IANA action is requested for this PEN.
 
 ## EAT Profile {#iana-eat-profile}
 
-Registration of the EAT profile URI: urn:ietf:params:rats:eat:profile:pop:1.0
+This document requests registration of the following EAT
+profile in the "EAT Profiles" registry (or its successor
+registry established by {{RFC9711}} or the EAR specification):
+
+Profile Name:
+: PoP Evidence Profile
+
+Profile URI:
+: urn:ietf:params:rats:eat:profile:pop:1.0
+
+Description:
+: Profile for Cryptographic Proof of Process (PoP) Evidence
+  Packets and Attestation Results as defined in this document
+  and {{PoP-Appraisal}}.
+
+Reference:
+: \[this document\]
+
+Change Controller:
+: David Condrey (david@writerslogic.com)
 
 ## Media Types {#iana-media-types}
 
@@ -1957,6 +2019,25 @@ Recommended:
 
 Reference:
 : \[this document\]
+
+## Future Registry Considerations {#iana-future-registries}
+
+This specification and its companion {{PoP-Appraisal}} define
+several enumerated code points in their CDDL schemas.
+Code points defined in this document: proof-algorithm,
+attestation-tier, content-tier, hash-algorithm, hash-salt-mode,
+binding-type, probe-type, and confidence-tier. Code points
+defined in {{PoP-Appraisal}}: verdict, absence-type, and
+cost-unit. During the Experimental phase, these values
+are defined inline in the CDDL and do not require separate
+IANA registries. Extension keys in the evidence-packet and
+checkpoint structures use integer values 100 or greater
+(keys 0-99 are reserved for this specification).
+
+If this specification advances beyond Experimental status,
+IANA registries with "Specification Required" or "Expert
+Review" policies will be established for these code points
+to enable interoperable extension.
 
 # Security Considerations {#security-considerations}
 
@@ -2243,13 +2324,16 @@ Intermediate States:
     ad2fc4de5455e9d85497c6083b3b1802
   state_1 (Argon2id, state_0 as password,
            salt=H("PoP-salt" || I2OSP(1, 4))):
-    [TO BE COMPUTED BY REFERENCE IMPLEMENTATION]
+    381cb3958af8f1cae818b56d52611ebf
+    63790f81c8fd25d31a4255ae861de62d
   state_2 (Argon2id, state_1 as password,
            salt=H("PoP-salt" || I2OSP(2, 4))):
-    [TO BE COMPUTED BY REFERENCE IMPLEMENTATION]
+    ba72607209114f46c076db653bf06d8a
+    8aa6038acb32293d1f1004d68ca24c1e
   state_3 (Argon2id, state_2 as password,
            salt=H("PoP-salt" || I2OSP(3, 4))):
-    [TO BE COMPUTED BY REFERENCE IMPLEMENTATION]
+    d2c7c5589636bbd5d71c13e66be2d737
+    71b4bfbded2e3cdfd1a9a4c8c352e745
 ~~~
 
 # Acknowledgements {#acknowledgements}
