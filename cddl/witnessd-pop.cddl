@@ -56,9 +56,11 @@ checkpoint = {
     9 => process-proof,           ; SWF proof
     ? 10 => jitter-binding,       ; behavioral-entropy (ENHANCED+)
     ? 11 => physical-state,       ; physical-state binding (ENHANCED+)
-    ? 12 => hash-digest,          ; entangled-mac (ENHANCED+)
+    ? 12 => hash-digest,          ; entangled-binding (ENHANCED+)
     ? 13 => [+ receipt],          ; receipts (self or tool)
     ? 14 => [+ active-probe],    ; active liveness probes
+    ? 15 => hat-proof,               ; HAT temporal proof (T3/T4)
+    ? 16 => beacon-anchor,           ; public randomness anchor (optional)
     * int => any,                 ; extension fields
 }
 
@@ -89,6 +91,8 @@ proof-params = {
     2 => uint,                    ; memory-cost (m, KiB)
     3 => uint,                    ; parallelism (p)
     4 => uint,                    ; steps
+    ? 5 => uint,                  ; waypoint-interval (Mode 10 only)
+    ? 6 => uint,                  ; waypoint-memory (KiB, Mode 10 only)
 }
 
 merkle-proof = {
@@ -104,7 +108,7 @@ merkle-proof = {
 jitter-binding = {
     1 => [+ uint],                ; intervals (milliseconds)
     2 => uint,                    ; entropy-estimate (centibits)
-    3 => hash-digest,             ; jitter-seal (HMAC)
+    3 => hash-digest,             ; jitter-tag (keyed consistency tag)
 }
 
 edit-delta = {
@@ -134,6 +138,27 @@ thermal-sample = [
     pop-timestamp,                ; sample time
     int,                          ; temperature delta (millidegrees)
 ]
+
+; ============================================================
+; Hardware-Anchored Time (HAT)
+; ============================================================
+
+hat-proof = {
+    1 => bstr,                    ; time-before (TPMS_TIME_ATTEST_INFO)
+    2 => bstr,                    ; time-after (TPMS_TIME_ATTEST_INFO)
+    3 => bstr,                    ; sig-before (AIK signature)
+    4 => bstr,                    ; sig-after (AIK signature)
+}
+
+; ============================================================
+; Beacon-Anchored Binding (Optional)
+; ============================================================
+
+beacon-anchor = {
+    1 => tstr,                    ; beacon-source (URI of beacon service)
+    2 => uint,                    ; beacon-round (round number)
+    3 => bstr .size 32,           ; beacon-value (randomness output)
+}
 
 ; ============================================================
 ; Behavioral Baseline Verification

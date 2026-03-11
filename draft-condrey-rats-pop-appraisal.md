@@ -243,13 +243,13 @@ A Verifier MUST perform the following procedure to appraise a PoP Evidence Packe
 
 4. *Entropy Threshold:* Independently estimate entropy from the jitter-binding intervals array using a standard entropy estimator (e.g., NIST SP 800-90B most common value estimator). Verify the independent estimate meets or exceeds 3.0 bits per inter-keystroke interval. The Attester's self-reported entropy-estimate field MUST NOT be relied upon. Low-entropy segments (below threshold) MUST be flagged as "Non-Biological."
 
-5. *Entanglement:* Verify the HMAC value (entangled-mac) over the combined document, jitter, and physical state.
+5. *Entanglement:* Verify the HMAC value (entangled-binding) over the combined document, jitter, and physical state.
 
 6. *State Matching:* Verify that the final checkpoint's content-hash matches the document-ref content-hash. Verify that the cumulative char-count from edit-deltas is consistent with the document-ref char-count.
 
 7. *Channel Binding:* If the Evidence Packet contains a channel-binding field and was received over TLS, verify that the binding-value matches the locally-computed TLS Exported Keying Material. Reject the Evidence Packet on mismatch.
 
-Steps 4 and 5 apply only when jitter-binding and entangled-mac fields
+Steps 4 and 5 apply only when jitter-binding and entangled-binding fields
 are present (ENHANCED and MAXIMUM profiles). For CORE Evidence Packets
 lacking these fields, the Verifier MUST skip Steps 4 and 5 and note
 in the WAR warnings that behavioral analysis was not performed.
@@ -626,9 +626,14 @@ where:
 
 The memory-hard nature of Argon2id ensures that reducing memory
 per evaluation forces a disproportionate increase in computation
-time; the best known tradeoff attacks achieve at most a ~2x
+time; the best known time-memory tradeoff (TMTO) attacks achieve at most a ~2x
 reduction in time-area product for single-pass Argon2id, decreasing
-to ~1.33x with multiple passes ({{RFC9106}}, Section 7). Beyond
+to ~1.33x with multiple passes ({{RFC9106}}, Section 7). The raw
+memory-bandwidth advantage of custom hardware (HBM3 at ~800 GB/s
+versus consumer DDR4 at ~25 GB/s) provides an additional 3-4x
+speedup when amortized over device cost. The combined ASIC advantage
+is bounded at approximately 8-16x; Verifiers SHOULD use a
+conservative factor of 10x when computing c-swf. Beyond
 approximately 8 parallel threads, memory bandwidth saturation on
 commodity hardware yields diminishing returns. The minimum forgery
 time equals the
@@ -1683,7 +1688,7 @@ adjust them within the ranges specified.
   claimed-duration within \[0.5x, 3.0x\] of expected time.
 * Entropy: minimum 3.0 bits/sample when jitter-binding is
   present. No upper bound enforced.
-* Entanglement: jitter seal presence required when
+* Entanglement: jitter tag presence required when
   jitter-binding is present; HMAC verification SHOULD be
   performed (MAC key derivable from public merkle-root).
 * State matching: final content hash match required.
@@ -1704,7 +1709,7 @@ adjust them within the ranges specified.
 * Entropy: 3.0 to 6.0 bits/sample per checkpoint.
   Values above 6.0 suggest injected randomness and SHOULD
   be flagged.
-* Entanglement: jitter seal and entangled-mac presence
+* Entanglement: jitter tag and entangled-binding presence
   required for ENHANCED+ profiles. HMAC verification
   SHOULD be performed.
 * State matching: final content hash match required;
