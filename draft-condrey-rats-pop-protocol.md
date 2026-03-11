@@ -1042,19 +1042,19 @@ evidence-packet = {
     3 => uuid,                    ; packet-id
     4 => pop-timestamp,           ; created
     5 => document-ref,            ; document
-    6 => [3* checkpoint],          ; checkpoints (min 3)
+    6 => [3* checkpoint],         ; checkpoints (min 3)
     ? 7 => attestation-tier,      ; T1-T4
     ? 8 => [* tstr],              ; limitations
     ? 9 => profile-declaration,   ; profile
     ? 10 => [+ presence-challenge], ; QR/OOB proofs
     ? 11 => channel-binding,      ; TLS EKM binding
     ; key 12 reserved for future use
-    ? 13 => content-tier,          ; Evidence Content Tier
+    ? 13 => content-tier,         ; Evidence Content Tier
     ? 14 => hash-value,            ; previous-packet-ref
     ? 15 => uint,                  ; packet-sequence (1-based)
     ; keys 16-17 reserved for future use
     ? 18 => physical-liveness,    ; physical-liveness markers
-    ? 19 => baseline-verification, ; behavioral baseline
+    ? 19 => baseline-verification, ; behavioral baseline verification
     * int => any,                  ; extension fields
 }
 
@@ -1253,7 +1253,7 @@ session-behavioral-summary = {
 streaming-stats = {
     1 => uint,                    ; count
     2 => float32,                 ; mean
-    3 => float32,                 ; m2 (Welford)
+    3 => float32,                 ; m2 (Welford's sum of squared diffs)
     4 => float32,                 ; min
     5 => float32,                 ; max
 }
@@ -1267,7 +1267,7 @@ confidence-tier = &(
 
 ; Base types
 uuid = bstr .size 16
-pop-timestamp = uint                  ; epoch milliseconds (unsigned)
+pop-timestamp = uint              ; epoch milliseconds (no tag 1; see protocol §6.7)
 hash-digest = bstr .size 32 /        ; SHA-256
               bstr .size 48 /        ; SHA-384
               bstr .size 64          ; SHA-512

@@ -793,6 +793,64 @@ time-window = {
     2 => pop-timestamp,           ; end
 }
 
+; Behavioral Baseline Verification
+baseline-verification = {
+    ? 1 => baseline-digest,       ; omitted during enrollment
+    2 => session-behavioral-summary, ; current session metrics
+    ? 3 => bstr .cbor COSE_Sign1,  ; digest-signature
+}
+
+baseline-digest = {
+    1 => uint,                    ; version (MUST be 1)
+    2 => uint,                    ; session-count
+    3 => uint,                    ; total-keystrokes
+    4 => streaming-stats,         ; iki-stats
+    5 => streaming-stats,         ; cv-stats
+    6 => streaming-stats,         ; hurst-stats
+    7 => [9* float32],            ; aggregate-iki-histogram
+    8 => streaming-stats,         ; pause-stats
+    9 => bstr .size 32,           ; session-merkle-root (MMR)
+    10 => confidence-tier,        ; baseline maturity
+    11 => pop-timestamp,          ; computed-at
+    12 => bstr .size 32,          ; identity-fingerprint
+}
+
+session-behavioral-summary = {
+    1 => [9* float32],            ; iki-histogram
+    2 => float32,                 ; iki-cv
+    3 => float32,                 ; hurst
+    4 => float32,                 ; pause-frequency
+    5 => uint,                    ; duration-secs
+    6 => uint,                    ; keystroke-count
+}
+
+streaming-stats = {
+    1 => uint,                    ; count
+    2 => float32,                 ; mean
+    3 => float32,                 ; m2 (Welford's sum of squared diffs)
+    4 => float32,                 ; min
+    5 => float32,                 ; max
+}
+
+; Receipts (Composition and Tool Attribution)
+receipt = self-receipt / tool-receipt
+
+self-receipt = {
+    1 => tstr,                    ; tool-id (source environment)
+    2 => hash-value / compact-ref, ; output-commit
+    3 => hash-value / compact-ref, ; evidence-ref (source packet)
+    4 => pop-timestamp,           ; transfer-time
+}
+
+tool-receipt = {
+    1 => tstr,                    ; tool-id (provider URI)
+    2 => hash-value,              ; output-commit
+    ? 3 => hash-value,            ; input-ref (prompt hash)
+    4 => pop-timestamp,           ; issued-at
+    5 => bstr .cbor COSE_Sign1,   ; tool-signature
+    ? 6 => uint,                  ; output-char-count
+}
+
 ; Shared type definitions reproduced from [PoP-Protocol] for reader
 ; convenience. In case of conflict, [PoP-Protocol] is authoritative.
 pop-timestamp = uint                ; epoch milliseconds (no tag 1; see [PoP-Protocol])
@@ -808,6 +866,11 @@ hash-algorithm = &(
     sha384: 2,
     sha512: 3,
 )
+compact-ref = {
+    1 => hash-algorithm,          ; algorithm used for full hash
+    2 => bstr .size (8..32),      ; truncated-digest (8-32 bytes)
+    3 => uint,                    ; prefix-length (bytes in digest)
+}
 confidence-tier = &(
     population-reference: 1,      ; 0-4 sessions
     emerging: 2,                  ; 5-9 sessions
