@@ -28,6 +28,7 @@ author:
 normative:
   RFC8610:
   RFC8949:
+  RFC9052:
   RFC9334:
   PoP-Protocol:
     title: "Cryptographic Proof of Process (PoP): Architecture and Evidence Format"
@@ -42,7 +43,6 @@ normative:
 informative:
   RFC5869:
   RFC9106:
-  RFC9052:
   Monrose2000:
     title: Keystroke dynamics as a biometric for authentication
     target: https://doi.org/10.1016/S0167-739X(99)00059-X
@@ -84,6 +84,39 @@ informative:
     date: 2026-02
     seriesinfo:
       Internet-Draft: draft-sardar-rats-sec-cons-02
+  RFC9711:
+  EAR:
+    title: "EAT Attestation Results"
+    target: https://datatracker.ietf.org/doc/html/draft-ietf-rats-ear-02
+    author:
+      - fullname: Thomas Fossati
+        initials: T.
+        surname: Fossati
+      - fullname: Eric Voit
+        initials: E.
+        surname: Voit
+      - fullname: Sergei Trofimov
+        initials: S.
+        surname: Trofimov
+    date: 2026-01
+    seriesinfo:
+      Internet-Draft: draft-ietf-rats-ear-02
+  AR4SI:
+    title: "Attestation Results for Secure Interactions"
+    target: https://datatracker.ietf.org/doc/html/draft-ietf-rats-ar4si-09
+    author:
+      - fullname: Thomas Fossati
+        initials: T.
+        surname: Fossati
+      - fullname: Eric Voit
+        initials: E.
+        surname: Voit
+      - fullname: Henk Birkholz
+        initials: H.
+        surname: Birkholz
+    date: 2025-08
+    seriesinfo:
+      Internet-Draft: draft-ietf-rats-ar4si-09
   SEAT-EXPAT:
     title: Remote Attestation with Exported Authenticators
     target: https://datatracker.ietf.org/doc/html/draft-fossati-seat-expat-01
@@ -582,18 +615,19 @@ without hardware binding, C_swf represents an economic cost only
 
 ### Adaptive SWF Calibration (Informative) {#adaptive-swf-calibration}
 
-Attesters SHOULD dynamically calibrate the `iterations`
-and `time-cost` parameters during the
-`initial-jitter-sample` phase to consistently hit the
-target interval duration, compensating for local hardware
-variance. By running a short calibration pass before the first
-checkpoint, the Attester measures actual Argon2id throughput on
-the local platform and adjusts SWF parameters so that each
-checkpoint's memory-hard computation completes within the
-expected wall-clock window. This ensures that the economic
-security bounds documented in this section hold uniformly
-across diverse deployment hardware, rather than relying on
-fixed parameters tuned to a single reference platform.
+Attesters SHOULD dynamically calibrate the `steps`
+parameter during the `initial-jitter-sample` phase to
+consistently hit the target duty cycle, compensating for
+local hardware variance. By running a short calibration pass
+before the first checkpoint, the Attester measures actual
+Argon2id throughput on the local platform and adjusts the
+step count so that the iterated memory-hard computation fills
+the target fraction of each checkpoint interval (30% for
+CORE, 50% for ENHANCED, 70% for MAXIMUM). This ensures that
+the economic security bounds documented in this section hold
+uniformly across diverse deployment hardware, rather than
+relying on fixed parameters tuned to a single reference
+platform.
 
 ## Behavioral Evidence Synthesis Cost (C_entropy) {#cost-entropy}
 
@@ -682,7 +716,7 @@ attestation-result = {
     ? 8 => forgery-cost-estimate, ; quantified forgery cost
     ? 9 => [+ absence-claim],     ; absence claims (1+ when present)
     ? 10 => [* tstr],             ; warnings
-    11 => bstr,                   ; verifier-signature (COSE_Sign1)
+    11 => bstr .cbor COSE_Sign1,   ; verifier-signature
     12 => pop-timestamp,          ; created (appraisal timestamp)
     ? 13 => forensic-summary,     ; forensic assessment summary
     ? 14 => confidence-tier,      ; baseline confidence level
@@ -805,6 +839,13 @@ When appraising CORE Evidence Packets that lack jitter-binding data,
 the Verifier SHOULD omit the entropy-report field from the
 Attestation Result and include a warning indicating that behavioral
 entropy analysis was not performed.
+
+The verifier-signature field (key 11) MUST contain a COSE_Sign1
+structure {{RFC9052}}. The protected header MUST include an algorithm
+identifier; ES256 or EdDSA is RECOMMENDED. The payload is the CBOR
+encoding of the attestation-result map with key 11 set to a
+zero-length bstr (h''). The Verifier's signing key MUST be
+identifiable via the COSE_Sign1 unprotected header (e.g., kid or x5chain).
 
 The created field (key 12) MUST contain the timestamp at which the
 Verifier completed the appraisal. Relying Parties use this field
@@ -1190,6 +1231,83 @@ array. The following values are defined: 0 (none), 1
 revision of {{PoP-Protocol}} will formalize this
 signaling mechanism.
 
+# EAR Compatibility Mapping (Informative) {#ear-compatibility}
+
+The RATS working group is developing a standard Attestation Result
+format called EAT Attestation Results (EAR) {{EAR}}, which profiles
+the Entity Attestation Token (EAT) {{RFC9711}} for Verifier output.
+The WAR format defined in this document is designed to be compatible
+with future EAR profiling. This section documents the mapping
+between WAR fields and EAR claims to facilitate interoperability
+and future convergence.
+
+## Verdict to ear.status Mapping {#ear-status-mapping}
+
+The WAR verdict enum maps to EAR's ear.status as follows:
+
+| WAR verdict | Value | ear.status | Semantics |
+|-------------|-------|------------|-----------|
+| authentic | 1 | affirming | Evidence consistent with human authorship |
+| inconclusive | 2 | none | Insufficient evidence for appraisal |
+| suspicious | 3 | warning | Anomalies detected; not definitively synthetic |
+| invalid | 4 | contraindicated | Chain broken, forged, or structurally invalid |
+
+## WAR Fields as EAR Extensions {#ear-extensions}
+
+When the WAR is expressed as an EAR, the attestation-result fields
+map as follows:
+
+Top-level EAR claims:
+
+- `eat_profile`: "tag:ietf.org,2025-07:ear" (per EAR requirement)
+- `iat`: WAR created field (key 12)
+- `ear.verifier-id`: derived from the Verifier's signing key
+  identity in the verifier-signature COSE_Sign1 header (per
+  {{AR4SI}})
+- `submods`: single entry keyed by the evidence-ref hash
+
+Per-appraisal EAR claims (within the submods entry):
+
+- `ear.status`: mapped from WAR verdict per {{ear-status-mapping}}
+
+PoP-specific extension claims (registered via $$ear-appraisal-extension):
+
+| WAR field (key) | Extension claim | Type |
+|-----------------|----------------|------|
+| evidence-ref (2) | ear.pop.evidence-ref | hash-value |
+| attestation-tier (4) | ear.pop.attestation-tier | uint (1-4) |
+| chain-length (5) | ear.pop.chain-length | uint |
+| chain-duration (6) | ear.pop.chain-duration | uint (seconds) |
+| entropy-report (7) | ear.pop.entropy-report | map |
+| forgery-cost-estimate (8) | ear.pop.forgery-cost | map |
+| absence-claims (9) | ear.pop.absence-claims | array |
+| warnings (10) | ear.pop.warnings | array of tstr |
+| forensic-summary (13) | ear.pop.forensic-summary | map |
+| confidence-tier (14) | ear.pop.confidence-tier | uint (1-4) |
+| effort-attribution (15) | ear.pop.effort-attribution | map |
+
+## Migration Path {#ear-migration}
+
+A future revision of this document will adopt EAR as the native
+Attestation Result format when {{EAR}} reaches Working Group Last
+Call. The migration path is:
+
+1. Replace the WAR CBOR tag (1129791826) with CWT or JWT wrapping
+   per EAR requirements.
+
+2. Register the PoP-specific extension claims listed above via the
+   EAR extension point ($$ear-appraisal-extension).
+
+3. Adopt the ear.verifier-id structure from {{AR4SI}} in place of
+   the current verifier-signature field.
+
+4. Retain the PoP profile URI to distinguish PoP Attestation
+   Results from other EAR-conformant results.
+
+Until EAR stabilizes, the WAR format defined in
+{{war-wire-format}} remains the normative format for this
+specification.
+
 # IANA Considerations {#iana-considerations}
 
 This document has no IANA actions. All IANA registrations for the PoP framework are defined in {{PoP-Protocol}}.
@@ -1233,6 +1351,17 @@ MUST apply the same data protection requirements as other
 biometric data under applicable regulations. Baseline data
 MUST NOT be shared between Verifiers without explicit author
 consent.
+
+## Attestation Tier Downgrade Detection {#sec-tier-downgrade}
+
+A Verifier that maintains state across sessions SHOULD detect
+tier downgrades — where an Attesting Environment that previously
+submitted Evidence at tier T(n) submits Evidence at tier T(n-k)
+where k > 0. Tier downgrades MAY indicate key compromise,
+environment tampering, or an attempt to evade hardware-bound
+verification. A Verifier that detects a tier downgrade SHOULD
+include a warning in the Attestation Result warnings field
+(key 10) and MAY assign a more conservative verdict.
 
 ## Assistive Mode Abuse {#sec-assistive-bypass}
 
@@ -1397,6 +1526,37 @@ the ranges specified.
   C_hardware. Hardware compromise cost estimated at
   USD 100,000 or more. Total minimum forgery cost exceeds
   sum of claimed-durations plus hardware procurement.
+
+# Composite Trust Score (Informative) {#composite-trust-score}
+{:numbered="false"}
+
+Relying Parties may wish to derive a single scalar trust
+metric from the Attestation Result. The following formula
+provides one example weighting:
+
+~~~
+process-score = w_r * regularity +
+                w_s * swf-strength +
+                w_b * behavioral-consistency
+~~~
+
+Where:
+
+* regularity reflects checkpoint spacing uniformity
+  (derived from timestamp intervals)
+* swf-strength reflects the sequential work function's
+  forgery cost relative to claimed duration
+* behavioral-consistency reflects the forensic assessment
+  outcome (fraction of flags not triggered)
+* w_r, w_s, w_b are Relying Party-configured weights
+  that MUST sum to 1.0 (example: 0.3, 0.3, 0.4)
+
+This formula is non-normative. Relying Parties SHOULD
+adjust weights based on their threat model and the
+Attestation Tier of the Evidence. For example, a Relying
+Party that trusts hardware-bound attestation (T3/T4) may
+increase w_s, while one focused on behavioral authenticity
+may increase w_b.
 
 # Acknowledgements {#acknowledgements}
 {:numbered="false"}

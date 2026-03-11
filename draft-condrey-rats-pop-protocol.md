@@ -920,7 +920,7 @@ WAR Result (.cwar):
 : A Verifier Attestation Result containing signed EAT claims and forensic assessments (CBOR tag 1129791826). The WAR format is specified in {{PoP-Appraisal}}.
 
 SWF:
-: Sequential Work Function. The composite construction combining Argon2id and iterated hashing using the Evidence Packet's selected hash algorithm (see {{swf-construction}}).
+: Sequential Work Function. For Argon2id modes (20/21), a chain of iterated Argon2id evaluations each individually memory-hard. For SHA-256 mode (10), a single Argon2id evaluation followed by iterated SHA-256 hashing. See {{swf-construction}}.
 
 # Attester State Machine {#attester-state-machine}
 
@@ -1109,7 +1109,7 @@ content-tier = &(
 )
 
 proof-algorithm = &(
-    ; 1 is reserved for future use
+    swf-sha256: 10,             ; SHA-256 iterative (no memory-hard)
     swf-argon2id: 20,
     swf-argon2id-entangled: 21, ; Entangled VDF Mode
 )
@@ -1123,7 +1123,7 @@ proof-params = {
     1 => uint,                    ; time-cost (t)
     2 => uint,                    ; memory-cost (m, KiB)
     3 => uint,                    ; parallelism (p)
-    4 => uint,                    ; iterations
+    4 => uint,                    ; steps
 }
 
 jitter-binding = {
@@ -1403,7 +1403,10 @@ structure {{RFC9052}} covering the challenge-nonce.
 The signing key MUST be hardware-bound on the secondary device.
 The Verifier obtains the corresponding public key through prior
 device registration (the registration mechanism is out of scope
-for this document).
+for this document). Platform-specific attestation formats
+(e.g., Apple App Attest, Android Key Attestation) MAY be
+carried as the COSE_Sign1 payload to provide hardware-tier
+evidence alongside the presence proof.
 
 Active-probe structures (checkpoint key 14) record challenge-response
 interactions issued by the Attester or Verifier during the authoring
@@ -1445,6 +1448,7 @@ The checkpoint-hash field MUST be computed as follows:
 
 ~~~
 checkpoint-hash = H(
+    "PoP-Checkpoint-v1" ||
     prev-hash ||
     content-hash ||
     CBOR-encode(edit-delta) ||
@@ -1454,27 +1458,21 @@ checkpoint-hash = H(
 )
 ~~~
 
-Where H is the Evidence Packet's selected hash function, \|\| denotes concatenation, and CBOR-encode produces deterministic CBOR per Section 4.2.1 of {{RFC8949}}.
+Where H is the Evidence Packet's selected hash function, \|\| denotes concatenation, and CBOR-encode produces deterministic CBOR per Section 4.2.1 of {{RFC8949}}. The UTF-8 Domain Separation Tag (DST) prefix "PoP-Checkpoint-v1" MUST be prepended as the first input to prevent cross-context hash collisions.
 
 For the first checkpoint in the initial Evidence Packet of a series (or a standalone packet), prev-hash MUST be set to H(CBOR-encode(document-ref)). This anchors the chain to the document identity. For the first checkpoint in a continuation packet (previous-packet-ref present), prev-hash MUST be set to the final checkpoint-hash of the preceding Evidence Packet (see {{session-continuation}}).
 
-When jitter-binding and physical-state fields are absent (CORE profile), the checkpoint-hash MUST be computed without those terms: checkpoint-hash = H(prev-hash \|\| content-hash \|\| CBOR-encode(edit-delta) \|\| process-proof.merkle-root).
-
-All components except process-proof.merkle-root are either
-fixed-length hashes (32/48/64 bytes per algorithm) or
-CBOR-encoded (self-delimiting). The merkle-root (fixed length
-per hash algorithm) is appended last. This concatenation is
-unambiguous and does not require additional domain separation.
+When jitter-binding and physical-state fields are absent (CORE profile), the checkpoint-hash MUST be computed without those terms: checkpoint-hash = H("PoP-Checkpoint-v1" \|\| prev-hash \|\| content-hash \|\| CBOR-encode(edit-delta) \|\| process-proof.merkle-root).
 
 ## Checkpoint Computation Order {#checkpoint-computation-order}
 
 The fields within a checkpoint MUST be computed in the following order:
 
-1. Compute the SWF: run Argon2id with the derived seed, then iterate H to produce all intermediate states. Construct the Merkle tree to obtain the merkle-root (process-proof key 4).
+1. Compute the SWF: run the proof-algorithm with the derived seed. For modes 20/21, evaluate Argon2id iteratively for the configured number of steps. For mode 10, evaluate Argon2id once then iterate SHA-256. Construct the Merkle tree over all intermediate states to obtain the merkle-root (process-proof key 4).
 2. Compute the jitter-seal using the merkle-root as HKDF-Expand PRK input and jitter-binding.intervals as HMAC input.
 3. Assemble the jitter-binding structure (intervals, entropy-estimate, jitter-seal).
 4. Compute the entangled-mac using the merkle-root as HKDF-Expand PRK input and prev-hash, content-hash, jitter-binding, and physical-state as HMAC input.
-5. Compute the checkpoint-hash over prev-hash, content-hash, edit-delta, jitter-binding, physical-state, and merkle-root.
+5. Compute the checkpoint-hash over the DST "PoP-Checkpoint-v1", prev-hash, content-hash, edit-delta, jitter-binding, physical-state, and merkle-root.
 
 This ordering ensures that each subsequent computation can reference the outputs of prior steps. Implementations MUST follow this order to produce interoperable checkpoints.
 
@@ -1545,37 +1543,57 @@ The following rules apply to the armored encoding:
 
 # Sequential Work Function {#swf-construction}
 
-PoP uses a composite Sequential Work Function (SWF) combining Argon2id {{RFC9106}} for memory-hardness with iterated hashing (using the Evidence Packet's selected hash function H) for sequential ordering. This construction is NOT a Verifiable Delay Function in the formal sense {{Boneh2018}}; it does not provide efficient public verification of the delay claim from the output alone.
+PoP uses a Sequential Work Function (SWF) to bind Evidence to sustained computational effort. For `swf-argon2id` (20) and `swf-argon2id-entangled` (21), the SWF consists of iterated Argon2id {{RFC9106}} evaluations, each individually memory-hard, providing ASIC-resistant sequential work. For `swf-sha256` (10), the SWF uses a single Argon2id evaluation followed by iterated SHA-256 hashing, intended for constrained environments where Argon2id is impractical. This construction is NOT a Verifiable Delay Function in the formal sense {{Boneh2018}}; it does not provide efficient public verification of the delay claim from the output alone.
 
-Instead, verification relies on Merkle-sampled audit proofs: the Attester commits to a Merkle tree over intermediate states, and the Verifier checks a random subset of state transitions. This provides probabilistic verification in O(k * log n) time where k is the sample count and n is the iteration count.
+Instead, verification relies on Merkle-sampled audit proofs: the Attester commits to a Merkle tree over intermediate states, and the Verifier checks a random subset of state transitions. This provides probabilistic verification in O(k * log n) time where k is the sample count and n is the step count.
 
 ## Construction {#swf-algorithm}
 
-The SWF is computed as follows:
+The SWF is computed as follows.
+
+For `swf-argon2id` (20) and `swf-argon2id-entangled` (21):
 
 ~~~
 hash_len = output_length(H)          ; 32, 48, or 64 bytes
-state_0  = Argon2id(seed, salt=H("PoP-salt" || seed), t=1, m=65536,
-                    p=1, len=hash_len)
-for i in 1..iterations:
-    state_i = H(state_{i-1})
+state_0  = Argon2id(seed, salt=H("PoP-salt" || seed),
+                    t=t, m=m, p=1, len=hash_len)
+for i in 1..steps:
+    state_i = Argon2id(state_{i-1},
+                       salt=H("PoP-salt" || I2OSP(i, 4)),
+                       t=t, m=m, p=1, len=hash_len)
 merkle_root = MerkleTree(state_0, state_1, ...,
-                         state_iterations).root
+                         state_steps).root
 ~~~
 
-The salt for Argon2id MUST be derived from the seed: salt = H("PoP-salt" \|\| seed). The Argon2id output length (`len`) MUST equal the output length of H. This ensures domain separation between the password and salt inputs per RFC 9106 best practices and guarantees that SWF state sizes are consistent with the selected hash algorithm.
+Each step is a full Argon2id evaluation bounded by memory bandwidth, ensuring ASIC resistance at every link in the chain. The salt for state\_0 MUST be derived from the seed: salt = H("PoP-salt" \|\| seed). For subsequent steps i >= 1, the salt MUST be H("PoP-salt" \|\| I2OSP(i, 4)), where I2OSP encodes i as a 4-byte big-endian integer per {{RFC8017}}. This provides domain separation between steps. The Argon2id output length (`len`) MUST equal the output length of H to ensure SWF state sizes are consistent with the selected hash algorithm.
 
-The merkle-root field (process-proof key 4) MUST contain the Merkle tree root computed over all intermediate states. The final iteration state (state_iterations) is verified as the leaf at index "iterations" in the Merkle tree.
+For `swf-sha256` (10):
+
+~~~
+hash_len = 32                        ; SHA-256 fixed
+state_0  = Argon2id(seed, salt=H("PoP-salt" || seed),
+                    t=t, m=m, p=1, len=hash_len)
+for i in 1..steps:
+    state_i = H(state_{i-1})
+merkle_root = MerkleTree(state_0, state_1, ...,
+                         state_steps).root
+~~~
+
+The `swf-sha256` mode retains the single Argon2id initialization followed by iterated SHA-256 hashing. Because SHA-256 lacks memory-hardness, forgery cost is bounded only by computation time. Verifiers SHOULD reflect this in the forgery-cost-estimate by setting c-swf proportionally lower than for Argon2id-based modes.
+
+The merkle-root field (process-proof key 4) MUST contain the Merkle tree root computed over all intermediate states. The final state (state\_steps) is verified as the leaf at index "steps" in the Merkle tree.
 
 ## Verification Protocol {#swf-verification}
 
 The Verifier MUST:
 
-1. Recompute Argon2id from the declared seed to obtain state_0
-2. For each sampled proof in the Merkle tree, verify the sibling path against the committed root and recompute H(state_i) to compare against state_{i+1}
-3. Verify the final iteration state (state_iterations) by checking its Merkle proof against the committed root (process-proof key 4, merkle-root). If the final-leaf index is not included in the Fiat-Shamir sample set, the Verifier SHOULD additionally derive or request a proof for it.
+1. Recompute Argon2id from the declared seed to obtain state_0.
+2. For each sampled proof in the Merkle tree, verify the sibling path against the committed root and recompute the state transition: for modes 20/21, recompute Argon2id(state\_i, salt=H("PoP-salt" \|\| I2OSP(i+1, 4)), t=t, m=m, p=1, len=hash\_len) and verify it equals state\_{i+1}; for mode 10, recompute H(state\_i) and verify it equals state\_{i+1}.
+3. Verify the final state (state\_steps) by checking its Merkle proof against the committed root (process-proof key 4, merkle-root). If the final-leaf index is not included in the Fiat-Shamir sample set, the Verifier SHOULD additionally derive or request a proof for it.
 
 A minimum of 20 sampled proofs is REQUIRED for CORE profile. ENHANCED profile requires 50 proofs. MAXIMUM profile requires 100 proofs.
+
+NOTE: For modes 20/21, each sampled proof requires one Argon2id evaluation to verify. Verification cost is O(k) Argon2id evaluations, each requiring m KiB of memory. For CORE (k=20, m=65536 KiB), verification requires approximately 2 seconds on reference hardware. Verifiers MUST verify samples sequentially or limit concurrent evaluations to avoid excessive memory consumption.
 
 ## Fiat-Shamir Sample Derivation {#fiat-shamir-sampling}
 
@@ -1586,7 +1604,7 @@ via Fiat-Shamir transform:
 sample_seed = H(merkle_root || process-proof.input)
 for j in 0..k-1:
     okm_j   = HKDF-Expand(sample_seed, I2OSP(j, 4), 4)
-    index_j = OS2IP(okm_j) mod (iterations + 1)
+    index_j = OS2IP(okm_j) mod (steps + 1)
 ~~~
 
 Where k is the number of required samples (20 for CORE, 50 for
@@ -1604,17 +1622,33 @@ additional indices by incrementing j beyond k-1 until k distinct
 indices are obtained. The Verifier MUST verify that all k sample
 indices are distinct.
 
-Sample indices are in the range \[0, iterations\] inclusive.
-Padded Merkle tree leaves (indices greater than iterations)
+Sample indices are in the range \[0, steps\] inclusive.
+Padded Merkle tree leaves (indices greater than steps)
 are never sampled by this derivation.
 
 ## SWF Seed Derivation {#swf-seed-derivation}
+
+For `swf-sha256` (10), the SWF seed for each checkpoint
+MUST be derived as:
+
+~~~
+seed = H(
+    "PoP-SWF-Seed-v1" ||
+    prev-hash ||
+    CBOR-encode(jitter-binding.intervals) ||
+    CBOR-encode(physical-state)
+)
+~~~
+
+The `swf-sha256` mode uses iterated SHA-256 as described
+in {{swf-algorithm}}.
 
 For `swf-argon2id` (20), the SWF seed for each
 checkpoint MUST be derived as:
 
 ~~~
 seed = H(
+    "PoP-SWF-Seed-v1" ||
     prev-hash ||
     CBOR-encode(jitter-binding.intervals) ||
     CBOR-encode(physical-state)
@@ -1627,6 +1661,7 @@ derived as:
 
 ~~~
 seed = H(
+    "PoP-SWF-Seed-v1" ||
     prev-hash ||
     prev-swf-output ||
     CBOR-encode(jitter-binding.intervals) ||
@@ -1640,10 +1675,11 @@ function computation. This creates a strict cryptographic
 dependency chain: each checkpoint's SWF cannot begin until the
 previous checkpoint's SWF has completed.
 
-For the first checkpoint (sequence = 1), both modes use:
+For the first checkpoint (sequence = 1), all modes use:
 
 ~~~
 seed = H(
+    "PoP-SWF-Seed-v1" ||
     CBOR-encode(document-ref) ||
     initial-jitter-sample
 )
@@ -1654,7 +1690,7 @@ behavioral entropy collected before the first checkpoint.
 When jitter-binding and physical-state are absent (CORE profile
 without behavioral data), the seed MUST incorporate at least
 the prev-hash and a locally-generated 32-byte random nonce:
-seed = H(prev-hash \|\| local-nonce). For the first
+seed = H("PoP-SWF-Seed-v1" \|\| prev-hash \|\| local-nonce). For the first
 checkpoint, the nonce provides non-determinism when
 initial-jitter-sample is unavailable. Implementations MUST
 NOT use a fully deterministic seed derivation.
@@ -1668,39 +1704,63 @@ implementations MUST use the derivation specified above.
 The SWF Merkle tree is constructed over all intermediate states
 as follows:
 
-* Leaves: state_i for i in 0..iterations, where leaf-index = i
+* Leaves: state_i for i in 0..steps, where leaf-index = i
   and leaf-value = state_i. The total number of leaves is
-  (iterations + 1).
+  (steps + 1).
 * Internal nodes: H(left_child \|\| right_child)
 * Tree structure: binary Merkle tree. If the number of leaves
   is not a power of 2, the tree is padded by duplicating the
   last leaf until the count reaches the next power of 2.
 * The Merkle root is stored in process-proof.merkle-root (key 4).
 
-The final iteration state (state_iterations) is the leaf at
-index "iterations" and is verified by checking its Merkle proof
+The final state (state\_steps) is the leaf at
+index "steps" and is verified by checking its Merkle proof
 against the committed root.
 
 ## Mandatory SWF Parameters {#mandatory-swf-params}
 
 Conforming Attesters MUST use the following minimum SWF parameters
-for each Evidence Content Tier:
+for each Evidence Content Tier.
+
+For `swf-argon2id` (20) and `swf-argon2id-entangled` (21):
+
+| Parameter | CORE | ENHANCED | MAXIMUM |
+|---|---|---|---|
+| time-cost (t) | 1 | 1 | 1 |
+| memory-cost (m, KiB) | 65536 | 65536 | 65536 |
+| parallelism (p) | 1 | 1 | 1 |
+| steps | 90 | 150 | 210 |
+| Merkle samples (k) | 20 | 50 | 100 |
+
+For `swf-sha256` (10):
 
 | Parameter | CORE | ENHANCED | MAXIMUM |
 |---|---|---|---|
 | time-cost (t) | 1 | 1 | 1 |
 | memory-cost (m, KiB) | 65536 | 65536 | 131072 |
 | parallelism (p) | 1 | 1 | 1 |
-| iterations | 10000 | 50000 | 100000 |
+| steps | 10000 | 50000 | 100000 |
 | Merkle samples (k) | 20 | 50 | 100 |
 
 Verifiers MUST reject Evidence where declared proof-params are
 below the mandatory minimums for the claimed content tier.
-Expected wall-clock times for the Argon2id phase on reference
-hardware (DDR4, approximately 25 GB/s memory bandwidth):
-CORE approximately 50-100ms, ENHANCED approximately 50-100ms,
-MAXIMUM approximately 100-200ms. The subsequent hash iterations
-add approximately 0.1ms per 1000 iterations.
+
+Expected wall-clock times for `swf-argon2id` modes on reference
+hardware (DDR4, approximately 25 GB/s memory bandwidth): each
+Argon2id step with t=1, m=65536 KiB requires approximately
+100ms. Target duty cycles at 30-second default checkpoint
+intervals: CORE approximately 30% (90 steps, ~9s), ENHANCED
+approximately 50% (150 steps, ~15s), MAXIMUM approximately 70%
+(210 steps, ~21s). For ENHANCED and MAXIMUM, entangled mode
+(swf-argon2id-entangled) is MANDATORY per {{entangled-mode-requirement}}.
+
+For `swf-sha256` mode, the initial Argon2id evaluation requires
+approximately 50-100ms; subsequent SHA-256 steps add approximately
+0.1ms per 1000 steps.
+
+## Entangled Mode Requirement {#entangled-mode-requirement}
+
+Attesters claiming ENHANCED or MAXIMUM content tier with `swf-argon2id` MUST use `swf-argon2id-entangled` (21) instead of `swf-argon2id` (20). This ensures that each checkpoint's SWF computation depends on the previous checkpoint's final state, creating a strict inter-checkpoint sequential dependency that eliminates parallel pre-computation. Verifiers MUST reject ENHANCED or MAXIMUM Evidence that uses proof-algorithm 20 instead of 21.
 
 ## Entangled MAC Computation {#entangled-mac-computation}
 
@@ -1752,12 +1812,12 @@ within an honestly-generated checkpoint. See {{security-considerations}}.
 
 ## Security Bound {#swf-security}
 
-An adversary who skips fraction f of iterations will be detected with probability 1-(1-f)^k where k is the number of sampled proofs. With k=20 and f=0.1, detection probability exceeds 0.878. With k=100 and f=0.05, detection probability exceeds 0.994.
+An adversary who skips fraction f of steps will be detected with probability 1-(1-f)^k where k is the number of sampled proofs. With k=20 and f=0.1, detection probability exceeds 0.878. With k=100 and f=0.05, detection probability exceeds 0.994.
 
 This bound holds under the random oracle model for the selected
 hash function H. The Attester commits to the Merkle root before
 sample positions are derived via the Fiat-Shamir transform. Finding
-a root that biases all k samples away from skipped iterations
+a root that biases all k samples away from skipped steps
 requires inverting H, which is computationally infeasible under
 standard assumptions.
 
@@ -1942,9 +2002,9 @@ Verifiers MUST reject Evidence where physical freshness markers are stale, incon
 
 As analyzed in {{swf-acceleration}}, specialized hardware attacks are mitigated by:
 
-* *Memory-hardness:* Argon2id computation is bounded by memory bandwidth (approximately 50 GB/s for DDR5), not ALU throughput. ASICs provide minimal advantage.
+* *Memory-hardness:* For modes 20/21, every SWF step is a full Argon2id evaluation bounded by memory bandwidth (approximately 50 GB/s for DDR5), not ALU throughput. ASICs provide minimal advantage per step, and this resistance compounds across all steps in the chain.
 * *Hardware-Anchored Time (T3/T4):* SWF seeds are bound to TPM monotonic counters, preventing time compression even with faster computation.
-* *Merkle sampling:* Skipping SWF iterations is detected probabilistically. With k=100 samples, skipping 5% of iterations has >99.4% detection probability.
+* *Merkle sampling:* Skipping SWF steps is detected probabilistically. With k=100 samples, skipping 5% of steps has >99.4% detection probability.
 
 ## Trust Gradation by Tier {#sec-tier-trust}
 
@@ -1959,21 +2019,18 @@ Relying Parties SHOULD interpret Evidence according to its Attestation Tier. Det
 
 ## Forgery Cost Bounds {#sec-economic-bounds}
 
-Implementations SHOULD report quantified forgery cost estimates in Attestation Results. For CORE profile (10,000 iterations, m=65536 KiB):
+Implementations SHOULD report quantified forgery cost estimates in Attestation Results. For CORE profile with `swf-argon2id` (90 steps, m=65536 KiB):
 
-* Sequential computation time: Argon2id with t=1, m=65536 KiB requires approximately 50-100ms on consumer hardware (DDR4, ~25 GB/s memory bandwidth). The subsequent hash iterations add negligible time (<1ms for 10,000 iterations).
-* Memory requirement: 64 MiB per concurrent chain
-* Energy cost per checkpoint: approximately $0.00001 USD at consumer electricity rates
+* Sequential computation time: 90 Argon2id evaluations at approximately 100ms each requires ~9 seconds of sustained memory-hard computation per checkpoint on consumer hardware (DDR4, ~25 GB/s memory bandwidth).
+* Memory requirement: 64 MiB per step (steps are sequential, not concurrent)
+* Duty cycle: approximately 30% of the 30-second checkpoint interval
+* Energy cost per checkpoint: approximately $0.0001 USD at consumer electricity rates
 
-These costs are low for individual checkpoints. Security derives from the
-conjunctive requirement across many checkpoints: an adversary must sustain
-consistent behavioral entropy, temporal ordering, and physical state data
-across the entire chain. The forgery cost scales superlinearly with
-checkpoint count due to session consistency requirements.
+For ENHANCED profile with `swf-argon2id-entangled` (150 steps), duty cycle rises to approximately 50%. For MAXIMUM (210 steps), approximately 70%. Entangled mode creates strict inter-checkpoint sequential dependencies: forging N hours of ENHANCED authorship requires approximately N/2 hours of real computation. The forgery cost scales linearly with session duration and superlinearly with checkpoint count due to session consistency requirements across the behavioral dimensions.
 
 ## Denial of Service {#sec-dos}
 
-SWF verification is asymmetric: Merkle-sampled proofs verify in O(k * log n) versus O(n) generation. Verifiers cannot be overwhelmed by expensive verification requests. Implementations SHOULD implement rate limiting on Evidence submission.
+SWF verification is asymmetric: Merkle-sampled proofs verify in O(k) versus O(n) generation, where k is the sample count and n is the step count. For `swf-argon2id` modes, each sampled proof requires one Argon2id evaluation (~100ms), so verification cost is approximately k * 100ms (2s for CORE, 5s for ENHANCED, 10s for MAXIMUM). This is substantially less than generation cost (9-21s per checkpoint). Implementations SHOULD implement rate limiting on Evidence submission.
 
 ## MAC Field Security Limitations {#sec-mac-limitations}
 
@@ -2124,7 +2181,9 @@ Selective disclosure:
 
 The following test vectors validate SWF implementations.
 
-NOTE: These test vectors use SHA-256 (hash-algorithm value 1) and the construction from this specification revision. The salt is derived as H("PoP-salt" \|\| seed) where H is SHA-256 for these vectors. Implementers should verify their Argon2id output matches state_0 before proceeding with hash iterations.
+## swf-sha256 (Mode 10) Test Vector
+
+NOTE: This vector uses SHA-256 (hash-algorithm value 1) and the `swf-sha256` construction: one Argon2id initialization followed by iterated SHA-256 hashing. The salt is derived as H("PoP-salt" \|\| seed) where H is SHA-256.
 
 ~~~
 Seed: "witnessd-genesis-v1"
@@ -2137,7 +2196,7 @@ Argon2id Parameters:
   Parallelism (p): 1
   Output Length: 32 bytes
 
-Iterations: 10,000
+Steps: 10,000
 
 Salt (hex): c5de0ba53fa83ab477ead9013bfca978
              339e5072882cafb3d0efc8cc40299155
@@ -2146,7 +2205,7 @@ Intermediate States:
   state_0 (Argon2id):
     a40e0f73832f88dc8bfe5f8956fff4a0
     ad2fc4de5455e9d85497c6083b3b1802
-  state_1000:
+  state_1000 (SHA-256 chain):
     c727ead9631eef95ca9a5976a947f71a
     6f4f29a5c80aa2dc7f120f9a4193d7b4
   state_5000:
@@ -2158,6 +2217,37 @@ Intermediate States:
   state_10000 (final):
     e445a3cdc8152d66c71366d22b2c5975
     cff4d0c8ee6ec0e76515b04d143bd148
+~~~
+
+## swf-argon2id (Mode 20) Test Vector
+
+NOTE: This vector uses SHA-256 (hash-algorithm value 1) and the `swf-argon2id` construction: iterated Argon2id evaluations. Each step feeds the previous state as the password input. The salt for step i >= 1 is H("PoP-salt" \|\| I2OSP(i, 4)). Implementers should verify state\_0 matches the `swf-sha256` vector above (identical Argon2id initialization), then verify state\_1 to confirm the iterated construction.
+
+~~~
+Seed: "witnessd-genesis-v1"
+Seed (hex): 7769746e657373642d67656e657369732d7631
+
+Argon2id Parameters (per step):
+  Time Cost (t): 1
+  Memory Cost (m): 65536 KiB
+  Parallelism (p): 1
+  Output Length: 32 bytes
+
+Steps: 3
+
+Intermediate States:
+  state_0 (Argon2id, seed as password):
+    a40e0f73832f88dc8bfe5f8956fff4a0
+    ad2fc4de5455e9d85497c6083b3b1802
+  state_1 (Argon2id, state_0 as password,
+           salt=H("PoP-salt" || I2OSP(1, 4))):
+    [TO BE COMPUTED BY REFERENCE IMPLEMENTATION]
+  state_2 (Argon2id, state_1 as password,
+           salt=H("PoP-salt" || I2OSP(2, 4))):
+    [TO BE COMPUTED BY REFERENCE IMPLEMENTATION]
+  state_3 (Argon2id, state_2 as password,
+           salt=H("PoP-salt" || I2OSP(3, 4))):
+    [TO BE COMPUTED BY REFERENCE IMPLEMENTATION]
 ~~~
 
 # Acknowledgements {#acknowledgements}

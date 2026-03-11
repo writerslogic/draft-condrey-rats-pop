@@ -88,7 +88,7 @@ proof-params = {
     1 => uint,                    ; time-cost (t)
     2 => uint,                    ; memory-cost (m, KiB)
     3 => uint,                    ; parallelism (p)
-    4 => uint,                    ; iterations
+    4 => uint,                    ; steps
 }
 
 merkle-proof = {
@@ -265,7 +265,7 @@ attestation-result = {
     ? 8 => forgery-cost-estimate, ; quantified forgery cost
     ? 9 => [+ absence-claim],     ; absence claims (1+ when present)
     ? 10 => [* tstr],             ; warnings
-    11 => bstr,                   ; verifier-signature (COSE_Sign1)
+    11 => bstr .cbor COSE_Sign1,   ; verifier-signature
     12 => pop-timestamp,          ; created (appraisal timestamp)
     ? 13 => forensic-summary,     ; forensic assessment summary
     ? 14 => confidence-tier,      ; baseline confidence level
@@ -372,7 +372,7 @@ content-tier = &(
 )
 
 proof-algorithm = &(
-    ; 1 is reserved for future use
+    swf-sha256: 10,               ; SHA-256 iterative (no memory-hard)
     swf-argon2id: 20,
     swf-argon2id-entangled: 21,   ; Entangled VDF Mode
 )
