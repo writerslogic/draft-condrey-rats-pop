@@ -571,6 +571,34 @@ PoP implements a critical trust inversion: in traditional remote attestation, th
 
 The RATS architecture accommodates this through its layered trust model and configurable Appraisal Policies ({{RFC9334}}). The companion appraisal document ({{PoP-Appraisal}}) defines domain-specific verification procedures. The rationale for Experimental status is provided in {{experimental-status-rationale}}.
 
+## Adversarial Attester as RATS Profile {#adversarial-attester-profile}
+
+PoP constitutes a RATS profile in which the standard Attester-operator trust assumption is explicitly relaxed. RFC 9334 Section 3 defines Attester roles functionally (the entity producing Evidence) without requiring the operator to be trusted. PoP leverages this by treating the Attester operator as the primary adversary and relying on physics-based constraints, memory-hard functions, and hardware trust anchors (at T3/T4) rather than Attester honesty.
+
+This profile is analogous to anti-cheat and DRM attestation patterns where the platform operator is adversarial, and differs from traditional RATS deployments (firmware integrity, supply chain verification) where external compromise is the primary threat. Implementations and Verifier policies MUST account for this trust model when interpreting PoP Evidence.
+
+## Evidence Format and EAT Relationship {#evidence-eat-relationship}
+
+PoP Evidence Packets use a domain-specific CBOR structure (tag 1129336656) rather than CWT/JWT-wrapped EAT tokens. This design reflects the fundamental difference between PoP Evidence and traditional EAT claims:
+
+* EAT ({{RFC9711}}) models entity state as a set of claims at a point in time. PoP Evidence models a continuous physical process as an ordered sequence of checkpoints with SWF proofs, behavioral entropy, and physical state bindings.
+* The checkpoint chain structure (sequential process-proofs, hash-linked deltas, jitter bindings) has no natural representation in the EAT claims model.
+* Wrapping each checkpoint as a separate EAT would lose the cryptographic chain integrity that is central to PoP's security properties.
+
+The EAT profile URI "urn:ietf:params:rats:eat:profile:pop:1.0" applies to the Attestation Result (WAR) format defined in {{PoP-Appraisal}}, which carries EAT-compatible claims (verdict, attestation tier, forensic assessments). The Evidence Packet uses its own profile URI "urn:ietf:params:pop:profile:1.0" to identify the PoP Evidence format. Generic EAT tooling cannot parse PoP Evidence without PoP-specific support, but can consume WAR Attestation Results via the EAR compatibility mapping defined in {{PoP-Appraisal}}.
+
+## Reference Value Trust Model {#reference-value-trust}
+
+The Reference Value Provider role in PoP differs from traditional RATS deployments where RVPs supply known-good platform measurements from a trusted supply chain. In PoP, Reference Values take two forms:
+
+Specification-defined values:
+: SWF parameters, forensic thresholds, and profile requirements defined in this document and {{PoP-Appraisal}}. These are static and trusted by virtue of the specification itself.
+
+Author-generated behavioral baselines:
+: Per-author behavioral profiles (baseline-digest) accumulated across sessions within the Attesting Environment. These are self-asserted by the Attester and MUST NOT be treated as trusted Reference Values. The baseline-digest is signed by the Evidence Packet's signing key and bound to the author identity via identity-fingerprint, but at T1/T2 tiers the signing key is software-controlled and the baseline could be synthetically constructed (see {{baseline-forgery}}).
+
+Verifiers MUST treat behavioral baselines as corroborative evidence whose weight scales with the confidence-tier (population-reference through mature), not as independent attestation of authenticity. The forensic mechanisms (SNR, CLC, error topology) operate independently of baseline data and provide the primary discrimination between biological and synthetic authoring.
+
 # Protocol Overview {#protocol-overview}
 
 This section provides an end-to-end overview of the PoP protocol, mapping the message flow to the RATS passport model and illustrating the lifecycle of an Evidence Packet from creation through appraisal.
@@ -604,6 +632,8 @@ The PoP-specific message flow is:
 4. The Relying Party (publisher, reader, or automated platform) consumes the WAR to make trust decisions about the claimed authorship provenance.
 
 Endorsers (hardware manufacturers) supply TPM endorsement certificates and Secure Element attestations that Verifiers use to validate hardware-bound claims in T3/T4 Evidence. Reference Value Providers supply the expected behavioral patterns, SWF difficulty parameters, and profile specifications that Verifiers use as appraisal baselines.
+
+Note: In some deployments, the Relying Party (e.g., a content management system or publishing platform) may receive an Evidence Packet alongside content and forward it to a Verifier on behalf of the author. This is operationally similar to the RATS background-check model ({{RFC9334}}, Section 8.2), where the Relying Party initiates verification. However, the Evidence Packet is still generated by the Attester and travels with the content as a self-contained credential, making this architecturally consistent with the passport model. Deployments using this pattern SHOULD ensure that the Relying Party does not modify the Evidence Packet before forwarding it to the Verifier.
 
 ## Evidence Lifecycle {#evidence-lifecycle}
 
@@ -775,6 +805,17 @@ SHA-256 of the Evidence Packet's signing key.
 # Threat Model {#threat-model}
 
 This section defines the adversary model following the methodology of {{RFC3552}} and incorporating insights from RATS security analysis {{Sardar-RATS}}. The threat model assumes a Dolev-Yao style adversary {{Dolev-Yao}} with domain-specific constraints.
+
+The following table maps PoP threat categories to the RATS threat analysis in {{Sardar-RATS}} and {{RFC9334}} Section 12:
+
+| RATS Threat Category | PoP Coverage | PoP Mechanism |
+|---|---|---|
+| Compromised Attester | Primary threat ({{adversarial-attester}}) | SWF time-binding, behavioral entropy, hardware isolation (T3/T4) |
+| Spoofed Attestation Results | WAR signature verification | COSE_Sign1 over WAR, Verifier identity binding |
+| Evidence replay | {{replay-attack}} | Physical freshness anchors, entangled VDF mode |
+| Man-in-the-middle | {{diversion-attack}} | TLS channel binding (EKM), SEAT platform attestation |
+| Compromised Verifier | Out of scope (trusted Verifier assumption) | Relying Party MAY cross-verify with multiple Verifiers |
+| Supply chain attack on AE | {{ae-spoofing}} | T3/T4 hardware attestation; T1/T2 accept this risk |
 
 ## Adversarial Attester Model {#adversarial-attester}
 
@@ -969,7 +1010,13 @@ ISO/IEC 29115 Levels of Assurance (LoA), and Entity Attestation Token
 
 T3 and T4 both map to EAT security level "hardware" (4) because the EAT
 specification does not distinguish PUF-level binding from standard
-TPM key binding.
+TPM key binding. EAT security level "secure-restricted" (3) is not used
+because PoP tiers define hardware binding in terms of key isolation and
+anti-tamper properties, not the firmware/software security boundary that
+"secure-restricted" describes. Relying Parties requiring finer-grained
+assurance distinctions SHOULD use the attestation-tier value (T1-T4)
+from the WAR Attestation Result rather than relying solely on EAT
+security-level.
 
 ## Tier T1: Software-Only {#tier-t1-software}
 
@@ -1017,7 +1064,7 @@ Feature IDs 1-9 are reserved for core protocol features. IDs 50-99 are reserved 
 
 A conforming Attester MUST implement at least the CORE profile. A conforming Verifier MUST be capable of validating all three profiles. Verifiers encountering unknown fields MUST ignore them and proceed with validation of known fields. Verifiers receiving an Evidence Packet with version greater than 1 MUST reject the packet unless they implement the corresponding protocol version.
 
-The profile-uri field in an Evidence Packet MUST be set to "urn:ietf:params:rats:eat:profile:pop:1.0" for Evidence conforming to this specification.
+The profile-uri field in an Evidence Packet MUST be set to "urn:ietf:params:pop:profile:1.0" for Evidence conforming to this specification. This URI identifies the PoP Evidence format and is distinct from the EAT profile URI "urn:ietf:params:rats:eat:profile:pop:1.0", which identifies PoP Attestation Results (see {{evidence-eat-relationship}}).
 
 In the document-ref structure, byte-length is the length in bytes of the UTF-8 encoded document, and char-count is the number of Unicode scalar values (code points).
 
@@ -1924,15 +1971,19 @@ profile in the "EAT Profiles" registry (or its successor
 registry established by {{RFC9711}} or the EAR specification):
 
 Profile Name:
-: PoP Evidence Profile
+: PoP Attestation Result Profile
 
 Profile URI:
 : urn:ietf:params:rats:eat:profile:pop:1.0
 
 Description:
-: Profile for Cryptographic Proof of Process (PoP) Evidence
-  Packets and Attestation Results as defined in this document
-  and {{PoP-Appraisal}}.
+: Profile for Cryptographic Proof of Process (PoP) Attestation
+  Results (WAR format) as defined in {{PoP-Appraisal}}. The
+  PoP Evidence Packet format uses a domain-specific CBOR
+  structure (tag 1129336656) that is not an EAT token; this
+  profile URI identifies the Verifier output format. See
+  {{evidence-eat-relationship}} for the architectural
+  rationale.
 
 Reference:
 : \[this document\]

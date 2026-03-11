@@ -1053,6 +1053,91 @@ verdict; a significant baseline deviation SHOULD be
 reported as a warning but does not by itself trigger a
 suspicious verdict.
 
+# Appraisal Policy Architecture {#appraisal-policy}
+
+RFC 9334 Section 2.2 defines two types of Appraisal Policy:
+Appraisal Policy for Evidence (used by the Verifier) and
+Appraisal Policy for Attestation Results (used by the Relying
+Party). This section maps the PoP appraisal framework to these
+two policy types.
+
+## Appraisal Policy for Evidence {#policy-for-evidence}
+
+The Verifier's Appraisal Policy for Evidence is defined by
+the verification procedure in {{verification-procedure}}, the
+forensic assessment mechanisms in {{forensic-assessment}}, and
+the per-tier verification constraints in
+{{per-tier-constraints}}. Collectively, these specify how the
+Verifier evaluates an Evidence Packet to produce an Attestation
+Result (WAR).
+
+The policy inputs are:
+
+* The Evidence Packet itself (CBOR tag 1129336656)
+* The PoP specification (this document and {{PoP-Protocol}}),
+  which defines SWF parameters, forensic thresholds, and
+  profile requirements
+* Endorsements: TPM endorsement certificates and platform
+  attestation credentials (T3/T4 tiers only), supplied by
+  hardware manufacturers acting as Endorsers per {{RFC9334}}
+* Reference Values: specification-defined forensic thresholds
+  and behavioral baselines as described in
+  {{PoP-Protocol}}, Section "Reference Value Trust Model"
+* Deployment-specific configuration: clock skew tolerances
+  ({{clock-skew-tolerance}}), entropy estimator selection, and
+  optional forensic mechanism enablement per Evidence Content
+  Tier
+
+## Appraisal Policy for Attestation Results {#policy-for-results}
+
+The Relying Party's Appraisal Policy for Attestation Results
+determines how WAR verdicts inform trust decisions. This policy
+is deployment-specific, but implementations SHOULD consider the
+following framework:
+
+Verdict interpretation:
+
+* authentic (1): The Relying Party MAY accept the claimed
+  authorship provenance. The attestation-tier and
+  confidence-tier fields indicate the strength of the
+  underlying evidence.
+* inconclusive (2): Insufficient behavioral data was available
+  (typically CORE profile Evidence). The Relying Party SHOULD
+  NOT treat this as evidence of forgery. Deployments requiring
+  behavioral assurance SHOULD require ENHANCED or MAXIMUM
+  Evidence Content Tiers.
+* suspicious (3): Forensic anomalies were detected. The Relying
+  Party SHOULD request additional evidence or apply enhanced
+  scrutiny. The forensic-summary field identifies which
+  mechanisms triggered and the affected checkpoint coverage.
+* invalid (4): The Evidence Packet is structurally or
+  cryptographically broken. The Relying Party MUST NOT rely on
+  any claims from the associated content.
+
+Tier-based acceptance:
+
+* Relying Parties SHOULD define minimum acceptable attestation
+  tiers and Evidence Content Tiers for their use case. For
+  example, a legal evidentiary context might require T3
+  ENHANCED or higher, while a blogging platform might accept
+  T1 CORE.
+* The attestation-tier in the WAR reflects the Verifier's
+  assessed assurance level, which may differ from the
+  Attester's claimed tier if hardware attestation validation
+  failed.
+
+Forgery cost evaluation:
+
+* The forgery-cost-estimate field provides a quantified lower
+  bound on the resources required to forge the Evidence. Relying
+  Parties MAY compare this against the economic value of the
+  content to assess whether forgery is economically rational.
+
+Relying Parties MUST NOT make trust decisions based solely on
+the verdict enum. The attestation-tier, confidence-tier,
+forensic-summary, and forgery-cost-estimate fields provide
+essential context for informed trust decisions.
+
 # Effort Attribution {#effort-attribution}
 
 When an Evidence Packet contains receipt structures (checkpoint
@@ -1365,7 +1450,7 @@ PoP-specific extension claims (registered via $$ear-appraisal-extension):
 | chain-length (5) | ear.pop.chain-length | uint |
 | chain-duration (6) | ear.pop.chain-duration | uint (seconds) |
 | entropy-report (7) | ear.pop.entropy-report | map |
-| forgery-cost-estimate (8) | ear.pop.forgery-cost | map |
+| forgery-cost-estimate (8) | ear.pop.forgery-cost-estimate | map |
 | absence-claims (9) | ear.pop.absence-claims | array |
 | warnings (10) | ear.pop.warnings | array of tstr |
 | forensic-summary (13) | ear.pop.forensic-summary | map |
@@ -1379,20 +1464,49 @@ Attestation Result format when {{EAR}} reaches Working Group Last
 Call. The migration path is:
 
 1. Replace the WAR CBOR tag (1129791826) with CWT or JWT wrapping
-   per EAR requirements.
+   per EAR requirements. The verdict field maps to ear.status per
+   {{ear-status-mapping}}.
 
-2. Register the PoP-specific extension claims listed above via the
-   EAR extension point ($$ear-appraisal-extension).
+2. Register the PoP-specific extension claims listed in
+   {{ear-extensions}} via the EAR extension point
+   ($$ear-appraisal-extension). The CDDL definitions for these
+   claims are provided below to facilitate early implementation:
+
+   ~~~ cddl
+   $$ear-appraisal-extension //= (
+     "ear.pop.evidence-ref" => hash-value,
+     "ear.pop.attestation-tier" => uint .within (1..4),
+     "ear.pop.chain-length" => uint,
+     "ear.pop.chain-duration" => uint,
+     ? "ear.pop.entropy-report" => entropy-report,
+     ? "ear.pop.forgery-cost-estimate" => forgery-cost-estimate,
+     ? "ear.pop.absence-claims" => [+ absence-claim],
+     ? "ear.pop.warnings" => [* tstr],
+     ? "ear.pop.forensic-summary" => forensic-summary,
+     ? "ear.pop.confidence-tier" => uint .within (1..4),
+     ? "ear.pop.effort-attribution" => effort-attribution,
+   )
+   ~~~
+
+   The attestation-tier and confidence-tier claims use `uint .within
+   (1..4)` rather than the named enums defined in
+   {{war-wire-format}}. The numeric values are identical;
+   implementers should consult the attestation-tier and
+   confidence-tier definitions in the WAR format for the
+   corresponding symbolic names.
 
 3. Adopt the ear.verifier-id structure from {{AR4SI}} in place of
    the current verifier-signature field.
 
-4. Retain the PoP profile URI to distinguish PoP Attestation
-   Results from other EAR-conformant results.
+4. Retain the PoP profile URI
+   "urn:ietf:params:rats:eat:profile:pop:1.0" to distinguish PoP
+   Attestation Results from other EAR-conformant results.
 
 Until EAR stabilizes, the WAR format defined in
 {{war-wire-format}} remains the normative format for this
-specification.
+specification. Implementers are encouraged to support both the
+WAR format and the EAR extension claims defined above to
+facilitate a smooth transition.
 
 # Experimental Status Rationale {#experimental-status-rationale}
 
