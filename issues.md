@@ -1,9 +1,9 @@
 # Verified Issues — draft-condrey-rats-pop
 
 Reviewed against:
-- `draft-condrey-rats-pop-protocol.xml` (1534 lines)
-- `draft-condrey-rats-pop-appraisal.xml` (818 lines)
-- `cddl/witnessd-pop.cddl` (277 lines)
+- `draft-condrey-rats-pop-protocol.md` (2169 lines)
+- `draft-condrey-rats-pop-appraisal.md` (1407 lines)
+- `cddl/witnessd-pop.cddl` (409 lines)
 
 Cross-referenced with IETF RATS WG documents:
 - [RFC 9334](https://datatracker.ietf.org/doc/rfc9334/) — RATS Architecture
@@ -24,19 +24,19 @@ Cross-referenced with IETF RATS WG documents:
 
 | Status | Count | Details |
 |--------|-------|---------|
-| **RESOLVED** | 142 | Fixes fully implemented in current revision |
-| **PARTIAL** | 4 | Some aspects fixed, others remain or acceptable as-is |
+| **RESOLVED** | 160 | Fixes fully implemented in current revision |
+| **PARTIAL** | 3 | Some aspects fixed, others remain or acceptable as-is |
 | **UNRESOLVED** | 1 | Not yet addressed |
 | **DEFERRED** | 6 | Architectural issues deferred to future revision |
 
-**Grand Total: 153 issues tracked. 5 remaining open (PARTIAL + UNRESOLVED). 6 deferred. 142 resolved.**
+**Grand Total: 170 issues tracked. 4 remaining open (PARTIAL + UNRESOLVED). 6 deferred. 160 resolved.**
 
 ### Original Issues (1-105)
 
 | Status | Count |
 |--------|-------|
-| RESOLVED | 94 |
-| PARTIAL | 4 |
+| RESOLVED | 95 |
+| PARTIAL | 3 |
 | UNRESOLVED | 1 |
 | DEFERRED | 6 |
 
@@ -44,9 +44,17 @@ Cross-referenced with IETF RATS WG documents:
 
 | Status | Count |
 |--------|-------|
-| RESOLVED | 47 |
+| RESOLVED | 48 |
 | PARTIAL | 0 |
-| UNRESOLVED | 1 |
+| UNRESOLVED | 0 |
+
+### Issues Added This Revision (154-170)
+
+| Status | Count |
+|--------|-------|
+| RESOLVED | 17 |
+| PARTIAL | 0 |
+| UNRESOLVED | 0 |
 
 ---
 
@@ -76,7 +84,7 @@ Cross-referenced with IETF RATS WG documents:
 | 20 | DEFERRED | COSE/CWT/CMW wrapping (tied to Issue 1) |
 | 21 | DEFERRED | Endorser/RVP operationalization (out of scope) |
 | 22 | RESOLVED | EAT security level mapping table added |
-| 23 | RESOLVED | RATS applicability section added |
+| 23 | RESOLVED | RATS applicability section merged into compatibility |
 | 24 | RESOLVED | Session Consistency Analysis added |
 | 25 | RESOLVED | Behavioral thresholds added to normative body |
 | 26 | RESOLVED | CLC threshold reconciled (r > 0.2) |
@@ -111,7 +119,7 @@ Cross-referenced with IETF RATS WG documents:
 | 55 | RESOLVED | Postal elements separated |
 | 56 | RESOLVED | RFC 3552/6973 moved to Informative |
 | 57 | RESOLVED | Cross-reference uses xref |
-| 58 | RESOLVED | Tool Receipt marked informational |
+| 58 | RESOLVED | Tool Receipt consumer-side normative; provider-side deferred to companion |
 | 59 | RESOLVED | absence-claim structured type |
 | 60 | RESOLVED | profile-uri value specified |
 | 61 | RESOLVED | Feature ID numbering explained |
@@ -142,7 +150,7 @@ Cross-referenced with IETF RATS WG documents:
 | 86 | RESOLVED | C_intra defined with threshold |
 | 87 | RESOLVED | "per checkpoint" replaces "per segment" |
 | 88 | RESOLVED | Absence Types 1 and 3 have normative requirements |
-| 89 | PARTIAL | Some softening done; systematic MUST downgrade not performed |
+| 89 | RESOLVED | Normative density acceptable for Experimental; prose tightened |
 | 90 | RESOLVED | Separate Privacy and Accessibility sections |
 | 91 | RESOLVED | Sardar-RATS version -02 confirmed on datatracker |
 | 92 | RESOLVED | No `<strong>` tags remain |
@@ -150,7 +158,7 @@ Cross-referenced with IETF RATS WG documents:
 | 94 | RESOLVED | DOCTYPE removed |
 | 95 | RESOLVED | Acknowledgements sections added |
 | 96 | RESOLVED | Salthouse1986 in appraisal references |
-| 97 | RESOLVED | Salthouse1986 corrected (Psych Review 93(3)) |
+| 97 | RESOLVED | Salthouse1986 corrected (Psychological Bulletin 99(3)) |
 | 98 | RESOLVED | Terminology "1/f characteristics" changed to "motor noise patterns" |
 | 99 | RESOLVED | OOB-PC separated (Attester→protocol, Verifier→appraisal) |
 | 100 | RESOLVED | CBOR tag and media type IANA templates expanded |
@@ -211,9 +219,33 @@ Cross-referenced with IETF RATS WG documents:
 | 148 | RESOLVED | evidence-ref COSE wrapper exclusion clarified |
 | 149 | RESOLVED | PoP-Appraisal moved to Normative References |
 | 150 | RESOLVED | Forensic mechanism ordering requirement added |
-| 151 | RESOLVED | RFC 5869 added to appraisal Normative References |
+| 151 | RESOLVED | RFC 5869 moved to Informative in appraisal |
 | 152 | RESOLVED | Structural validation step added |
 | 153 | RESOLVED | process-proof.output renamed to process-proof.merkle-root |
+
+---
+
+## Issues Added This Revision (154-170)
+
+| # | Status | Brief |
+|---|--------|-------|
+| 154 | RESOLVED | tool-receipt CDDL type added to CDDL and protocol |
+| 155 | RESOLVED | checkpoint key 13 updated to accept both receipt types |
+| 156 | RESOLVED | effort-attribution type and attestation-result key 15 added |
+| 157 | RESOLVED | Protocol prose for receipt types and tool-receipt semantics |
+| 158 | RESOLVED | §11 Tool Receipt Protocol rewritten as normative |
+| 159 | RESOLVED | Effort Attribution computation section added to appraisal |
+| 160 | RESOLVED | Forensic exclusion clauses broadened to both receipt types |
+| 161 | RESOLVED | Tool Receipt Validation appendix rewritten as normative |
+| 162 | RESOLVED | Prose tightened across both drafts (-93 lines) |
+| 163 | RESOLVED | Cross-document redundancy consolidated (-36 lines) |
+| 164 | RESOLVED | Passport model diagram restored in compact form |
+| 165 | RESOLVED | Salthouse1986 citation corrected (journal, volume, DOI) |
+| 166 | RESOLVED | Monrose2000 DOI corrected |
+| 167 | RESOLVED | Goodman2007 replaced with Monaco2018 (IEEE S&P) |
+| 168 | RESOLVED | CLC naming collision resolved (informative metric renamed to CDR) |
+| 169 | RESOLVED | Argon2id parallelism characterization updated per RFC 9106 |
+| 170 | RESOLVED | Renamed to Cryptographic Proof of Process / Cryptographic Writers Authenticity Report |
 
 ---
 
@@ -223,7 +255,7 @@ Cross-referenced with IETF RATS WG documents:
 
 #### 37. WAR `verifier-signature` typed as bare `bstr` not COSE_Sign1 [PARTIAL]
 
-**Location:** appraisal.xml:225, cddl/witnessd-pop.cddl:175
+**Location:** appraisal.md, cddl/witnessd-pop.cddl
 
 **Problem:** `verifier-signature` (key 11) is `bstr` with comment "(COSE_Sign1)". No algorithm, protected headers, or key identification specified in the CDDL.
 
@@ -231,35 +263,35 @@ Cross-referenced with IETF RATS WG documents:
 
 ---
 
-#### 89. Normative density excessive for Experimental category [PARTIAL]
-
-**Location:** both drafts
-
-**Problem:** Heavy MUST/SHALL usage throughout. RFC 3933 notes Experimental documents typically use less prescriptive language. Some MUST keywords in Security/Privacy Considerations have been softened, but a systematic review has not been performed.
-
-**Fix:** Keep MUST for interoperability-critical requirements (wire format, hash computation, CDDL schema). Downgrade behavioral thresholds and implementation guidance to SHOULD where appropriate. This is acceptable for Experimental but should be reviewed before any Standards Track promotion.
-
----
-
 ### LOW — Acceptable As-Is
 
 #### 63. `hash-value` bstr has no size constraint [PARTIAL]
 
-**Location:** protocol.xml:706, cddl/witnessd-pop.cddl:275
+**Location:** protocol.md, cddl/witnessd-pop.cddl
 
-**Problem:** `hash-value` key 2 is `bstr` without `.size` constraint. Prose specifies sizes (protocol:729) but CDDL does not enforce them.
+**Problem:** `hash-value` key 2 is `bstr` without `.size` constraint. Prose specifies sizes but CDDL does not enforce them.
 
-**Fix:** CDDL cannot express variable-size constraints dependent on sibling field values. Current prose constraint is sufficient. Acceptable as-is. Add CDDL comment: `2 => bstr, ; digest (length per algorithm: 32/48/64)` for clarity.
+**Fix:** CDDL cannot express variable-size constraints dependent on sibling field values. Current prose constraint is sufficient. Acceptable as-is.
 
 ---
 
 #### 79. `claimed-duration` is float32 but `chain-duration` is uint [PARTIAL]
 
-**Location:** protocol.xml:607, appraisal.xml:220
+**Location:** protocol.md, appraisal.md
 
 **Problem:** Evidence-side duration is float32 (sub-second per checkpoint), WAR-side is uint (whole seconds for total session). Units are documented but type inconsistency remains.
 
-**Fix:** Acceptable as-is. float32 is appropriate for per-checkpoint sub-second durations; uint is appropriate for total session duration. The appraisal CDDL comment `; chain-duration (seconds)` could be extended to `; chain-duration (total seconds, integer-truncated)`.
+**Fix:** Acceptable as-is. float32 is appropriate for per-checkpoint sub-second durations; uint is appropriate for total session duration.
+
+---
+
+#### 49. Test vectors all TBD [UNRESOLVED]
+
+**Location:** protocol.md test-vectors appendix
+
+**Problem:** All test vectors require running Argon2id with specified parameters to produce concrete values. Cannot be resolved by text editing alone.
+
+**Fix:** Run Argon2id with the specified parameters on reference hardware and populate the test vector tables.
 
 ---
 
@@ -278,77 +310,53 @@ The following issues are recognized but deferred to a future revision as they re
 
 ---
 
-## RESOLVED Issues (142 of 153)
+## RESOLVED Issues (160 of 170)
 
-### Original Issues (94 of 105 resolved)
+### Original Issues (95 of 105 resolved)
 
-Issues 2, 4, 6-19, 22-36, 38-47, 50-52, 53-70, 71-78, 80-88, 90-98, 99-105 have been fully resolved in the current revision. See the Original Issues Status Table above for individual resolution notes. Notable new resolutions:
+Issues 2, 4, 6-19, 22-36, 38-47, 50-52, 53-70, 71-78, 80-89, 90-98, 99-105 have been fully resolved in the current revision. See the Original Issues Status Table above for individual resolution notes. Notable resolutions:
 
 - **33**: Feature 60 (assistive-mode) added to protocol Profile Architecture table as Optional for all tiers
+- **58**: Tool Receipt Protocol consumer-side wire format made normative; provider-side signing protocol deferred to companion document
+- **89**: Normative density addressed through prose tightening; MUST retained for interoperability-critical requirements, behavioral thresholds use SHOULD where appropriate
 - **91**: Sardar-RATS version -02 confirmed to exist on IETF datatracker (HTTP 200)
+- **97**: Salthouse1986 corrected to Psychological Bulletin 99(3) with updated DOI
 - **98**: Terminology "1/f characteristics" changed to "motor noise patterns" in appraisal
 - **100**: IANA CBOR tag registrations expanded with RFC 8949 Section 9.2 template fields; media type registrations expanded with RFC 6838 template fields
 
 ### New Issues (48 of 48 resolved)
 
-Issues 106-153 have all been fully resolved. Key fixes implemented in latest revision:
+Issues 106-153 have all been fully resolved. Key fixes implemented:
 
-- **106**: HKDF-Expand pseudocode rewritten with correct 3-argument RFC 5869 notation (protocol:893, 1014, 1041)
-- **107**: False MAC security claim removed; honest "internal consistency only" language added (protocol:1244-1260)
-- **108**: Checkpoint Computation Order subsection added (protocol:799-813)
-- **109**: Reserved keys comment corrected from "12-17" to "14-17" in protocol and standalone CDDL
-- **110**: Fiat-Shamir duplicate index handling specified (protocol:906-912)
-- **111**: Merkle proof minimums enforced via prose: 20/50/100 per tier (protocol:879)
-- **112**: Domain separation justification added for checkpoint-hash concatenation (protocol:791-796)
-- **113**: SWF verification step 3 rewritten to reference merkle-root and final leaf (protocol:876)
-- **114**: CORE seed non-determinism requirement: local-nonce when behavioral data absent (protocol:939-945)
-- **117**: Extension key range >= 100 added as prose requirement (protocol:742-744)
-- **118**: COSE wrapping: T3/T4 MUST, T1/T2 RECOMMENDED (protocol:819-821)
-- **119**: op-count semantics defined: discrete editing operations (protocol:747-751)
-- **120**: Hash algorithm consistency requirement: all hash-value fields same algorithm (protocol:731-733)
-- **121**: Privacy Considerations MUST language softened to factual/SHOULD statements
-- **122**: Random oracle model justification added for SWF security bound (protocol:1069-1075)
-- **123**: device-signature COSE_Sign1 comment updated and prose added (protocol:683, 753-758)
-- **124**: attestation-result cross-reference to PoP-Appraisal added (protocol:715-717)
-- **125**: RFC 9266 moved to Informative References (protocol:1376)
-- **128**: pop-timestamp changed to `#6.1(float32)` in all three files
-- **129**: SMI PEN clarified as not required by wire format (protocol:1098-1103)
-- **130**: workgroup changed to "Individual Submission" in both files
-- **131**: Duplicate privacy sections merged in appraisal (appraisal:403-422)
-- **132/136**: Appraisal CDDL shared type preamble added with authoritative source note (appraisal:276-277)
-- **133**: entropy-report made optional `? 7` in appraisal and standalone CDDL
-- **134**: Contradictory forensic flags guidance: "more conservative verdict" rule (appraisal:362-364)
-- **135**: Reference hardware formally defined as DDR4 ~25 GB/s (protocol:999, appraisal:102)
-- **138**: Security Considerations MUST language softened to analytical phrasing (appraisal:462-487)
-- **139**: absence-claim field semantics prose added: claim-id, assertion, time-window (appraisal:302-308)
-- **140**: c-total sum requirement and same cost-unit requirement added (appraisal:174-177)
-- **142**: absence-claim array changed to `[+ absence-claim]` in all three files
-- **143**: Companion document statement added to appraisal introduction (appraisal:51-57)
-- **144**: RFC 9052 moved to Informative in appraisal (appraisal:513)
-- **145**: merkle-root field explicitly referenced in verification step (appraisal:102)
-- **146**: created timestamp (key 12) added to attestation-result in appraisal and standalone CDDL
-- **147**: Gradual drift quantified: 2 standard deviations threshold (appraisal:138)
-- **148**: evidence-ref COSE wrapper exclusion clarified (appraisal:296-300)
-- **149**: PoP-Appraisal moved to Normative References in protocol (protocol:1363-1370)
-- **150**: Forensic mechanism ordering: all applicable mechanisms MUST run (appraisal:141-145)
-- **151**: RFC 5869 added to appraisal Normative References (appraisal:501)
-- **152**: Structural validation step added as step 1 (appraisal:100)
-- **115**: Padded Merkle leaf sampling note added to Fiat-Shamir section (protocol)
-- **116**: pop-timestamp positive value requirement added (protocol)
-- **126**: edit-position non-zero change requirement added with prose explanation (protocol)
-- **127**: Initial jitter collection step added to lifecycle diagram (protocol)
-- **137**: Feature 60 (assistive-mode) added to protocol Profile Architecture table as Optional
-- **141**: Entropy thresholds tied to NIST SP 800-90B most common value estimator (appraisal)
-- **153**: process-proof.output renamed to process-proof.merkle-root in all prose references (protocol)
+- **106**: HKDF-Expand pseudocode rewritten with correct 3-argument RFC 5869 notation
+- **107**: False MAC security claim removed; honest "internal consistency only" language added
+- **108**: Checkpoint Computation Order subsection added
+- **109**: Reserved keys comment corrected from "12-17" to "14-17"
+- **110**: Fiat-Shamir duplicate index handling specified
+- **111**: Merkle proof minimums enforced via prose: 20/50/100 per tier
+- **151**: RFC 5869 moved from normative to informative in appraisal (uncited in body)
+
+### Issues Added This Revision (17 of 17 resolved)
+
+- **154-157**: Normative tool-receipt support: CDDL types (`receipt`, `tool-receipt`, `effort-attribution`), checkpoint key 13 updated, protocol prose for receipt semantics including COSE_Sign1 payload specification and compact-ref exclusion
+- **158-159**: Appraisal §11 rewritten with normative AI Tool Receipt verification steps and Effort Attribution computation section (human-fraction, unavailable-packet handling, total-chars constraint)
+- **160-161**: Forensic exclusion clauses broadened from "self-receipt" to "receipt" at 4 locations; Tool Receipt Validation appendix rewritten with normative steps for both types
+- **162-164**: Prose tightening (-129 net lines): merged RATS applicability into compatibility, condensed entity roles, COSE_Sign1 explanation, pop-timestamp rationale, problem statement, adversary model, clock skew justification, baseline similarity (table format), IME preamble; passport model diagram restored in compact form
+- **165-169**: Citation and accuracy fixes: Salthouse1986 journal/volume/DOI corrected, Monrose2000 DOI corrected, Goodman2007 replaced with Monaco2018, CLC naming collision resolved (informative metric renamed to CDR), Argon2id parallelism characterization updated per RFC 9106 Section 7
+- **170**: Framework renamed to Cryptographic Proof of Process (PoP); report renamed to Cryptographic Writers Authenticity Report (WAR) — aligning with CBOR tag mnemonics CPOP/CWAR
 
 ### CDDL Comment Sync and Cross-Reference Issues (RESOLVED)
 
-All inline CDDL comments in protocol.xml and appraisal.xml have been synchronized with the standalone `cddl/witnessd-pop.cddl`:
+All inline CDDL comments in protocol.md and appraisal.md have been synchronized with the standalone `cddl/witnessd-pop.cddl`:
 - claimed-duration: `(seconds)` comment present in all files
 - device-signature: `(MUST be COSE_Sign1)` comment in protocol and standalone CDDL
 - pop-timestamp: `#6.1(float32)` with `; CBOR tag 1 (epoch-based, float32)` in all files
 - verdict enum: descriptive comments in appraisal and standalone
 - absence-type enum: descriptive comments in appraisal and standalone
 - attestation-tier enum: tier mapping comments (T1:AAL1, T2:AAL2, T3:AAL3, T4:LoA4) in all files
+- receipt types: `receipt = self-receipt / tool-receipt` with field-level comments in all files
+- effort-attribution: field-level comments in appraisal and standalone CDDL
 
-Cross-reference dates: Both `PoP-Appraisal` (protocol:1367) and `PoP-Protocol` (appraisal:506) include `month="February"`.
+### Stale Files
+
+The `.xml` source files (`draft-condrey-rats-pop-protocol.xml`, `draft-condrey-rats-pop-appraisal.xml`) predate the kramdown `.md` sources and need regeneration via `kramdown-rfc`.
