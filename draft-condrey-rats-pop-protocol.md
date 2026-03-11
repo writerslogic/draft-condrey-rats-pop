@@ -43,6 +43,7 @@ normative:
   RFC8949:
   RFC9052:
   RFC9106:
+  RFC9266:
   RFC9334:
   RFC9711:
 
@@ -58,8 +59,9 @@ informative:
       Internet-Draft: draft-condrey-rats-pop-appraisal-04
   RFC3161:
   RFC3552:
+  RFC6838:
+  RFC6962:
   RFC6973:
-  RFC9266:
   Boneh2018:
     title: "Verifiable Delay Functions"
     target: "https://doi.org/10.1007/978-3-319-96884-1_25"
@@ -274,6 +276,8 @@ The rapid proliferation of generative artificial intelligence has created an aut
 Unlike traditional attestation which captures static system state, PoP attests to a continuous physical process. Its Sequential Work Function (SWF) enforces temporal monotonicity, jitter seals bind behavioral entropy (human inter-keystroke timing) to the checkpoint chain, and entangled MACs bind physical state (thermodynamics) to the document's evolution.
 
 By entangling content hashes with these physical constraints, this protocol enables an Attester to generate an Evidence Packet (.cpop) that imposes quantifiable cost on forgery of authorship claims, preserving privacy by design without disclosing document content. The formal threat model, including the adversarial Attester assumption that distinguishes PoP from standard RATS deployments, is defined in {{threat-model}}.
+
+This document is a companion to {{PoP-Appraisal}}, which specifies the Verifier's forensic appraisal logic, the Attestation Result (WAR) wire format, and the quantitative security model. Implementers of Verifier components require both documents.
 
 # Requirements Language {#requirements-language}
 
@@ -684,7 +688,7 @@ The following sequence illustrates the end-to-end lifecycle of a PoP attestation
 ~~~
 {: #fig-evidence-lifecycle title="Evidence Packet Lifecycle"}
 
-Each checkpoint interval (default 30 seconds, MUST be between 10 and 120 seconds) produces one link in the hash chain. The SWF computation runs continuously during the interval, binding the author's behavioral entropy and the platform's physical state to the elapsed wall-clock time. At session end or rollover boundary, the Attester seals the chain into a .cpop Evidence Packet. For long-running authoring projects, the Session Continuation mechanism ({{session-continuation}}) allows a series of Evidence Packets to be cryptographically linked.
+Each checkpoint interval (default 30 seconds, SHOULD be between 10 and 120 seconds) produces one link in the hash chain. The SWF computation runs continuously during the interval, binding the author's behavioral entropy and the platform's physical state to the elapsed wall-clock time. At session end or rollover boundary, the Attester seals the chain into a .cpop Evidence Packet. For long-running authoring projects, the Session Continuation mechanism ({{session-continuation}}) allows a series of Evidence Packets to be cryptographically linked.
 
 ## Session Continuation {#session-continuation}
 
@@ -929,7 +933,7 @@ When the Attester conveys Evidence over TLS, it SHOULD populate the optional cha
 
 The EKM label "EXPORTER-PoP-channel-binding" is specific to this protocol. The empty context ensures the binding depends solely on the TLS session keys, which are unique per connection.
 
-For offline verification (where no TLS session exists between Attester and Verifier), the channel-binding field is absent and Relying Parties MUST evaluate Evidence provenance through out-of-band channels.
+For offline verification (where no TLS session exists between Attester and Verifier), the channel-binding field is absent and Relying Parties SHOULD evaluate Evidence provenance through out-of-band channels.
 
 When PoP Evidence is conveyed over an attested TLS channel, implementations MAY leverage the SEAT exported authenticator mechanism {{SEAT-EXPAT}} to combine platform attestation (proving the Attesting Environment's integrity) with PoP process attestation (proving the authorship process). The TLS channel binding described above is compatible with the SEAT evidence binding approach, which derives binding values from TLS exporters. At T3/T4 tiers, SEAT platform attestation provides the hardware trust anchor that corroborates PoP's Attesting Environment claims.
 
@@ -1503,7 +1507,7 @@ Appraisal of baseline-verification data is specified in
 
 The checkpoint-hash field MUST be computed as follows:
 
-~~~
+~~~ pseudocode
 checkpoint-hash = H(
     "PoP-Checkpoint-v1" ||
     prev-hash ||
@@ -1563,7 +1567,7 @@ Section 4), and a footer line.
 
 Evidence Packets (.cpop) use the following armor boundaries:
 
-~~~
+~~~ artwork
 -----BEGIN POP EVIDENCE-----
 <Base64-encoded CBOR payload>
 -----END POP EVIDENCE-----
@@ -1572,7 +1576,7 @@ Evidence Packets (.cpop) use the following armor boundaries:
 Attestation Results (.cwar) use the following armor
 boundaries:
 
-~~~
+~~~ artwork
 -----BEGIN POP WAR-----
 <Base64-encoded CBOR payload>
 -----END POP WAR-----
@@ -1610,7 +1614,7 @@ The SWF is computed as follows.
 
 For `swf-argon2id` (20) and `swf-argon2id-entangled` (21):
 
-~~~
+~~~ pseudocode
 hash_len = output_length(H)          ; 32, 48, or 64 bytes
 state_0  = Argon2id(seed, salt=H(0x00 || "PoP-salt-v1" || seed),
                     t=t, m=m, p=1, len=hash_len)
@@ -1626,7 +1630,7 @@ Each step is a full Argon2id evaluation bounded by memory bandwidth, ensuring AS
 
 For `swf-sha256` (10):
 
-~~~
+~~~ pseudocode
 hash_len = 32                        ; SHA-256 fixed
 state_0  = Argon2id(seed, salt=H(0x00 || "PoP-salt-v1" || seed),
                     t=t, m=m, p=1, len=hash_len)
@@ -1726,7 +1730,7 @@ Verifier indicates sampled verification mode.
 Merkle proof sample positions MUST be derived deterministically
 via Fiat-Shamir transform:
 
-~~~
+~~~ pseudocode
 sample_seed = H(
     "PoP-Fiat-Shamir-v1" ||
     I2OSP(proof-algorithm, 2) ||
@@ -1774,7 +1778,7 @@ are never sampled by this derivation.
 For `swf-sha256` (10), the SWF seed for each checkpoint
 MUST be derived as:
 
-~~~
+~~~ pseudocode
 seed = H(
     "PoP-SWF-Seed-v1" ||
     prev-hash ||
@@ -1789,7 +1793,7 @@ in {{swf-algorithm}}.
 For `swf-argon2id` (20), the SWF seed for each
 checkpoint MUST be derived as:
 
-~~~
+~~~ pseudocode
 seed = H(
     "PoP-SWF-Seed-v1" ||
     prev-hash ||
@@ -1802,7 +1806,7 @@ For `swf-argon2id-entangled` (21), the Attester MUST
 entangle the previous checkpoint's SWF output. The seed is
 derived as:
 
-~~~
+~~~ pseudocode
 seed = H(
     "PoP-SWF-Seed-v1" ||
     prev-hash ||
@@ -1827,7 +1831,7 @@ beacon value in the seed derivation.
 
 For the first checkpoint (sequence = 1), all modes use:
 
-~~~
+~~~ pseudocode
 seed = H(
     "PoP-SWF-Seed-v1" ||
     CBOR-encode(document-ref) ||
@@ -1879,8 +1883,10 @@ against the committed root.
 
 ## Mandatory SWF Parameters {#mandatory-swf-params}
 
-Conforming Attesters MUST use the following minimum SWF parameters
-for each Evidence Content Tier.
+Conforming Attesters SHOULD use the following minimum SWF parameters
+for each Evidence Content Tier. These values are initial calibration
+parameters (see {{experimental-status-rationale}}) and may be revised
+based on deployment experience.
 
 For `swf-argon2id` (20) and `swf-argon2id-entangled` (21):
 
@@ -1941,7 +1947,7 @@ All keyed consistency tags within a checkpoint MUST derive keys from
 a single pseudorandom key (PRK) using the HKDF Extract-then-Expand
 paradigm per {{RFC5869}}:
 
-~~~
+~~~ pseudocode
 PRK = HKDF-Extract(
     salt = "PoP-key-derivation-v1",
     IKM  = process-proof.merkle-root || process-proof.input
@@ -1958,11 +1964,11 @@ providing defense-in-depth against multi-target Merkle root collision
 attacks. HKDF-Expand then derives independent keys for each
 consistency tag using distinct info strings.
 
-### Entangled Binding
+### Entangled Binding {#entangled-binding}
 
 The entangled-binding value is computed as:
 
-~~~
+~~~ pseudocode
 binding-input = prev-hash || content-hash ||
                 CBOR-encode(jitter-binding) ||
                 CBOR-encode(physical-state)
@@ -1974,7 +1980,7 @@ CBOR per Section 4.2.1 of {{RFC8949}}.
 
 NOTE: In the adversarial Attester model, the Attester generates
 the SWF output and therefore knows the binding key. The
-entangled-binding provides internal consistency but does NOT
+entangled-binding provides internal consistency but does not
 prevent forgery by a malicious Attester (see
 {{sec-binding-limitations}}).
 
@@ -1984,7 +1990,7 @@ When present, the jitter-tag field (jitter-binding key 3) MUST be
 computed as HMAC-H using the tag-key derived from the shared PRK
 (see {{key-derivation-hierarchy}}):
 
-~~~
+~~~ pseudocode
 tag-input = CBOR-encode(jitter-binding.intervals)
 jitter-tag = HMAC-H(tag-key, tag-input)
 ~~~
@@ -2015,7 +2021,7 @@ When beacon-anchoring is used, the Attester MUST:
    delay (RECOMMENDED: 60 seconds).
 3. Incorporate the beacon value into the key derivation:
 
-~~~
+~~~ pseudocode
 PRK = HKDF-Extract(
     salt = "PoP-key-derivation-v1",
     IKM  = process-proof.merkle-root ||
@@ -2031,7 +2037,7 @@ PRK = HKDF-Extract(
 
 The beacon-anchor structure is:
 
-~~~
+~~~ cddl
 beacon-anchor = {
     1 => tstr,          ; beacon-source (URI of beacon service)
     2 => uint,          ; beacon-round (round number)
@@ -2060,7 +2066,7 @@ the SWF cannot begin until the Verifier releases the nonce, and
 the Verifier chooses the nonce after the preceding checkpoint is
 submitted.
 
-### Protocol
+### Protocol {#verifier-nonce-protocol}
 
 1. The Attester submits checkpoint N-1 to the Verifier.
 2. The Verifier responds with a 32-byte random nonce:
@@ -2068,7 +2074,7 @@ submitted.
 3. The Attester incorporates the nonce into checkpoint N's SWF
    seed derivation (see {{swf-seed-derivation}}):
 
-~~~
+~~~ pseudocode
 seed = H(
     "PoP-SWF-Seed-v1" ||
     prev-hash ||
@@ -2083,7 +2089,7 @@ seed = H(
 5. The Verifier checks that the nonce in the submitted checkpoint
    matches the nonce it issued.
 
-### Security Properties
+### Security Properties {#verifier-nonce-security}
 
 The verifier-nonce is strictly stronger than beacon anchoring
 because:
@@ -2137,7 +2143,7 @@ probability of all k samples missing skipped positions is
 (1-f)^k per trial. The expected number of trials is (1-f)^{-k}.
 The expected total work is:
 
-~~~
+~~~ pseudocode
 W_grind = (1-f)*n * (1-f)^{-k} = n * (1-f)^{1-k}
 ~~~
 
@@ -2167,7 +2173,7 @@ adversarial Attester cannot compress or manipulate.
 The Attester MUST obtain TPM-attested time readings before and after
 each SWF computation:
 
-~~~
+~~~ pseudocode
 T_before = TPM2_GetTime(aikHandle)
 seed = H("PoP-SWF-Seed-v1" || ... || T_before.attestation)
 ... execute SWF ...
@@ -2176,7 +2182,7 @@ T_after = TPM2_GetTime(aikHandle)
 
 The HAT proof structure is:
 
-~~~
+~~~ cddl
 hat-proof = {
     1 => bstr,     ; time-before (TPMS_TIME_ATTEST_INFO)
     2 => bstr,     ; time-after (TPMS_TIME_ATTEST_INFO)
@@ -2249,6 +2255,13 @@ with Experimental status for the following reasons:
    to a companion document. The EAT profile and SEAT integration
    points reference specifications that are themselves in
    development.
+
+5. *Forensic thresholds:* The MUST-level forensic flagging
+   thresholds in {{PoP-Appraisal}} (spectral flatness, CLC
+   correlation, CoV bounds, etc.) ensure interoperable Verifier
+   behavior for initial deployments but may be relaxed to SHOULD
+   in a future revision based on false positive analysis across
+   diverse author populations.
 
 Implementers are encouraged to report deployment experience,
 particularly regarding SWF performance on diverse hardware,
@@ -2334,8 +2347,8 @@ Change Controller:
 
 ## Media Types {#iana-media-types}
 
-This document requests registration of the following media
-types per RFC 6838:
+This document requests provisional registration of the following
+media types in the Standards tree per {{RFC6838}}:
 
 application/cpop+cbor:
 
@@ -2352,18 +2365,57 @@ Optional parameters:
 : none
 
 Encoding considerations:
-: binary (CBOR)
+: binary (CBOR, {{RFC8949}})
 
 Security considerations:
-: See {{security-considerations}} of this document
+: See {{security-considerations}} of this document.
+  PoP Evidence Packets contain cryptographic hashes and timing
+  data but no document content. Receivers MUST validate CBOR
+  structure before processing. Evidence Packets may contain
+  privacy-sensitive behavioral data (keystroke timing).
 
 Interoperability considerations:
-: See {{wire-format}} of this document
+: See {{wire-format}} of this document. Evidence Packets are
+  CBOR-encoded maps tagged with CBOR tag 1129336656.
 
 Published specification:
 : \[this document\]
 
-Person and email address to contact:
+Applications that use this media type:
+: Authorship attestation systems, content provenance platforms,
+  digital forensics tools, and publishing workflow systems that
+  generate or consume PoP Evidence Packets.
+
+Fragment identifier considerations:
+: N/A; this media type does not define fragment identifiers.
+
+Additional information:
+
+: Deprecated alias names for this type:
+  : N/A
+
+  Magic number(s):
+  : N/A (identified by CBOR tag 1129336656)
+
+  File extension(s):
+  : .cpop
+
+  Macintosh file type code(s):
+  : N/A
+
+Person & email address to contact for further information:
+: David Condrey (david@writerslogic.com)
+
+Intended usage:
+: COMMON
+
+Restrictions on usage:
+: none
+
+Author:
+: David Condrey
+
+Change controller:
 : David Condrey (david@writerslogic.com)
 
 application/cwar+cbor:
@@ -2381,24 +2433,62 @@ Optional parameters:
 : none
 
 Encoding considerations:
-: binary (CBOR)
+: binary (CBOR, {{RFC8949}})
 
 Security considerations:
-: See {{PoP-Appraisal}}
+: See {{PoP-Appraisal}}. Attestation Results contain forensic
+  assessment outcomes and forgery cost estimates. Receivers
+  MUST validate CBOR structure and COSE signatures before
+  relying on verdict fields.
 
 Interoperability considerations:
-: See {{PoP-Appraisal}}
+: See {{PoP-Appraisal}}. Attestation Results are CBOR-encoded
+  maps tagged with CBOR tag 1129791826.
 
 Published specification:
 : \[this document\], {{PoP-Appraisal}}
 
-Person and email address to contact:
+Applications that use this media type:
+: Authorship verification systems, content trust platforms,
+  and relying party applications that consume PoP Attestation
+  Results (Cryptographic Writers Authenticity Reports).
+
+Fragment identifier considerations:
+: N/A; this media type does not define fragment identifiers.
+
+Additional information:
+
+: Deprecated alias names for this type:
+  : N/A
+
+  Magic number(s):
+  : N/A (identified by CBOR tag 1129791826)
+
+  File extension(s):
+  : .cwar
+
+  Macintosh file type code(s):
+  : N/A
+
+Person & email address to contact for further information:
+: David Condrey (david@writerslogic.com)
+
+Intended usage:
+: COMMON
+
+Restrictions on usage:
+: none
+
+Author:
+: David Condrey
+
+Change controller:
 : David Condrey (david@writerslogic.com)
 
 ## TLS Exporter Label {#iana-tls-exporter}
 
-This document registers the following TLS exporter label in the
-"TLS Exporter Labels" registry defined in {{RFC5705}}:
+This document requests registration of the following TLS exporter
+label in the "TLS Exporter Labels" registry defined in {{RFC5705}}:
 
 Value:
 : EXPORTER-PoP-channel-binding
@@ -2407,7 +2497,7 @@ DTLS-OK:
 : Y
 
 Recommended:
-: Y
+: N
 
 Reference:
 : \[this document\]
@@ -2459,7 +2549,7 @@ Error Topology Analysis:
 Temporal Cost:
 : Even successful retype attacks require real-time effort. A 5,000-word document with 10-second checkpoint intervals requires 8+ hours of continuous typing effort to forge. The attack does not scale economically for high-volume forgery.
 
-Relying Parties SHOULD be aware that retype attacks remain viable for short documents or high-value targets willing to invest real time. PoP provides graduated assurance proportional to document length and checkpoint density.
+Relying Parties need to be aware that retype attacks remain viable for short documents or high-value targets willing to invest real time. PoP provides graduated assurance proportional to document length and checkpoint density.
 
 ## Relay and Replay Attack Defenses {#sec-relay-replay}
 
@@ -2557,7 +2647,7 @@ the Attester generates the SWF output and therefore knows the
 binding keys. An adversarial Attester can compute valid bindings
 over fabricated data (synthetic jitter, manufactured physical
 state). These fields provide internal consistency checking but do
-NOT prevent forgery by the Attester. Their value is limited to:
+not prevent forgery by the Attester. Their value is limited to:
 
 * Binding data fields to the SWF computation within an honestly-generated checkpoint, ensuring the data was committed at checkpoint-generation time (when the SWF output was computed) rather than substituted afterward
 * Providing internal consistency verification (note: the binding keys are derivable from the public merkle-root field; these bindings do not provide third-party tamper detection)
@@ -2703,7 +2793,7 @@ These test vectors use the type-tagged salt derivation (0x00/0x01
 prefixes) and memory-hard waypoints for Mode 10 as specified in
 {{swf-algorithm}}. All vectors use SHA-256 (hash-algorithm value 1).
 
-## swf-sha256 (Mode 10) Test Vector
+## swf-sha256 (Mode 10) Test Vector {#test-vector-mode10}
 {:numbered="false"}
 
 NOTE: This vector uses the `swf-sha256` construction with
@@ -2713,7 +2803,7 @@ waypoints at every 1000th step. The initial salt uses the
 type-tagged derivation H(0x00 \|\| "PoP-salt-v1" \|\| seed).
 Waypoint salts use H(0x01 \|\| "PoP-salt-v1" \|\| I2OSP(i, 4)).
 
-~~~
+~~~ test-vectors
 Seed: "witnessd-genesis-v1"
 Seed (hex): 7769746e657373642d67656e657369732d7631
 Salt: H(0x00 || "PoP-salt-v1" || seed)  [H = SHA-256]
@@ -2754,7 +2844,7 @@ Intermediate States:
     c9f205c6cc1609984a142c9bd1f745a7
 ~~~
 
-## swf-argon2id (Mode 20) Test Vector
+## swf-argon2id (Mode 20) Test Vector {#test-vector-mode20}
 {:numbered="false"}
 
 NOTE: This vector uses the `swf-argon2id` construction: iterated
@@ -2765,7 +2855,7 @@ H(0x01 \|\| "PoP-salt-v1" \|\| I2OSP(i, 4)). Implementers should
 verify state\_0 matches the `swf-sha256` vector above (identical
 Argon2id initialization).
 
-~~~
+~~~ test-vectors
 Seed: "witnessd-genesis-v1"
 Seed (hex): 7769746e657373642d67656e657369732d7631
 

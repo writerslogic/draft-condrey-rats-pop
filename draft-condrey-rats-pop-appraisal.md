@@ -14,6 +14,13 @@ keyword:
   - biometrics
   - security economics
 
+stand_alone: yes
+pi:
+  toc: yes
+  tocdepth: "4"
+  sortrefs: yes
+  symrefs: yes
+
 author:
   - fullname: David Condrey
     initials: D.
@@ -26,12 +33,9 @@ author:
     email: david@writerslogic.com
 
 normative:
-  RFC5869:
   RFC8610:
   RFC8949:
   RFC9052:
-  RFC9106:
-  RFC9334:
   PoP-Protocol:
     title: "Cryptographic Proof of Process (PoP): Architecture and Evidence Format"
     author:
@@ -43,6 +47,8 @@ normative:
       Internet-Draft: draft-condrey-rats-pop-protocol-06
 
 informative:
+  RFC9106:
+  RFC9334:
   Monrose2000:
     title: Keystroke dynamics as a biometric for authentication
     target: https://doi.org/10.1016/S0167-739X(99)00059-X
@@ -247,7 +253,7 @@ A Verifier MUST perform the following procedure to appraise a PoP Evidence Packe
 
 6. *State Matching:* Verify that the final checkpoint's content-hash matches the document-ref content-hash. Verify that the cumulative char-count from edit-deltas is consistent with the document-ref char-count.
 
-7. *Channel Binding:* If the Evidence Packet contains a channel-binding field and was received over TLS, verify that the binding-value matches the locally-computed TLS Exported Keying Material. Reject the Evidence Packet on mismatch.
+7. *Channel Binding:* If the Evidence Packet contains a channel-binding field and was received over TLS, verify that the binding-value matches the locally-computed TLS Exported Keying Material. The Verifier MUST reject the Evidence Packet on mismatch.
 
 Steps 4 and 5 apply only when jitter-binding and entangled-binding fields
 are present (ENHANCED and MAXIMUM profiles). For CORE Evidence Packets
@@ -366,7 +372,7 @@ defined in this specification.
 
 Individual forensic flags MUST be recorded in the
 forensic-summary structure and reported as warnings in the
-Attestation Result, but a single triggered flag alone is NOT
+Attestation Result, but a single triggered flag alone is not
 sufficient to assign the suspicious verdict. To account for
 legitimate human variance (e.g., pauses for thought, fatigue,
 environmental interruptions), the Verifier MUST apply the
@@ -706,7 +712,7 @@ cost-unit.
 
 # Absence Proofs: Negative Evidence Taxonomy {#absence-proofs}
 
-Absence proofs assert that certain events did NOT occur during the monitored session. They are divided into categories based on verifiability:
+Absence proofs assert that certain events did not occur during the monitored session. They are divided into categories based on verifiability:
 
 Type 1: Computationally-Bound Claims
 : Verifiable from the Evidence Packet alone (e.g., "Max single delta size < 500 bytes" or "No checkpoint timestamps out of order").
@@ -1564,7 +1570,7 @@ An adversary may attempt to inject synthetic jitter patterns that satisfy entrop
 
 ## Verifier Trust Model {#sec-verifier-trust}
 
-The forensic assessments defined in this document produce probabilistic confidence scores, not binary determinations. Relying Parties MUST understand that forgery cost bounds represent economic estimates, not cryptographic guarantees. Trust decisions SHOULD incorporate the declared Attestation Tier (T1-T4) and the specific absence proof types claimed.
+The forensic assessments defined in this document produce probabilistic confidence scores, not binary determinations. Relying Parties need to understand that forgery cost bounds represent economic estimates, not cryptographic guarantees. Trust decisions SHOULD incorporate the declared Attestation Tier (T1-T4) and the specific absence proof types claimed.
 
 ## Stylometric De-anonymization {#sec-stylometric-risk}
 
@@ -1776,7 +1782,7 @@ Relying Parties may wish to derive a single scalar trust
 metric from the Attestation Result. The following formula
 provides one example weighting:
 
-~~~
+~~~ pseudocode
 process-score = w_r * regularity +
                 w_s * swf-strength +
                 w_b * behavioral-consistency
