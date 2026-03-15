@@ -3488,9 +3488,9 @@ Table of Contents
               rats-sec-cons-02>.
 
    [ScholaWrite]
-              Wang, L., Lee, M., Volkov, R., and D. Kang, "ScholaWrite:
-              A Dataset of End-to-End Scholarly Writing Process",
-              arXiv 2502.02904, 2025,
+              Wang, L., Lee, M., Volkov, R., Chau, L.T., and D. Kang,
+              "ScholaWrite: A Dataset of End-to-End Scholarly Writing
+              Process", arXiv 2502.02904, 2025,
               <https://arxiv.org/abs/2502.02904>.
 
    [ScholaWriteAugmented]
