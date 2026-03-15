@@ -144,6 +144,100 @@ informative:
     date: 2026
     seriesinfo:
       arXiv: "2601.17280"
+  Gilden2001:
+    title: "Cognitive Emissions of 1/f Noise"
+    target: https://doi.org/10.1037/0033-295X.108.1.33
+    author:
+      - fullname: David L. Gilden
+        initials: D.L.
+        surname: Gilden
+    date: 2001
+    seriesinfo:
+      "Psychological Review": "108(1), 33-56"
+  Kello2007:
+    title: "The Emergent Coordination of Cognitive Function"
+    target: https://doi.org/10.1037/0096-3445.136.4.551
+    author:
+      - fullname: Christopher T. Kello
+        initials: C.T.
+        surname: Kello
+      - fullname: Brandon C. Beltz
+        initials: B.C.
+        surname: Beltz
+      - fullname: John G. Holden
+        initials: J.G.
+        surname: Holden
+      - fullname: Guy C. Van Orden
+        initials: G.C.
+        surname: Van Orden
+    date: 2007
+    seriesinfo:
+      "Journal of Experimental Psychology: General": "136(4), 551-568"
+  Adams1961:
+    title: "The Second Facet of Forgetting: A Review of Warmup Decrement"
+    target: https://doi.org/10.1037/h0044798
+    author:
+      - fullname: Jack A. Adams
+        initials: J.A.
+        surname: Adams
+    date: 1961
+    seriesinfo:
+      "Psychological Bulletin": "58(4), 257-273"
+  Gentner1983:
+    title: "Keystroke Timing in Transcription Typing"
+    target: https://doi.org/10.1007/978-1-4612-5470-6_5
+    author:
+      - fullname: Donald R. Gentner
+        initials: D.R.
+        surname: Gentner
+    date: 1983
+    seriesinfo:
+      "Cognitive Aspects of Skilled Typewriting": "pp. 95-120"
+  Majaranta2009:
+    title: "Fast Gaze Typing with an Adjustable Dwell Time"
+    target: https://doi.org/10.1145/1518701.1518758
+    author:
+      - fullname: Paiivi Majaranta
+        initials: P.
+        surname: Majaranta
+      - fullname: Ulla-Kaija Ahola
+        initials: U.-K.
+        surname: Ahola
+      - fullname: Oleg Spakov
+        initials: O.
+        surname: Spakov
+    date: 2009
+    seriesinfo:
+      "ACM CHI": "2009"
+  Karat1999:
+    title: "Patterns of Entry and Correction in Large Vocabulary Continuous Speech Recognition Systems"
+    target: https://doi.org/10.1145/302979.303160
+    author:
+      - fullname: Clare-Marie Karat
+        initials: C.-M.
+        surname: Karat
+      - fullname: Christine Halverson
+        initials: C.
+        surname: Halverson
+      - fullname: Daniel Horn
+        initials: D.
+        surname: Horn
+      - fullname: John Karat
+        initials: J.
+        surname: Karat
+    date: 1999
+    seriesinfo:
+      "ACM CHI": "1999"
+  Takens1981:
+    title: "Detecting Strange Attractors in Turbulence"
+    target: https://doi.org/10.1007/BFb0091924
+    author:
+      - fullname: Floris Takens
+        initials: F.
+        surname: Takens
+    date: 1981
+    seriesinfo:
+      "Lecture Notes in Mathematics": "898, 366-381"
   Orden2003:
     title: "Self-Organization of Cognitive Performance"
     target: https://doi.org/10.1037/0096-3445.132.3.331
@@ -429,7 +523,7 @@ initial deployments; individual flags do not determine the
 verdict (see the composite assessment procedure below).
 
 SNR (Signal-to-Noise Ratio) Analysis:
-: Verifiers MUST compute the power spectral density of jitter intervals. Human motor signals exhibit characteristic noise patterns consistent with biological motor control {{Monrose2000}}. Evidence exhibiting spectral flatness greater than 0.9 (indicating white noise rather than biological 1/f-like noise) MUST be flagged as potentially synthetic.
+: Verifiers MUST compute the power spectral density of jitter intervals. Human motor signals exhibit characteristic noise patterns consistent with biological motor control {{Monrose2000}}. Evidence exhibiting spectral flatness greater than 0.9 (indicating white noise rather than biological 1/f-like noise {{Gilden2001}}{{Kello2007}}) MUST be flagged as potentially synthetic.
 
 Cognitive Load Correlation (CLC):
 : Verifiers MUST correlate timing patterns with semantic complexity. Human authors exhibit increased inter-keystroke intervals (IKI) and pause frequency during composition of semantically complex segments compared to simple connective text {{Dhakal2018}}. Verifiers MUST compute the Pearson correlation between segment semantic complexity and mean IKI. Evidence with r < 0.2 (or r < 0.1 in assistive mode) MUST be flagged as a Semantic Mismatch.
@@ -438,7 +532,7 @@ Mechanical Turk Detection:
 : Verifiers MUST compute C_intra (Pearson correlation between pause duration and subsequent edit complexity within each checkpoint). C_intra values below 0.15 MUST be flagged as indicating robotic pacing, where an automated system maintains a machine-clocked editing rate independent of content demands.{{Monrose2000}}{{Monaco2018}} Checkpoints containing receipt structures (key 13) MUST have their associated paste events excluded from C_intra computation.
 
 Error Topology Analysis:
-: Verifiers SHOULD analyze error patterns for consistency with human cognitive processing {{Salthouse1986}}: localized corrections near recent insertions, fractal self-similarity in revision patterns, and deletion-to-insertion ratios consistent with natural composition. Evidence exhibiting unnaturally low error rates (below 1 correction per 500 characters) or randomly distributed errors lacking positional correlation SHOULD be flagged.{{ScholaWriteAugmented}}
+: Verifiers SHOULD analyze error patterns for consistency with human cognitive processing {{Salthouse1986}}: localized corrections near recent insertions, fractal self-similarity in revision patterns, and deletion-to-insertion ratios consistent with natural composition. Evidence exhibiting unnaturally low error rates (below 1 correction per 500 characters {{Dhakal2018}}) or randomly distributed errors lacking positional correlation SHOULD be flagged.{{ScholaWriteAugmented}}
 
 QR Presence Challenge (OOB-PC):
 : When presence-challenge structures are present in the Evidence Packet, Verifiers MUST verify that the response-time is within the corresponding checkpoint's time window (subject to the cross-device clock skew tolerance defined in {{clock-skew-tolerance}}) and MUST validate the device-signature. NOTE: The Attester-side procedure for issuing presence challenges is specified in {{PoP-Protocol}}.
@@ -453,7 +547,7 @@ Perplexity Scoring:
 : Verifiers SHOULD compute the character-level perplexity of text inserted during each checkpoint interval using a reference language model. Sudden drops in perplexity (highly predictable text) that correlate with rapid insertion rates (characters per second exceeding the session's 95th percentile) MUST be flagged as potential AI injection. A perplexity drop exceeding 50% relative to the session median, sustained for more than 100 consecutive inserted characters, constitutes a flag. Checkpoints containing receipt structures (key 13) MUST have their associated paste events excluded from perplexity scoring.
 
 Biological Cadence Analysis:
-: Verifiers MUST compute the Coefficient of Variation (CoV = standard deviation / mean) of inter-keystroke intervals within each checkpoint. Human typing exhibits characteristic CoV values reflecting biological motor variance. Evidence with per-checkpoint CoV consistently below 0.15 (mechanically regular) MUST be flagged as potentially non-biological.{{Monrose2000}}{{Dhakal2018}} Evidence with per-checkpoint CoV consistently above 0.90 (chaotically irregular) SHOULD be flagged as potentially injected random noise. The session-wide CoV trend SHOULD exhibit gradual drift consistent with fatigue and warm-up effects.
+: Verifiers MUST compute the Coefficient of Variation (CoV = standard deviation / mean) of inter-keystroke intervals within each checkpoint. Human typing exhibits characteristic CoV values reflecting biological motor variance. Evidence with per-checkpoint CoV consistently below 0.15 (mechanically regular) MUST be flagged as potentially non-biological.{{Monrose2000}}{{Dhakal2018}} Evidence with per-checkpoint CoV consistently above 0.90 (chaotically irregular) SHOULD be flagged as potentially injected random noise. The session-wide CoV trend SHOULD exhibit gradual drift consistent with fatigue and warm-up effects {{Adams1961}}.
 
 A conforming Verifier MUST evaluate all forensic mechanisms for
 which the Evidence Packet contains sufficient data. Verifiers
@@ -498,7 +592,7 @@ time-delay coordinates, the Verifier can estimate the
 correlation dimension of the resulting trajectory. Biological
 motor control processes typically produce a low-dimensional
 attractor (dimension 2-5), reflecting the finite degrees of
-freedom in the neuromuscular system {{Orden2003}}. Synthetic or AI-injected
+freedom in the neuromuscular system {{Takens1981}}{{Orden2003}}. Synthetic or AI-injected
 timing noise will typically fail to produce a low-dimensional
 biological attractor in the embedded space, instead exhibiting
 high or non-convergent correlation dimension estimates. This
@@ -681,7 +775,7 @@ Observed CoV ranges for different input sources:
 * Human typing (composition): CoV 0.25-0.70, reflecting
   natural motor variance, micro-pauses for word selection,
   and variable key travel distances {{Dhakal2018}}{{Salthouse1986}}.
-* Human typing (transcription): CoV 0.15-0.40, more
+* Human typing (transcription): CoV 0.15-0.40 {{Gentner1983}}, more
   regular due to reduced cognitive load but still
   biologically variable.
 * Automated injection (scripted replay): CoV below 0.10,
@@ -1431,7 +1525,7 @@ To signal input mode usage, the Attester SHOULD include an assistive-mode indica
 
 ## Eye-Tracking Mode {#assistive-eye-tracking}
 
-Eye-tracking input produces IKI ranges of 500-3000 ms (versus
+Eye-tracking input produces IKI ranges of 500-3000 ms {{Majaranta2009}} (versus
 100-300 ms for keyboard). Adjusted thresholds:
 
 * Entropy: 2.0 to 4.0 bits/sample (reduced from 3.0 minimum)
@@ -1445,7 +1539,7 @@ Eye-tracking input produces IKI ranges of 500-3000 ms (versus
 ## Dictation Mode {#assistive-dictation}
 
 Dictation input produces burst patterns with higher cadence
-variance than keyboard. Adjusted thresholds:
+variance than keyboard {{Karat1999}}. Adjusted thresholds:
 
 * SNR: -8 dB to +8 dB (wider range reflecting speech pauses)
 * CLC correlation: r > 0.1 (range 0.1 to 0.8)

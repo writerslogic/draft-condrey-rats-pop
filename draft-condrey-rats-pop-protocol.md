@@ -201,6 +201,69 @@ informative:
     date: 2026
     seriesinfo:
       arXiv: "2601.17280"
+  Biryukov2016:
+    title: "Argon2: New Generation of Memory-Hard Functions for Password Hashing and Other Applications"
+    target: "https://doi.org/10.1109/EuroSP.2016.31"
+    author:
+      - fullname: Alex Biryukov
+        initials: A.
+        surname: Biryukov
+      - fullname: Daniel Dinu
+        initials: D.
+        surname: Dinu
+      - fullname: Dmitry Khovratovich
+        initials: D.
+        surname: Khovratovich
+    date: 2016
+    seriesinfo:
+      "IEEE EuroS&P": "pp. 292-302"
+  RenDevadas2017:
+    title: "Bandwidth Hard Functions for ASIC Resistance"
+    target: "https://doi.org/10.1007/978-3-319-70500-2_16"
+    author:
+      - fullname: Ling Ren
+        initials: L.
+        surname: Ren
+      - fullname: Srinivas Devadas
+        initials: S.
+        surname: Devadas
+    date: 2017
+    seriesinfo:
+      "TCC 2017, LNCS": "10677, pp. 466-492"
+  JESD79-4:
+    title: "DDR4 SDRAM Standard"
+    target: "https://www.jedec.org/standards-documents/docs/jesd79-4a"
+    author:
+      - org: JEDEC Solid State Technology Association
+    date: 2012
+    seriesinfo:
+      JEDEC: "JESD79-4D"
+  JESD79-5:
+    title: "DDR5 SDRAM Standard"
+    target: "https://www.jedec.org/standards-documents/docs/jesd79-5d"
+    author:
+      - org: JEDEC Solid State Technology Association
+    date: 2020
+    seriesinfo:
+      JEDEC: "JESD79-5D"
+  JESD238:
+    title: "High Bandwidth Memory (HBM3) DRAM"
+    target: "https://www.jedec.org/standards-documents/docs/jesd238b01"
+    author:
+      - org: JEDEC Solid State Technology Association
+    date: 2022
+    seriesinfo:
+      JEDEC: "JESD238A"
+  Takens1981:
+    title: "Detecting Strange Attractors in Turbulence"
+    target: "https://doi.org/10.1007/BFb0091924"
+    author:
+      - fullname: Floris Takens
+        initials: F.
+        surname: Takens
+    date: 1981
+    seriesinfo:
+      "Lecture Notes in Mathematics": "898, 366-381"
   Orden2003:
     title: "Self-Organization of Cognitive Performance"
     target: "https://doi.org/10.1037/0096-3445.132.3.331"
@@ -2122,9 +2185,9 @@ Verifiers MUST reject Evidence where declared proof-params are
 below the mandatory minimums for the claimed content tier.
 
 Expected wall-clock times for `swf-argon2id` modes on reference
-hardware (DDR4, approximately 25 GB/s memory bandwidth): each
+hardware (DDR4, approximately 25 GB/s memory bandwidth {{JESD79-4}}): each
 Argon2id step with t=1, m=65536 KiB requires approximately
-100ms. Target duty cycles at 30-second default checkpoint
+100ms {{Biryukov2016}}. Target duty cycles at 30-second default checkpoint
 intervals: CORE approximately 30% (90 steps, ~9s), ENHANCED
 approximately 50% (150 steps, ~15s), MAXIMUM approximately 70%
 (210 steps, ~21s). For ENHANCED and MAXIMUM, entangled mode
@@ -2762,7 +2825,7 @@ Cognitive Load Correlation (CLC):
 : Verifiers analyze correlation between content complexity and typing cadence as specified in {{PoP-Appraisal}}.
 
 Error Topology Analysis:
-: Authentic authoring produces characteristic error patterns: corrections localized near recent insertions, deletion-to-insertion ratios consistent with human cognitive models {{Salthouse1986}}{{ScholaWrite}}{{ScholaWriteAugmented}}, and fractal self-similarity in revision patterns {{Orden2003}}. Retyping produces either unnaturally low error rates or randomly distributed artificial errors.
+: Authentic authoring produces characteristic error patterns: corrections localized near recent insertions, deletion-to-insertion ratios consistent with human cognitive models {{Salthouse1986}}{{ScholaWrite}}{{ScholaWriteAugmented}}, and fractal self-similarity in revision patterns {{Takens1981}}{{Orden2003}}. Retyping produces either unnaturally low error rates or randomly distributed artificial errors.
 
 Temporal Cost:
 : Even successful retype attacks require real-time effort. A 5,000-word document with 10-second checkpoint intervals requires 8+ hours of continuous typing effort to forge. The attack does not scale economically for high-volume forgery.
@@ -2783,7 +2846,7 @@ Verifiers MUST reject Evidence where physical freshness markers are stale, incon
 
 As analyzed in {{swf-acceleration}}, specialized hardware attacks are mitigated by:
 
-* *Memory-hardness:* For modes 20/21, every SWF step is a full Argon2id evaluation bounded by memory bandwidth (approximately 50 GB/s for DDR5), not ALU throughput. ASICs provide minimal advantage per step, and this resistance compounds across all steps in the chain. For mode 10, memory-hard waypoints ({{swf-algorithm}}) bound the ASIC advantage at waypoint steps to the Argon2id limit.
+* *Memory-hardness:* For modes 20/21, every SWF step is a full Argon2id evaluation bounded by memory bandwidth (approximately 50 GB/s for DDR5 {{JESD79-5}}), not ALU throughput. ASICs provide minimal advantage per step, and this resistance compounds across all steps in the chain. For mode 10, memory-hard waypoints ({{swf-algorithm}}) bound the ASIC advantage at waypoint steps to the Argon2id limit.
 * *Hardware-Anchored Time (T3/T4):* The HAT temporal sandwich protocol ({{hat}}) brackets each SWF computation with TPM-attested clock readings, preventing time compression even with faster computation. The Verifier checks that the TPM clock delta meets or exceeds the expected SWF duration.
 * *Merkle sampling:* Skipping SWF steps is detected probabilistically. With k=100 samples, skipping 5% of steps has >99.4% detection probability. Seed grinding does not improve the adversary's position ({{seed-grinding}}).
 
@@ -2817,7 +2880,7 @@ independent factors:
 Time-Memory Tradeoff (TMTO):
 : Single-pass Argon2id (t=1) permits at most ~2x reduction in
   time-area product via ranking-based tradeoff attacks
-  (Alwen-Blocki 2016). Multi-pass reduces this to ~1.33x
+  ({{RenDevadas2017}}). Multi-pass reduces this to ~1.33x
   ({{RFC9106}}, Section 7). PoP uses t=1 because the TMTO
   advantage is offset by the multiplicative effect of iterated
   evaluations: an adversary gaining 2x per step gains 2x overall
@@ -2826,9 +2889,9 @@ Time-Memory Tradeoff (TMTO):
 
 Memory Bandwidth:
 : Each Argon2id step is bounded by memory bandwidth, not ALU
-  throughput. Consumer DDR4 provides ~25 GB/s; DDR5 provides
-  ~50 GB/s. HBM3 (available in datacenter ASICs) provides
-  ~800 GB/s per stack but at approximately 100x the cost per
+  throughput. Consumer DDR4 provides ~25 GB/s {{JESD79-4}}; DDR5 provides
+  ~50 GB/s {{JESD79-5}}. HBM3 (available in datacenter ASICs) provides
+  ~800 GB/s per stack {{JESD238}} but at substantially higher cost per
   device. The effective economic advantage is approximately
   3-4x when amortized over device cost.
 
@@ -2836,7 +2899,7 @@ Silicon Optimization:
 : Custom Argon2id ASICs can eliminate instruction decode overhead
   and optimize the Blake2b core, providing an estimated 1.5-2x
   advantage over general-purpose CPUs for the same memory
-  bandwidth.
+  bandwidth {{Biryukov2016}}{{RenDevadas2017}}.
 
 Combined Advantage:
 : The multiplicative combination of these factors yields an upper
