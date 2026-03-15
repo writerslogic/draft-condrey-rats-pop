@@ -102,6 +102,9 @@ informative:
       - fullname: Ross Volkov
         initials: R.
         surname: Volkov
+      - fullname: Luan Tuyen Chau
+        initials: L.T.
+        surname: Chau
       - fullname: Dongyeop Kang
         initials: D.
         surname: Kang
