@@ -4,8 +4,8 @@
 
 Individual Submission                                         D. Condrey
 Internet-Draft                                              WritersLogic
-Intended status: Experimental                              11 March 2026
-Expires: 12 September 2026
+Intended status: Experimental                              15 March 2026
+Expires: 16 September 2026
 
 
  Cryptographic Proof of Process (PoP): Forensic Appraisal and Security
@@ -44,7 +44,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 12 September 2026.
+   This Internet-Draft will expire on 16 September 2026.
 
 Copyright Notice
 
@@ -248,8 +248,8 @@ Table of Contents
        estimate field MUST NOT be relied upon.  Low-entropy segments
        (below threshold) MUST be flagged as "Non-Biological."
 
-   5.  _Entanglement:_ Verify the HMAC value (entangled-mac) over the
-       combined document, jitter, and physical state.
+   5.  _Entanglement:_ Verify the HMAC value (entangled-binding) over
+       the combined document, jitter, and physical state.
 
    6.  _State Matching:_ Verify that the final checkpoint's content-hash
        matches the document-ref content-hash.  Verify that the
@@ -259,12 +259,12 @@ Table of Contents
    7.  _Channel Binding:_ If the Evidence Packet contains a channel-
        binding field and was received over TLS, verify that the binding-
        value matches the locally-computed TLS Exported Keying Material.
-       Reject the Evidence Packet on mismatch.
+       The Verifier MUST reject the Evidence Packet on mismatch.
 
-   Steps 4 and 5 apply only when jitter-binding and entangled-mac fields
-   are present (ENHANCED and MAXIMUM profiles).  For CORE Evidence
-   Packets lacking these fields, the Verifier MUST skip Steps 4 and 5
-   and note in the WAR warnings that behavioral analysis was not
+   Steps 4 and 5 apply only when jitter-binding and entangled-binding
+   fields are present (ENHANCED and MAXIMUM profiles).  For CORE
+   Evidence Packets lacking these fields, the Verifier MUST skip Steps 4
+   and 5 and note in the WAR warnings that behavioral analysis was not
    performed.
 
    When appraising a series of continuation packets (linked via
@@ -332,8 +332,8 @@ Table of Contents
    NOTE: The specific numeric thresholds in this section (e.g., spectral
    flatness 0.9, CLC correlation r < 0.2, CoV bounds) are initial
    calibration values derived from empirical observation of human
-   authoring behavior.  Refinement of these values based on
-   implementation experience is an explicit goal of the Experimental
+   authoring behavior [ScholaWrite].  Refinement of these values based
+   on implementation experience is an explicit goal of the Experimental
    status of this specification (see Section 16).  The MUST-level
    flagging requirements ensure interoperable Verifier behavior for
    initial deployments; individual flags do not determine the verdict
@@ -361,9 +361,9 @@ Table of Contents
       within each checkpoint).  C_intra values below 0.15 MUST be
       flagged as indicating robotic pacing, where an automated system
       maintains a machine-clocked editing rate independent of content
-      demands.  Checkpoints containing receipt structures (key 13) MUST
-      have their associated paste events excluded from C_intra
-      computation.
+      demands.[Monrose2000][Monaco2018] Checkpoints containing receipt
+      structures (key 13) MUST have their associated paste events
+      excluded from C_intra computation.
 
    Error Topology Analysis:  Verifiers SHOULD analyze error patterns for
       consistency with human cognitive processing [Salthouse1986]:
@@ -372,7 +372,7 @@ Table of Contents
       consistent with natural composition.  Evidence exhibiting
       unnaturally low error rates (below 1 correction per 500
       characters) or randomly distributed errors lacking positional
-      correlation SHOULD be flagged.
+      correlation SHOULD be flagged.[ScholaWriteAugmented]
 
    QR Presence Challenge (OOB-PC):  When presence-challenge structures
       are present in the Evidence Packet, Verifiers MUST verify that the
@@ -420,10 +420,11 @@ Table of Contents
       characteristic CoV values reflecting biological motor variance.
       Evidence with per-checkpoint CoV consistently below 0.15
       (mechanically regular) MUST be flagged as potentially non-
-      biological.  Evidence with per-checkpoint CoV consistently above
-      0.90 (chaotically irregular) SHOULD be flagged as potentially
-      injected random noise.  The session-wide CoV trend SHOULD exhibit
-      gradual drift consistent with fatigue and warm-up effects.
+      biological.[Monrose2000][Dhakal2018] Evidence with per-checkpoint
+      CoV consistently above 0.90 (chaotically irregular) SHOULD be
+      flagged as potentially injected random noise.  The session-wide
+      CoV trend SHOULD exhibit gradual drift consistent with fatigue and
+      warm-up effects.
 
    A conforming Verifier MUST evaluate all forensic mechanisms for which
    the Evidence Packet contains sufficient data.  Verifiers MAY
@@ -432,7 +433,7 @@ Table of Contents
 
    Individual forensic flags MUST be recorded in the forensic-summary
    structure and reported as warnings in the Attestation Result, but a
-   single triggered flag alone is NOT sufficient to assign the
+   single triggered flag alone is not sufficient to assign the
    suspicious verdict.  To account for legitimate human variance (e.g.,
    pauses for thought, fatigue, environmental interruptions), the
    Verifier MUST apply the following composite assessment before
@@ -679,14 +680,20 @@ Table of Contents
 
    The memory-hard nature of Argon2id ensures that reducing memory per
    evaluation forces a disproportionate increase in computation time;
-   the best known tradeoff attacks achieve at most a ~2x reduction in
-   time-area product for single-pass Argon2id, decreasing to ~1.33x with
-   multiple passes ([RFC9106], Section 7).  Beyond approximately 8
-   parallel threads, memory bandwidth saturation on commodity hardware
-   yields diminishing returns.  The minimum forgery time equals the sum
-   of SWF claimed-durations across all checkpoints.  At T1 tier without
-   hardware binding, C_swf represents an economic cost only (the
-   adversary must spend real time, but has no hardware constraint).
+   the best known time-memory tradeoff (TMTO) attacks achieve at most a
+   ~2x reduction in time-area product for single-pass Argon2id,
+   decreasing to ~1.33x with multiple passes ([RFC9106], Section 7).
+   The raw memory-bandwidth advantage of custom hardware (HBM3 at ~800
+   GB/s versus consumer DDR4 at ~25 GB/s) provides an additional 3-4x
+   speedup when amortized over device cost.  The combined ASIC advantage
+   is bounded at approximately 8-16x; Verifiers SHOULD use a
+   conservative factor of 10x when computing c-swf.  Beyond
+   approximately 8 parallel threads, memory bandwidth saturation on
+   commodity hardware yields diminishing returns.  The minimum forgery
+   time equals the sum of SWF claimed-durations across all checkpoints.
+   At T1 tier without hardware binding, C_swf represents an economic
+   cost only (the adversary must spend real time, but has no hardware
+   constraint).
 
 6.1.1.  Adaptive SWF Calibration (Informative)
 
@@ -750,7 +757,7 @@ Table of Contents
 
 7.  Absence Proofs: Negative Evidence Taxonomy
 
-   Absence proofs assert that certain events did NOT occur during the
+   Absence proofs assert that certain events did not occur during the
    monitored session.  They are divided into categories based on
    verifiability:
 
@@ -1301,6 +1308,10 @@ Table of Contents
 
    Tier 1 (Casual):  SWF time-binding provides the primary defense.  The
       T1 appraisal policy accepts the risk of basic retype attacks.
+      External timestamping via append-only ledgers [HaberStornetta1991]
+      is complementary infrastructure that establishes a lower bound on
+      when content was created but does not substitute for SWF-based
+      minimum elapsed computation.
 
    Tier 2 (Motivated):  Multi-dimensional behavioral analysis (SNR + CLC
       + mechanical turk detection).
@@ -1644,19 +1655,19 @@ Table of Contents
 18.1.  Entropy Manipulation Attacks
 
    An adversary may attempt to inject synthetic jitter patterns that
-   satisfy entropy thresholds while lacking biological origin.  The use
-   of multi-dimensional analysis (SNR, CLC, Error Topology) rather than
-   single metrics provides defense-in-depth against high-fidelity
-   simulation.
+   satisfy entropy thresholds while lacking biological origin
+   [Condrey2026Attack].  The use of multi-dimensional analysis (SNR,
+   CLC, Error Topology) rather than single metrics provides defense-in-
+   depth against high-fidelity simulation.
 
 18.2.  Verifier Trust Model
 
    The forensic assessments defined in this document produce
    probabilistic confidence scores, not binary determinations.  Relying
-   Parties MUST understand that forgery cost bounds represent economic
-   estimates, not cryptographic guarantees.  Trust decisions SHOULD
-   incorporate the declared Attestation Tier (T1-T4) and the specific
-   absence proof types claimed.
+   Parties need to understand that forgery cost bounds represent
+   economic estimates, not cryptographic guarantees.  Trust decisions
+   SHOULD incorporate the declared Attestation Tier (T1-T4) and the
+   specific absence proof types claimed.
 
 18.3.  Stylometric De-anonymization
 
@@ -1724,11 +1735,6 @@ Table of Contents
               DOI 10.17487/RFC2119, March 1997,
               <https://www.rfc-editor.org/rfc/rfc2119>.
 
-   [RFC5869]  Krawczyk, H. and P. Eronen, "HMAC-based Extract-and-Expand
-              Key Derivation Function (HKDF)", RFC 5869,
-              DOI 10.17487/RFC5869, May 2010,
-              <https://www.rfc-editor.org/rfc/rfc5869>.
-
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
@@ -1749,17 +1755,6 @@ Table of Contents
               DOI 10.17487/RFC9052, August 2022,
               <https://www.rfc-editor.org/rfc/rfc9052>.
 
-   [RFC9106]  Biryukov, A., Dinu, D., Khovratovich, D., and S.
-              Josefsson, "Argon2 Memory-Hard Function for Password
-              Hashing and Proof-of-Work Applications", RFC 9106,
-              DOI 10.17487/RFC9106, September 2021,
-              <https://www.rfc-editor.org/rfc/rfc9106>.
-
-   [RFC9334]  Birkholz, H., Thaler, D., Richardson, M., Smith, N., and
-              W. Pan, "Remote ATtestation procedureS (RATS)
-              Architecture", RFC 9334, DOI 10.17487/RFC9334, January
-              2023, <https://www.rfc-editor.org/rfc/rfc9334>.
-
 19.2.  Informative References
 
    [AR4SI]    Fossati, T., Voit, E., and H. Birkholz, "Attestation
@@ -1768,11 +1763,28 @@ Table of Contents
               <https://datatracker.ietf.org/doc/html/draft-ietf-rats-
               ar4si-09>.
 
+   [Condrey2026Attack]
+              Condrey, D., "On the Insecurity of Keystroke-Based AI
+              Authorship Detection: Timing-Forgery Attacks Against
+              Motor-Signal Verification", arXiv 2601.17280, 2026,
+              <https://arxiv.org/abs/2601.17280>.
+
+   [Dhakal2018]
+              Dhakal, V., Feit, A.M., Kristensson, P.O., and A.
+              Oulasvirta, "Observations on Typing from 136 Million
+              Keystrokes", ACM CHI 2018, 2018,
+              <https://doi.org/10.1145/3173574.3174220>.
+
    [EAR]      Fossati, T., Voit, E., and S. Trofimov, "EAT Attestation
               Results", Work in Progress, Internet-Draft, draft-ietf-
               rats-ear-02, January 2026,
               <https://datatracker.ietf.org/doc/html/draft-ietf-rats-
               ear-02>.
+
+   [HaberStornetta1991]
+              Haber, S. and W.S. Stornetta, "How to Time-Stamp a Digital
+              Document", Journal of Cryptology 3(2), 99-111, 1991,
+              <https://doi.org/10.1007/BF00196791>.
 
    [Monaco2018]
               Monaco, J.V., "SoK: Keylogging Side Channels", IEEE
@@ -1783,6 +1795,17 @@ Table of Contents
               Monrose, F. and A. Rubin, "Keystroke dynamics as a
               biometric for authentication", 2000,
               <https://doi.org/10.1016/S0167-739X(99)00059-X>.
+
+   [RFC9106]  Biryukov, A., Dinu, D., Khovratovich, D., and S.
+              Josefsson, "Argon2 Memory-Hard Function for Password
+              Hashing and Proof-of-Work Applications", RFC 9106,
+              DOI 10.17487/RFC9106, September 2021,
+              <https://www.rfc-editor.org/rfc/rfc9106>.
+
+   [RFC9334]  Birkholz, H., Thaler, D., Richardson, M., Smith, N., and
+              W. Pan, "Remote ATtestation procedureS (RATS)
+              Architecture", RFC 9334, DOI 10.17487/RFC9334, January
+              2023, <https://www.rfc-editor.org/rfc/rfc9334>.
 
    [RFC9711]  Lundblade, L., Mandyam, G., O'Donoghue, J., and C.
               Wallace, "The Entity Attestation Token (EAT)", RFC 9711,
@@ -1801,6 +1824,19 @@ Table of Contents
               Internet-Draft, draft-sardar-rats-sec-cons-02, February
               2026, <https://datatracker.ietf.org/doc/html/draft-sardar-
               rats-sec-cons-02>.
+
+   [ScholaWrite]
+              Wang, L., Lee, M., Volkov, R., and D. Kang, "ScholaWrite:
+              A Dataset of End-to-End Scholarly Writing Process",
+              arXiv 2502.02904, 2025,
+              <https://arxiv.org/abs/2502.02904>.
+
+   [ScholaWriteAugmented]
+              Condrey, D., "ScholaWrite-Augmented: Revision-Tracked
+              Scholarly Writing Dataset with Annotated External
+              Insertion Events", GitHub writerslogic/scholawrite-
+              augmented, 2026,
+              <https://github.com/writerslogic/scholawrite-augmented>.
 
    [SEAT-EXPAT]
               Sardar, M.U., Fossati, T., Reddy, T., Sheffer, Y.,
@@ -1914,7 +1950,7 @@ T1 (Software-Only) Constraints
    *  Entropy: minimum 3.0 bits/sample when jitter-binding is present.
       No upper bound enforced.
 
-   *  Entanglement: jitter seal presence required when jitter-binding is
+   *  Entanglement: jitter tag presence required when jitter-binding is
       present; HMAC verification SHOULD be performed (MAC key derivable
       from public merkle-root).
 
@@ -1938,8 +1974,8 @@ T2 (Attested Software) Constraints
    *  Entropy: 3.0 to 6.0 bits/sample per checkpoint.  Values above 6.0
       suggest injected randomness and SHOULD be flagged.
 
-   *  Entanglement: jitter seal and entangled-mac presence required for
-      ENHANCED+ profiles.  HMAC verification SHOULD be performed.
+   *  Entanglement: jitter tag and entangled-binding presence required
+      for ENHANCED+ profiles.  HMAC verification SHOULD be performed.
 
    *  State matching: final content hash match required; intermediate
       content hash progression SHOULD be verified for monotonic growth.

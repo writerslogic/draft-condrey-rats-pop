@@ -1052,7 +1052,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Condrey</td>
-<td class="center">Expires 12 September 2026</td>
+<td class="center">Expires 16 September 2026</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1065,12 +1065,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-condrey-rats-pop-appraisal-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-03-11" class="published">11 March 2026</time>
+<time datetime="2026-03-15" class="published">15 March 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Experimental</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2026-09-12">12 September 2026</time></dd>
+<dd class="expires"><time datetime="2026-09-16">16 September 2026</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1112,7 +1112,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 12 September 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 16 September 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1484,16 +1484,16 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
           <p id="section-4-2.4.1"><em>Entropy Threshold:</em> Independently estimate entropy from the jitter-binding intervals array using a standard entropy estimator (e.g., NIST SP 800-90B most common value estimator). Verify the independent estimate meets or exceeds 3.0 bits per inter-keystroke interval. The Attester's self-reported entropy-estimate field <span class="bcp14">MUST NOT</span> be relied upon. Low-entropy segments (below threshold) <span class="bcp14">MUST</span> be flagged as "Non-Biological."<a href="#section-4-2.4.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-4-2.5">
-          <p id="section-4-2.5.1"><em>Entanglement:</em> Verify the HMAC value (entangled-mac) over the combined document, jitter, and physical state.<a href="#section-4-2.5.1" class="pilcrow">¶</a></p>
+          <p id="section-4-2.5.1"><em>Entanglement:</em> Verify the HMAC value (entangled-binding) over the combined document, jitter, and physical state.<a href="#section-4-2.5.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-4-2.6">
           <p id="section-4-2.6.1"><em>State Matching:</em> Verify that the final checkpoint's content-hash matches the document-ref content-hash. Verify that the cumulative char-count from edit-deltas is consistent with the document-ref char-count.<a href="#section-4-2.6.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-4-2.7">
-          <p id="section-4-2.7.1"><em>Channel Binding:</em> If the Evidence Packet contains a channel-binding field and was received over TLS, verify that the binding-value matches the locally-computed TLS Exported Keying Material. Reject the Evidence Packet on mismatch.<a href="#section-4-2.7.1" class="pilcrow">¶</a></p>
+          <p id="section-4-2.7.1"><em>Channel Binding:</em> If the Evidence Packet contains a channel-binding field and was received over TLS, verify that the binding-value matches the locally-computed TLS Exported Keying Material. The Verifier <span class="bcp14">MUST</span> reject the Evidence Packet on mismatch.<a href="#section-4-2.7.1" class="pilcrow">¶</a></p>
 </li>
       </ol>
-<p id="section-4-3">Steps 4 and 5 apply only when jitter-binding and entangled-mac fields
+<p id="section-4-3">Steps 4 and 5 apply only when jitter-binding and entangled-binding fields
 are present (ENHANCED and MAXIMUM profiles). For CORE Evidence Packets
 lacking these fields, the Verifier <span class="bcp14">MUST</span> skip Steps 4 and 5 and note
 in the WAR warnings that behavioral analysis was not performed.<a href="#section-4-3" class="pilcrow">¶</a></p>
@@ -1581,7 +1581,7 @@ in the profile-uri metadata.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
 <p id="section-5-2">NOTE: The specific numeric thresholds in this section (e.g.,
 spectral flatness 0.9, CLC correlation r &lt; 0.2, CoV bounds)
 are initial calibration values derived from empirical
-observation of human authoring behavior. Refinement of these
+observation of human authoring behavior <span>[<a href="#ScholaWrite" class="cite xref">ScholaWrite</a>]</span>. Refinement of these
 values based on implementation experience is an explicit goal
 of the Experimental status of this specification (see
 <a href="#experimental-status-rationale" class="auto internal xref">Section 16</a>). The <span class="bcp14">MUST</span>-level flagging
@@ -1601,12 +1601,12 @@ verdict (see the composite assessment procedure below).<a href="#section-5-2" cl
         <dd class="break"></dd>
 <dt id="section-5-3.5">Mechanical Turk Detection:</dt>
         <dd style="margin-left: 1.5em" id="section-5-3.6">
-          <p id="section-5-3.6.1">Verifiers <span class="bcp14">MUST</span> compute C_intra (Pearson correlation between pause duration and subsequent edit complexity within each checkpoint). C_intra values below 0.15 <span class="bcp14">MUST</span> be flagged as indicating robotic pacing, where an automated system maintains a machine-clocked editing rate independent of content demands. Checkpoints containing receipt structures (key 13) <span class="bcp14">MUST</span> have their associated paste events excluded from C_intra computation.<a href="#section-5-3.6.1" class="pilcrow">¶</a></p>
+          <p id="section-5-3.6.1">Verifiers <span class="bcp14">MUST</span> compute C_intra (Pearson correlation between pause duration and subsequent edit complexity within each checkpoint). C_intra values below 0.15 <span class="bcp14">MUST</span> be flagged as indicating robotic pacing, where an automated system maintains a machine-clocked editing rate independent of content demands.<span>[<a href="#Monrose2000" class="cite xref">Monrose2000</a>]</span><span>[<a href="#Monaco2018" class="cite xref">Monaco2018</a>]</span> Checkpoints containing receipt structures (key 13) <span class="bcp14">MUST</span> have their associated paste events excluded from C_intra computation.<a href="#section-5-3.6.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-5-3.7">Error Topology Analysis:</dt>
         <dd style="margin-left: 1.5em" id="section-5-3.8">
-          <p id="section-5-3.8.1">Verifiers <span class="bcp14">SHOULD</span> analyze error patterns for consistency with human cognitive processing <span>[<a href="#Salthouse1986" class="cite xref">Salthouse1986</a>]</span>: localized corrections near recent insertions, fractal self-similarity in revision patterns, and deletion-to-insertion ratios consistent with natural composition. Evidence exhibiting unnaturally low error rates (below 1 correction per 500 characters) or randomly distributed errors lacking positional correlation <span class="bcp14">SHOULD</span> be flagged.<a href="#section-5-3.8.1" class="pilcrow">¶</a></p>
+          <p id="section-5-3.8.1">Verifiers <span class="bcp14">SHOULD</span> analyze error patterns for consistency with human cognitive processing <span>[<a href="#Salthouse1986" class="cite xref">Salthouse1986</a>]</span>: localized corrections near recent insertions, fractal self-similarity in revision patterns, and deletion-to-insertion ratios consistent with natural composition. Evidence exhibiting unnaturally low error rates (below 1 correction per 500 characters) or randomly distributed errors lacking positional correlation <span class="bcp14">SHOULD</span> be flagged.<span>[<a href="#ScholaWriteAugmented" class="cite xref">ScholaWriteAugmented</a>]</span><a href="#section-5-3.8.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-5-3.9">QR Presence Challenge (OOB-PC):</dt>
@@ -1631,7 +1631,7 @@ verdict (see the composite assessment procedure below).<a href="#section-5-2" cl
         <dd class="break"></dd>
 <dt id="section-5-3.17">Biological Cadence Analysis:</dt>
         <dd style="margin-left: 1.5em" id="section-5-3.18">
-          <p id="section-5-3.18.1">Verifiers <span class="bcp14">MUST</span> compute the Coefficient of Variation (CoV = standard deviation / mean) of inter-keystroke intervals within each checkpoint. Human typing exhibits characteristic CoV values reflecting biological motor variance. Evidence with per-checkpoint CoV consistently below 0.15 (mechanically regular) <span class="bcp14">MUST</span> be flagged as potentially non-biological. Evidence with per-checkpoint CoV consistently above 0.90 (chaotically irregular) <span class="bcp14">SHOULD</span> be flagged as potentially injected random noise. The session-wide CoV trend <span class="bcp14">SHOULD</span> exhibit gradual drift consistent with fatigue and warm-up effects.<a href="#section-5-3.18.1" class="pilcrow">¶</a></p>
+          <p id="section-5-3.18.1">Verifiers <span class="bcp14">MUST</span> compute the Coefficient of Variation (CoV = standard deviation / mean) of inter-keystroke intervals within each checkpoint. Human typing exhibits characteristic CoV values reflecting biological motor variance. Evidence with per-checkpoint CoV consistently below 0.15 (mechanically regular) <span class="bcp14">MUST</span> be flagged as potentially non-biological.<span>[<a href="#Monrose2000" class="cite xref">Monrose2000</a>]</span><span>[<a href="#Dhakal2018" class="cite xref">Dhakal2018</a>]</span> Evidence with per-checkpoint CoV consistently above 0.90 (chaotically irregular) <span class="bcp14">SHOULD</span> be flagged as potentially injected random noise. The session-wide CoV trend <span class="bcp14">SHOULD</span> exhibit gradual drift consistent with fatigue and warm-up effects.<a href="#section-5-3.18.1" class="pilcrow">¶</a></p>
 </dd>
       <dd class="break"></dd>
 </dl>
@@ -1641,7 +1641,7 @@ which the Evidence Packet contains sufficient data. Verifiers
 defined in this specification.<a href="#section-5-4" class="pilcrow">¶</a></p>
 <p id="section-5-5">Individual forensic flags <span class="bcp14">MUST</span> be recorded in the
 forensic-summary structure and reported as warnings in the
-Attestation Result, but a single triggered flag alone is NOT
+Attestation Result, but a single triggered flag alone is not
 sufficient to assign the suspicious verdict. To account for
 legitimate human variance (e.g., pauses for thought, fatigue,
 environmental interruptions), the Verifier <span class="bcp14">MUST</span> apply the
@@ -1977,9 +1977,14 @@ where:
 </div>
 <p id="section-6.1-3">The memory-hard nature of Argon2id ensures that reducing memory
 per evaluation forces a disproportionate increase in computation
-time; the best known tradeoff attacks achieve at most a ~2x
+time; the best known time-memory tradeoff (TMTO) attacks achieve at most a ~2x
 reduction in time-area product for single-pass Argon2id, decreasing
-to ~1.33x with multiple passes (<span>[<a href="#RFC9106" class="cite xref">RFC9106</a>]</span>, Section 7). Beyond
+to ~1.33x with multiple passes (<span>[<a href="#RFC9106" class="cite xref">RFC9106</a>]</span>, Section 7). The raw
+memory-bandwidth advantage of custom hardware (HBM3 at ~800 GB/s
+versus consumer DDR4 at ~25 GB/s) provides an additional 3-4x
+speedup when amortized over device cost. The combined ASIC advantage
+is bounded at approximately 8-16x; Verifiers <span class="bcp14">SHOULD</span> use a
+conservative factor of 10x when computing c-swf. Beyond
 approximately 8 parallel threads, memory bandwidth saturation on
 commodity hardware yields diminishing returns. The minimum forgery
 time equals the
@@ -2075,7 +2080,7 @@ cost-unit.<a href="#section-6.3-3" class="pilcrow">¶</a></p>
       <h2 id="name-absence-proofs-negative-evi">
 <a href="#section-7" class="section-number selfRef">7. </a><a href="#name-absence-proofs-negative-evi" class="section-name selfRef">Absence Proofs: Negative Evidence Taxonomy</a>
       </h2>
-<p id="section-7-1">Absence proofs assert that certain events did NOT occur during the monitored session. They are divided into categories based on verifiability:<a href="#section-7-1" class="pilcrow">¶</a></p>
+<p id="section-7-1">Absence proofs assert that certain events did not occur during the monitored session. They are divided into categories based on verifiability:<a href="#section-7-1" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-7-2">
         <dt id="section-7-2.1">Type 1: Computationally-Bound Claims</dt>
         <dd style="margin-left: 1.5em" id="section-7-2.2">
@@ -2776,7 +2781,8 @@ section.<a href="#section-11.2-1" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-12-2">
         <dt id="section-12-2.1">Tier 1 (Casual):</dt>
         <dd style="margin-left: 1.5em" id="section-12-2.2">
-          <p id="section-12-2.2.1">SWF time-binding provides the primary defense. The T1 appraisal policy accepts the risk of basic retype attacks.<a href="#section-12-2.2.1" class="pilcrow">¶</a></p>
+          <p id="section-12-2.2.1">SWF time-binding provides the primary defense. The T1 appraisal policy accepts the risk of basic retype attacks.
+External timestamping via append-only ledgers <span>[<a href="#HaberStornetta1991" class="cite xref">HaberStornetta1991</a>]</span> is complementary infrastructure that establishes a lower bound on when content was created but does not substitute for SWF-based minimum elapsed computation.<a href="#section-12-2.2.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-12-2.3">Tier 2 (Motivated):</dt>
@@ -3293,7 +3299,7 @@ evasion attempts to inform future revisions.<a href="#section-16-3" class="pilcr
         <h3 id="name-entropy-manipulation-attack">
 <a href="#section-18.1" class="section-number selfRef">18.1. </a><a href="#name-entropy-manipulation-attack" class="section-name selfRef">Entropy Manipulation Attacks</a>
         </h3>
-<p id="section-18.1-1">An adversary may attempt to inject synthetic jitter patterns that satisfy entropy thresholds while lacking biological origin. The use of multi-dimensional analysis (SNR, CLC, Error Topology) rather than single metrics provides defense-in-depth against high-fidelity simulation.<a href="#section-18.1-1" class="pilcrow">¶</a></p>
+<p id="section-18.1-1">An adversary may attempt to inject synthetic jitter patterns that satisfy entropy thresholds while lacking biological origin <span>[<a href="#Condrey2026Attack" class="cite xref">Condrey2026Attack</a>]</span>. The use of multi-dimensional analysis (SNR, CLC, Error Topology) rather than single metrics provides defense-in-depth against high-fidelity simulation.<a href="#section-18.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-verifier-trust">
@@ -3301,7 +3307,7 @@ evasion attempts to inform future revisions.<a href="#section-16-3" class="pilcr
         <h3 id="name-verifier-trust-model">
 <a href="#section-18.2" class="section-number selfRef">18.2. </a><a href="#name-verifier-trust-model" class="section-name selfRef">Verifier Trust Model</a>
         </h3>
-<p id="section-18.2-1">The forensic assessments defined in this document produce probabilistic confidence scores, not binary determinations. Relying Parties <span class="bcp14">MUST</span> understand that forgery cost bounds represent economic estimates, not cryptographic guarantees. Trust decisions <span class="bcp14">SHOULD</span> incorporate the declared Attestation Tier (T1-T4) and the specific absence proof types claimed.<a href="#section-18.2-1" class="pilcrow">¶</a></p>
+<p id="section-18.2-1">The forensic assessments defined in this document produce probabilistic confidence scores, not binary determinations. Relying Parties need to understand that forgery cost bounds represent economic estimates, not cryptographic guarantees. Trust decisions <span class="bcp14">SHOULD</span> incorporate the declared Attestation Tier (T1-T4) and the specific absence proof types claimed.<a href="#section-18.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-stylometric-risk">
@@ -3382,10 +3388,6 @@ include a warning in the Attestation Result warnings field
         <dd>
 <span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="RFC5869">[RFC5869]</dt>
-        <dd>
-<span class="refAuthor">Krawczyk, H.</span> and <span class="refAuthor">P. Eronen</span>, <span class="refTitle">"HMAC-based Extract-and-Expand Key Derivation Function (HKDF)"</span>, <span class="seriesInfo">RFC 5869</span>, <span class="seriesInfo">DOI 10.17487/RFC5869</span>, <time datetime="2010-05" class="refDate">May 2010</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc5869">https://www.rfc-editor.org/rfc/rfc5869</a>&gt;</span>. </dd>
-<dd class="break"></dd>
 <dt id="RFC8174">[RFC8174]</dt>
         <dd>
 <span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
@@ -3399,16 +3401,8 @@ include a warning in the Attestation Result warnings field
 <span class="refAuthor">Bormann, C.</span> and <span class="refAuthor">P. Hoffman</span>, <span class="refTitle">"Concise Binary Object Representation (CBOR)"</span>, <span class="seriesInfo">STD 94</span>, <span class="seriesInfo">RFC 8949</span>, <span class="seriesInfo">DOI 10.17487/RFC8949</span>, <time datetime="2020-12" class="refDate">December 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8949">https://www.rfc-editor.org/rfc/rfc8949</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9052">[RFC9052]</dt>
-        <dd>
-<span class="refAuthor">Schaad, J.</span>, <span class="refTitle">"CBOR Object Signing and Encryption (COSE): Structures and Process"</span>, <span class="seriesInfo">STD 96</span>, <span class="seriesInfo">RFC 9052</span>, <span class="seriesInfo">DOI 10.17487/RFC9052</span>, <time datetime="2022-08" class="refDate">August 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9052">https://www.rfc-editor.org/rfc/rfc9052</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC9106">[RFC9106]</dt>
-        <dd>
-<span class="refAuthor">Biryukov, A.</span>, <span class="refAuthor">Dinu, D.</span>, <span class="refAuthor">Khovratovich, D.</span>, and <span class="refAuthor">S. Josefsson</span>, <span class="refTitle">"Argon2 Memory-Hard Function for Password Hashing and Proof-of-Work Applications"</span>, <span class="seriesInfo">RFC 9106</span>, <span class="seriesInfo">DOI 10.17487/RFC9106</span>, <time datetime="2021-09" class="refDate">September 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9106">https://www.rfc-editor.org/rfc/rfc9106</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC9334">[RFC9334]</dt>
       <dd>
-<span class="refAuthor">Birkholz, H.</span>, <span class="refAuthor">Thaler, D.</span>, <span class="refAuthor">Richardson, M.</span>, <span class="refAuthor">Smith, N.</span>, and <span class="refAuthor">W. Pan</span>, <span class="refTitle">"Remote ATtestation procedureS (RATS) Architecture"</span>, <span class="seriesInfo">RFC 9334</span>, <span class="seriesInfo">DOI 10.17487/RFC9334</span>, <time datetime="2023-01" class="refDate">January 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9334">https://www.rfc-editor.org/rfc/rfc9334</a>&gt;</span>. </dd>
+<span class="refAuthor">Schaad, J.</span>, <span class="refTitle">"CBOR Object Signing and Encryption (COSE): Structures and Process"</span>, <span class="seriesInfo">STD 96</span>, <span class="seriesInfo">RFC 9052</span>, <span class="seriesInfo">DOI 10.17487/RFC9052</span>, <time datetime="2022-08" class="refDate">August 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9052">https://www.rfc-editor.org/rfc/rfc9052</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
@@ -3423,9 +3417,21 @@ include a warning in the Attestation Result warnings field
         <dd>
 <span class="refAuthor">Fossati, T.</span>, <span class="refAuthor">Voit, E.</span>, and <span class="refAuthor">H. Birkholz</span>, <span class="refTitle">"Attestation Results for Secure Interactions"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-rats-ar4si-09</span>, <time datetime="2025-08" class="refDate">August 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-rats-ar4si-09">https://datatracker.ietf.org/doc/html/draft-ietf-rats-ar4si-09</a>&gt;</span>. </dd>
 <dd class="break"></dd>
+<dt id="Condrey2026Attack">[Condrey2026Attack]</dt>
+        <dd>
+<span class="refAuthor">Condrey, D.</span>, <span class="refTitle">"On the Insecurity of Keystroke-Based AI Authorship Detection: Timing-Forgery Attacks Against Motor-Signal Verification"</span>, <span class="seriesInfo">arXiv 2601.17280</span>, <time datetime="2026" class="refDate">2026</time>, <span>&lt;<a href="https://arxiv.org/abs/2601.17280">https://arxiv.org/abs/2601.17280</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="Dhakal2018">[Dhakal2018]</dt>
+        <dd>
+<span class="refAuthor">Dhakal, V.</span>, <span class="refAuthor">Feit, A.M.</span>, <span class="refAuthor">Kristensson, P.O.</span>, and <span class="refAuthor">A. Oulasvirta</span>, <span class="refTitle">"Observations on Typing from 136 Million Keystrokes"</span>, <span class="seriesInfo">ACM CHI 2018</span>, <time datetime="2018" class="refDate">2018</time>, <span>&lt;<a href="https://doi.org/10.1145/3173574.3174220">https://doi.org/10.1145/3173574.3174220</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="EAR">[EAR]</dt>
         <dd>
 <span class="refAuthor">Fossati, T.</span>, <span class="refAuthor">Voit, E.</span>, and <span class="refAuthor">S. Trofimov</span>, <span class="refTitle">"EAT Attestation Results"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-rats-ear-02</span>, <time datetime="2026-01" class="refDate">January 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-rats-ear-02">https://datatracker.ietf.org/doc/html/draft-ietf-rats-ear-02</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="HaberStornetta1991">[HaberStornetta1991]</dt>
+        <dd>
+<span class="refAuthor">Haber, S.</span> and <span class="refAuthor">W.S. Stornetta</span>, <span class="refTitle">"How to Time-Stamp a Digital Document"</span>, <span class="seriesInfo">Journal of Cryptology 3(2), 99-111</span>, <time datetime="1991" class="refDate">1991</time>, <span>&lt;<a href="https://doi.org/10.1007/BF00196791">https://doi.org/10.1007/BF00196791</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="Monaco2018">[Monaco2018]</dt>
         <dd>
@@ -3434,6 +3440,14 @@ include a warning in the Attestation Result warnings field
 <dt id="Monrose2000">[Monrose2000]</dt>
         <dd>
 <span class="refAuthor">Monrose, F.</span> and <span class="refAuthor">A. Rubin</span>, <span class="refTitle">"Keystroke dynamics as a biometric for authentication"</span>, <time datetime="2000" class="refDate">2000</time>, <span>&lt;<a href="https://doi.org/10.1016/S0167-739X(99)00059-X">https://doi.org/10.1016/S0167-739X(99)00059-X</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9106">[RFC9106]</dt>
+        <dd>
+<span class="refAuthor">Biryukov, A.</span>, <span class="refAuthor">Dinu, D.</span>, <span class="refAuthor">Khovratovich, D.</span>, and <span class="refAuthor">S. Josefsson</span>, <span class="refTitle">"Argon2 Memory-Hard Function for Password Hashing and Proof-of-Work Applications"</span>, <span class="seriesInfo">RFC 9106</span>, <span class="seriesInfo">DOI 10.17487/RFC9106</span>, <time datetime="2021-09" class="refDate">September 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9106">https://www.rfc-editor.org/rfc/rfc9106</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9334">[RFC9334]</dt>
+        <dd>
+<span class="refAuthor">Birkholz, H.</span>, <span class="refAuthor">Thaler, D.</span>, <span class="refAuthor">Richardson, M.</span>, <span class="refAuthor">Smith, N.</span>, and <span class="refAuthor">W. Pan</span>, <span class="refTitle">"Remote ATtestation procedureS (RATS) Architecture"</span>, <span class="seriesInfo">RFC 9334</span>, <span class="seriesInfo">DOI 10.17487/RFC9334</span>, <time datetime="2023-01" class="refDate">January 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9334">https://www.rfc-editor.org/rfc/rfc9334</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9711">[RFC9711]</dt>
         <dd>
@@ -3446,6 +3460,14 @@ include a warning in the Attestation Result warnings field
 <dt id="Sardar-RATS">[Sardar-RATS]</dt>
         <dd>
 <span class="refAuthor">Sardar, M.U.</span>, <span class="refTitle">"Security Considerations for Remote ATtestation procedureS (RATS)"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-sardar-rats-sec-cons-02</span>, <time datetime="2026-02" class="refDate">February 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-sardar-rats-sec-cons-02">https://datatracker.ietf.org/doc/html/draft-sardar-rats-sec-cons-02</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="ScholaWrite">[ScholaWrite]</dt>
+        <dd>
+<span class="refAuthor">Wang, L.</span>, <span class="refAuthor">Lee, M.</span>, <span class="refAuthor">Volkov, R.</span>, and <span class="refAuthor">D. Kang</span>, <span class="refTitle">"ScholaWrite: A Dataset of End-to-End Scholarly Writing Process"</span>, <span class="seriesInfo">arXiv 2502.02904</span>, <time datetime="2025" class="refDate">2025</time>, <span>&lt;<a href="https://arxiv.org/abs/2502.02904">https://arxiv.org/abs/2502.02904</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="ScholaWriteAugmented">[ScholaWriteAugmented]</dt>
+        <dd>
+<span class="refAuthor">Condrey, D.</span>, <span class="refTitle">"ScholaWrite-Augmented: Revision-Tracked Scholarly Writing Dataset with Annotated External Insertion Events"</span>, <span class="seriesInfo">GitHub writerslogic/scholawrite-augmented</span>, <time datetime="2026" class="refDate">2026</time>, <span>&lt;<a href="https://github.com/writerslogic/scholawrite-augmented">https://github.com/writerslogic/scholawrite-augmented</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="SEAT-EXPAT">[SEAT-EXPAT]</dt>
         <dd>
@@ -3607,7 +3629,7 @@ claimed-duration within [0.5x, 3.0x] of expected time.<a href="#appendix-B.1-1.2
 present. No upper bound enforced.<a href="#appendix-B.1-1.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-B.1-1.4">
-            <p id="appendix-B.1-1.4.1">Entanglement: jitter seal presence required when
+            <p id="appendix-B.1-1.4.1">Entanglement: jitter tag presence required when
 jitter-binding is present; HMAC verification <span class="bcp14">SHOULD</span> be
 performed (MAC key derivable from public merkle-root).<a href="#appendix-B.1-1.4.1" class="pilcrow">¶</a></p>
 </li>
@@ -3647,7 +3669,7 @@ Values above 6.0 suggest injected randomness and <span class="bcp14">SHOULD</spa
 be flagged.<a href="#appendix-B.2-1.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-B.2-1.4">
-            <p id="appendix-B.2-1.4.1">Entanglement: jitter seal and entangled-mac presence
+            <p id="appendix-B.2-1.4.1">Entanglement: jitter tag and entangled-binding presence
 required for ENHANCED+ profiles. HMAC verification
 <span class="bcp14">SHOULD</span> be performed.<a href="#appendix-B.2-1.4.1" class="pilcrow">¶</a></p>
 </li>
@@ -3764,7 +3786,7 @@ sum of claimed-durations plus hardware procurement.<a href="#appendix-B.4-1.7.1"
 <p id="appendix-C-1">Relying Parties may wish to derive a single scalar trust
 metric from the Attestation Result. The following formula
 provides one example weighting:<a href="#appendix-C-1" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="appendix-C-2">
+<div class="lang-pseudocode sourcecode" id="appendix-C-2">
 <pre>
 process-score = w_r * regularity +
                 w_s * swf-strength +

@@ -4,8 +4,8 @@
 
 Individual Submission                                         D. Condrey
 Internet-Draft                                              WritersLogic
-Intended status: Experimental                              11 March 2026
-Expires: 12 September 2026
+Intended status: Experimental                              15 March 2026
+Expires: 16 September 2026
 
 
  Cryptographic Proof of Process (PoP): Architecture and Evidence Format
@@ -45,7 +45,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 12 September 2026.
+   This Internet-Draft will expire on 16 September 2026.
 
 Copyright Notice
 
@@ -105,22 +105,35 @@ Table of Contents
    14. Profile Architecture
      14.1.  Conformance Requirements
    15. Evidence Format and CDDL
-     15.1.  Checkpoint Hash Computation
-     15.2.  Checkpoint Computation Order
-     15.3.  Evidence Protection
-     15.4.  ASCII-Armored Encoding
+     15.1.  Edit Graph Hash
+     15.2.  Edit Graph Histograms
+     15.3.  Checkpoint Hash Computation
+     15.4.  Checkpoint Computation Order
+     15.5.  Evidence Protection
+     15.6.  ASCII-Armored Encoding
    16. Sequential Work Function
      16.1.  Construction
      16.2.  Verification Protocol
+       16.2.1.  Modes 20/21 Verification (Merkle-Sampled)
+       16.2.2.  Mode 10 Verification (Deterministic Full-Chain)
      16.3.  Fiat-Shamir Sample Derivation
      16.4.  SWF Seed Derivation
      16.5.  Merkle Tree Construction
      16.6.  Mandatory SWF Parameters
      16.7.  Entangled Mode Requirement
-     16.8.  Entangled MAC Computation
-     16.9.  Jitter Seal Computation
-     16.10. Security Bound
-     16.11. Hardware-Anchored Time (HAT)
+     16.8.  Entangled Binding Computation
+       16.8.1.  Key Derivation Hierarchy
+       16.8.2.  Entangled Binding
+     16.9.  Jitter Tag Computation
+     16.10. Beacon-Anchored Binding (Optional)
+     16.11. Verifier-Nonce Binding (Optional)
+       16.11.1.  Protocol
+       16.11.2.  Security Properties
+     16.12. Security Bound
+       16.12.1.  Seed Grinding Resistance
+     16.13. Hardware-Anchored Time (HAT)
+       16.13.1.  HAT Proof Construction
+       16.13.2.  HAT Verification
    17. Experimental Status Rationale
    18. IANA Considerations
      18.1.  CBOR Tags
@@ -130,17 +143,20 @@ Table of Contents
      18.5.  TLS Exporter Label
      18.6.  Future Registry Considerations
    19. Security Considerations
-     19.1.  Primary Threat: Adversarial Attester
-     19.2.  Retype Attack Defenses
-     19.3.  Relay and Replay Attack Defenses
-     19.4.  SWF Acceleration Defenses
-     19.5.  Trust Gradation by Tier
-     19.6.  Forgery Cost Bounds
-     19.7.  Denial of Service
-     19.8.  MAC Field Security Limitations
-     19.9.  Physical Freshness by Tier
-     19.10. Implementation Security Requirements
-     19.11. Signing Key Lifecycle and Rotation
+     19.1.  Security Layer Model
+     19.2.  Primary Threat: Adversarial Attester
+     19.3.  Retype Attack Defenses
+     19.4.  Relay and Replay Attack Defenses
+     19.5.  SWF Acceleration Defenses
+     19.6.  Trust Gradation by Tier
+     19.7.  Forgery Cost Bounds
+       19.7.1.  ASIC Advantage Analysis
+     19.8.  Denial of Service
+     19.9.  Consistency Binding Limitations
+     19.10. Edit Graph Commitment Limitations
+     19.11. Physical Freshness by Tier
+     19.12. Implementation Security Requirements
+     19.13. Signing Key Lifecycle and Rotation
    20. Privacy Considerations
      20.1.  Data Minimization
      20.2.  Behavioral Fingerprinting
@@ -180,6 +196,11 @@ Table of Contents
    The formal threat model, including the adversarial Attester
    assumption that distinguishes PoP from standard RATS deployments, is
    defined in Section 8.
+
+   This document is a companion to [PoP-Appraisal], which specifies the
+   Verifier's forensic appraisal logic, the Attestation Result (WAR)
+   wire format, and the quantitative security model.  Implementers of
+   Verifier components require both documents.
 
 2.  Requirements Language
 
@@ -454,6 +475,11 @@ Table of Contents
       patterns, SWF parameters) and calibration services that provide
       updated forensic baselines.
 
+   Target Environment:  The document editor session and its content
+      state.  The Target Environment is measured by the Attesting
+      Environment at each checkpoint via content hashing and behavioral
+      telemetry capture.
+
 6.2.  Compatibility with RATS Architecture
 
    PoP extends RATS from device state attestation to process
@@ -672,8 +698,8 @@ Table of Contents
 
                   Figure 2: Evidence Packet Lifecycle
 
-   Each checkpoint interval (default 30 seconds, MUST be between 10 and
-   120 seconds) produces one link in the hash chain.  The SWF
+   Each checkpoint interval (default 30 seconds, SHOULD be between 10
+   and 120 seconds) produces one link in the hash chain.  The SWF
    computation runs continuously during the interval, binding the
    author's behavioral entropy and the platform's physical state to the
    elapsed wall-clock time.  At session end or rollover boundary, the
@@ -916,7 +942,7 @@ Table of Contents
       increased inter-keystroke intervals during high-complexity
       passages.  Retyping known text shows uniform timing regardless of
       content complexity.  Evidence with semantic-timing correlation r <
-      0.2 is flagged for additional scrutiny (see Section 19.2).
+      0.2 is flagged for additional scrutiny (see Section 19.3).
 
    *  _Error Topology:_ Authentic authoring exhibits characteristic
       error patterns (hesitations, deletions near recent insertions,
@@ -1031,8 +1057,8 @@ Table of Contents
 
    For offline verification (where no TLS session exists between
    Attester and Verifier), the channel-binding field is absent and
-   Relying Parties MUST evaluate Evidence provenance through out-of-band
-   channels.
+   Relying Parties SHOULD evaluate Evidence provenance through out-of-
+   band channels.
 
    When PoP Evidence is conveyed over an attested TLS channel,
    implementations MAY leverage the SEAT exported authenticator
@@ -1133,12 +1159,14 @@ Table of Contents
       ordering and content integrity.
 
    ENHANCED (Tier Value 2):  All CORE components plus behavioral entropy
-      capture (Jitter Seals) and intra-checkpoint correlation.  Adds
-      evidence of interactive authoring behavior.
+      capture (Jitter Seals), intra-checkpoint correlation, and edit-
+      graph-hash commitment (Section 15.1).  Adds evidence of
+      interactive authoring behavior.
 
    MAXIMUM (Tier Value 3):  All ENHANCED components plus entangled MACs
-      binding physical state, error topology analysis, and forgery cost
-      bounds.  Provides the strongest available evidence.
+      binding physical state, error topology analysis, edit graph
+      histograms (Section 15.2), and forgery cost bounds.  Provides the
+      strongest available evidence.
 
    PoP Evidence is classified along two orthogonal axes.  Evidence
    Content Tier (CORE/ENHANCED/MAXIMUM) determines the depth of
@@ -1216,23 +1244,27 @@ Table of Contents
    establish Mandatory-to-Implement (MTI) requirements for
    interoperability.
 
-     +============+======================+======+==========+=========+
-     | Feature ID | Feature Name         | CORE | ENHANCED | MAXIMUM |
-     +============+======================+======+==========+=========+
-     | 1          | swf-argon2id         | M    | M        | M       |
-     +------------+----------------------+------+----------+---------+
-     | 2          | content-binding      | M    | M        | M       |
-     +------------+----------------------+------+----------+---------+
-     | 4          | checkpoint-chain     | M    | M        | M       |
-     +------------+----------------------+------+----------+---------+
-     | 50         | behavioral-entropy   | O    | M        | M       |
-     +------------+----------------------+------+----------+---------+
-     | 60         | assistive-mode       | O    | O        | O       |
-     +------------+----------------------+------+----------+---------+
-     | 105        | hardware-attestation | O    | O        | M       |
-     +------------+----------------------+------+----------+---------+
+    +============+=======================+======+==========+=========+
+    | Feature ID | Feature Name          | CORE | ENHANCED | MAXIMUM |
+    +============+=======================+======+==========+=========+
+    | 1          | swf-argon2id          | M    | M        | M       |
+    +------------+-----------------------+------+----------+---------+
+    | 2          | content-binding       | M    | M        | M       |
+    +------------+-----------------------+------+----------+---------+
+    | 4          | checkpoint-chain      | M    | M        | M       |
+    +------------+-----------------------+------+----------+---------+
+    | 50         | behavioral-entropy    | O    | M        | M       |
+    +------------+-----------------------+------+----------+---------+
+    | 51         | edit-graph-hash       | O    | M        | M       |
+    +------------+-----------------------+------+----------+---------+
+    | 52         | edit-graph-histograms | O    | O        | M       |
+    +------------+-----------------------+------+----------+---------+
+    | 60         | assistive-mode        | O    | O        | O       |
+    +------------+-----------------------+------+----------+---------+
+    | 105        | hardware-attestation  | O    | O        | M       |
+    +------------+-----------------------+------+----------+---------+
 
-                                  Table 3
+                                 Table 3
 
    Feature IDs 1-9 are reserved for core protocol features.  IDs 50-99
    are reserved for behavioral features.  IDs 100-199 are reserved for
@@ -1313,9 +1345,12 @@ Table of Contents
        9 => process-proof,           ; SWF proof
        ? 10 => jitter-binding,         ; behavioral-entropy (ENHANCED+)
        ? 11 => physical-state,         ; physical-state binding (ENHANCED+)
-       ? 12 => hash-digest,             ; entangled-mac (ENHANCED+)
+       ? 12 => hash-digest,             ; entangled-binding (ENHANCED+)
        ? 13 => [+ receipt],             ; receipts (self or tool)
        ? 14 => [+ active-probe],        ; active liveness probes
+       ? 15 => hat-proof,               ; HAT temporal proof (T3/T4)
+       ? 16 => beacon-anchor,           ; public randomness anchor (optional)
+       ? 17 => bstr .size 32,           ; verifier-nonce (interactive mode)
        * int => any,                    ; extension fields
    }
 
@@ -1367,12 +1402,14 @@ Table of Contents
        2 => uint,                    ; memory-cost (m, KiB)
        3 => uint,                    ; parallelism (p)
        4 => uint,                    ; steps
+       ? 5 => uint,                  ; waypoint-interval (Mode 10 only)
+       ? 6 => uint,                  ; waypoint-memory (KiB, Mode 10 only)
    }
 
    jitter-binding = {
        1 => [+ uint],                ; intervals (milliseconds)
        2 => uint,                    ; entropy-estimate (centibits)
-       3 => hash-digest,             ; jitter-seal (HMAC)
+       3 => hash-digest,             ; jitter-tag (keyed consistency tag)
    }
 
    merkle-proof = {
@@ -1386,6 +1423,11 @@ Table of Contents
        2 => uint,                    ; chars-deleted
        3 => uint,                    ; op-count
        ? 4 => [* edit-position],     ; positions
+       ? 5 => hash-digest,           ; edit-graph-hash (ENHANCED+)
+       ; keys 6-8 reserved for future use
+       ? 9 => [8*8 uint],             ; cursor-trajectory-histogram (MAXIMUM)
+       ? 10 => [8*8 uint],            ; revision-depth-histogram (MAXIMUM)
+       ? 11 => [8*8 uint],            ; pause-duration-histogram (MAXIMUM)
    }
 
    edit-position = [
@@ -1645,6 +1687,62 @@ Table of Contents
    negative values indicate deletion.  A zero change value is
    semantically meaningless and MUST NOT appear.
 
+15.1.  Edit Graph Hash
+
+   The edit-graph-hash (edit-delta key 5) provides a cryptographic
+   commitment to the full editing trajectory within a checkpoint
+   interval.  It MUST be present in ENHANCED and MAXIMUM content tiers
+   and MAY be present in CORE.
+
+   The Attestation Environment MUST compute the edit-graph-hash as
+   follows:
+
+   edit-graph-input = [
+       cursor-positions,    ; [* uint] char offsets, 100ms sample
+       revision-depths,     ; [* uint] edit depth at each sample
+       pause-durations      ; [* uint] inter-keystroke gaps in ms
+   ]
+
+   edit-graph-hash = H(
+       "PoP-EditGraph-v1" ||
+       CBOR-encode(edit-graph-input)
+   )
+
+   Where H is the Evidence Packet's selected hash function and CBOR-
+   encode produces deterministic CBOR per Section 4.2.1 of [RFC8949].
+   The cursor-positions array MUST contain cursor position samples at
+   minimum 100ms intervals.  The revision-depths array MUST record the
+   number of prior edits at each cursor position at the same sample
+   rate.  The pause-durations array MUST record all inter-keystroke
+   intervals exceeding 500ms.  Arrays MUST be truncated to the most
+   recent 10,000 samples when longer.
+
+   When the edit-graph-hash is present, it is entangled into the SWF
+   seed derivation (Section 16.4).
+
+15.2.  Edit Graph Histograms
+
+   Edit-delta keys 9-11 carry 8-bin histograms summarizing the editing
+   trajectory.  These fields MUST be present in MAXIMUM content tier and
+   MUST be absent in CORE.  They MAY be present in ENHANCED.
+
+   Each histogram is an array of exactly 8 unsigned integers
+   representing event counts per bin.  The bin boundaries are:
+
+   Cursor Trajectory Histogram (key 9):  Cumulative cursor travel
+      distance in characters between consecutive samples.  Bins: [0,
+      50], [51, 200], [201, 500], [501, 1000], [1001, 2500], [2501,
+      5000], [5001, 10000], [10001, +inf).
+
+   Revision Depth Histogram (key 10):  Maximum revision depth per edited
+      region.  Bins correspond to depths 0 through 6 individually, with
+      bin 7 covering depth 7 and above.
+
+   Pause Duration Histogram (key 11):  Inter-keystroke pause durations
+      in milliseconds.  Pauses below 500ms are excluded.  Bins: [500,
+      1000], [1001, 2000], [2001, 5000], [5001, 10000], [10001, 30000],
+      [30001, 60000], [60001, 300000], [300001, +inf).
+
    The device-signature in a presence-challenge MUST be a COSE_Sign1
    structure [RFC9052] covering the challenge-nonce.  The signing key
    MUST be hardware-bound on the secondary device.  The Verifier obtains
@@ -1686,7 +1784,7 @@ Table of Contents
    Appraisal of baseline-verification data is specified in
    [PoP-Appraisal].
 
-15.1.  Checkpoint Hash Computation
+15.3.  Checkpoint Hash Computation
 
    The checkpoint-hash field MUST be computed as follows:
 
@@ -1704,7 +1802,10 @@ Table of Contents
    concatenation, and CBOR-encode produces deterministic CBOR per
    Section 4.2.1 of [RFC8949].  The UTF-8 Domain Separation Tag (DST)
    prefix "PoP-Checkpoint-v1" MUST be prepended as the first input to
-   prevent cross-context hash collisions.
+   prevent cross-context hash collisions.  When edit-graph-hash (edit-
+   delta key 5) is present, it is already included within the CBOR-
+   encoded edit-delta and requires no separate term in the checkpoint-
+   hash computation.
 
    For the first checkpoint in the initial Evidence Packet of a series
    (or a standalone packet), prev-hash MUST be set to H(CBOR-
@@ -1718,28 +1819,37 @@ Table of Contents
    checkpoint-hash = H("PoP-Checkpoint-v1" || prev-hash || content-
    hash || CBOR-encode(edit-delta) || process-proof.merkle-root).
 
-15.2.  Checkpoint Computation Order
+15.4.  Checkpoint Computation Order
 
    The fields within a checkpoint MUST be computed in the following
    order:
 
-   1.  Compute the SWF: run the proof-algorithm with the derived seed.
-       For modes 20/21, evaluate Argon2id iteratively for the configured
-       number of steps.  For mode 10, evaluate Argon2id once then
-       iterate SHA-256.  Construct the Merkle tree over all intermediate
-       states to obtain the merkle-root (process-proof key 4).
+   1.  When edit-graph-hash is present: compute the edit-graph-hash from
+       the accumulated cursor-positions, revision-depths, and pause-
+       durations arrays per Section 15.1.  When histograms are present
+       (MAXIMUM tier): populate the 8-bin arrays per Section 15.2.
+       Assemble the edit-delta structure including these fields.
 
-   2.  Compute the jitter-seal using the merkle-root as HKDF-Expand PRK
-       input and jitter-binding.intervals as HMAC input.
+   2.  Compute the SWF: run the proof-algorithm with the derived seed
+       (which incorporates the edit-graph-hash when present).  For modes
+       20/21, evaluate Argon2id iteratively for the configured number of
+       steps.  For mode 10, evaluate Argon2id once then iterate SHA-256
+       with memory-hard waypoints at every W-th step.  Construct the
+       Merkle tree over all intermediate states using tagged hashing
+       (Section 16.5) to obtain the merkle-root (process-proof key 4).
 
-   3.  Assemble the jitter-binding structure (intervals, entropy-
-       estimate, jitter-seal).
+   3.  Derive the shared PRK and per-field keys via the two-stage HKDF
+       hierarchy (Section 16.8.1).
 
-   4.  Compute the entangled-mac using the merkle-root as HKDF-Expand
-       PRK input and prev-hash, content-hash, jitter-binding, and
-       physical-state as HMAC input.
+   4.  Compute the jitter-tag using the tag-key and jitter-
+       binding.intervals as HMAC input.  Assemble the jitter-binding
+       structure (intervals, entropy-estimate, jitter-tag).
 
-   5.  Compute the checkpoint-hash over the DST "PoP-Checkpoint-v1",
+   5.  Compute the entangled-binding using the binding-key and prev-
+       hash, content-hash, jitter-binding, and physical-state as HMAC
+       input.
+
+   6.  Compute the checkpoint-hash over the DST "PoP-Checkpoint-v1",
        prev-hash, content-hash, edit-delta, jitter-binding, physical-
        state, and merkle-root.
 
@@ -1747,7 +1857,7 @@ Table of Contents
    the outputs of prior steps.  Implementations MUST follow this order
    to produce interoperable checkpoints.
 
-15.3.  Evidence Protection
+15.5.  Evidence Protection
 
    For T3 and T4 Attestation Tiers, Evidence Packets MUST be wrapped in
    a COSE_Sign1 envelope [RFC9052].  For T1 and T2 tiers, COSE_Sign1
@@ -1774,7 +1884,7 @@ Table of Contents
    triggered re-attestation as key requirements, both of which PoP's
    continuous checkpoint model satisfies.
 
-15.4.  ASCII-Armored Encoding
+15.6.  ASCII-Armored Encoding
 
    For transport over text-based protocols, embedding in source code
    repositories, or human-readable archival, Evidence Packets and
@@ -1841,40 +1951,55 @@ Table of Contents
    For swf-argon2id (20) and swf-argon2id-entangled (21):
 
    hash_len = output_length(H)          ; 32, 48, or 64 bytes
-   state_0  = Argon2id(seed, salt=H("PoP-salt" || seed),
+   state_0  = Argon2id(seed, salt=H(0x00 || "PoP-salt-v1" || seed),
                        t=t, m=m, p=1, len=hash_len)
    for i in 1..steps:
        state_i = Argon2id(state_{i-1},
-                          salt=H("PoP-salt" || I2OSP(i, 4)),
+                          salt=H(0x01 || "PoP-salt-v1" || I2OSP(i, 4)),
                           t=t, m=m, p=1, len=hash_len)
    merkle_root = MerkleTree(state_0, state_1, ...,
                             state_steps).root
 
    Each step is a full Argon2id evaluation bounded by memory bandwidth,
    ensuring ASIC resistance at every link in the chain.  The salt for
-   state_0 MUST be derived from the seed: salt = H("PoP-salt" || seed).
-   For subsequent steps i >= 1, the salt MUST be H("PoP-salt" ||
-   I2OSP(i, 4)), where I2OSP encodes i as a 4-byte big-endian integer
-   per [RFC8017].  This provides domain separation between steps.  The
-   Argon2id output length (len) MUST equal the output length of H to
-   ensure SWF state sizes are consistent with the selected hash
-   algorithm.
+   state_0 MUST be derived from the seed: salt = H(0x00 || "PoP-salt-
+   v1" || seed).  For subsequent steps i >= 1, the salt MUST be
+   H(0x01 || "PoP-salt-v1" || I2OSP(i, 4)), where I2OSP encodes i as a
+   4-byte big-endian integer per [RFC8017].  The 0x00 and 0x01 type-tag
+   prefixes provide unambiguous domain separation between the seed-
+   derived initial salt and step-indexed salts, preventing collisions
+   even when the seed value equals I2OSP(i, 4) for some i.  The Argon2id
+   output length (len) MUST equal the output length of H to ensure SWF
+   state sizes are consistent with the selected hash algorithm.
 
    For swf-sha256 (10):
 
    hash_len = 32                        ; SHA-256 fixed
-   state_0  = Argon2id(seed, salt=H("PoP-salt" || seed),
+   state_0  = Argon2id(seed, salt=H(0x00 || "PoP-salt-v1" || seed),
                        t=t, m=m, p=1, len=hash_len)
    for i in 1..steps:
-       state_i = H(state_{i-1})
+       if i mod W == 0:
+           state_i = Argon2id(state_{i-1},
+                              salt=H(0x01 || "PoP-salt-v1" || I2OSP(i, 4)),
+                              t=1, m=m_waypoint, p=1, len=hash_len)
+       else:
+           state_i = H(state_{i-1})
    merkle_root = MerkleTree(state_0, state_1, ...,
                             state_steps).root
 
-   The swf-sha256 mode retains the single Argon2id initialization
-   followed by iterated SHA-256 hashing.  Because SHA-256 lacks memory-
-   hardness, forgery cost is bounded only by computation time.
-   Verifiers SHOULD reflect this in the forgery-cost-estimate by setting
-   c-swf proportionally lower than for Argon2id-based modes.
+   The swf-sha256 mode uses a single Argon2id initialization followed by
+   iterated SHA-256 hashing with periodic *memory-hard waypoints*. At
+   every W-th step (where W is the waypoint-interval parameter), the
+   Attester MUST compute a full Argon2id evaluation instead of SHA-256,
+   using waypoint-memory (m_waypoint) as the memory cost.  These
+   waypoints bound the ASIC advantage to the Argon2id memory-bandwidth
+   limit at waypoint steps, preventing the ~10,000x speedup that custom
+   SHA-256 ASICs achieve on the intervening steps.  Verifiers SHOULD
+   reflect the reduced forgery cost relative to Argon2id-only modes in
+   the forgery-cost-estimate by setting c-swf based on the effective
+   number of Argon2id evaluations (steps / W).  When waypoint-interval
+   (proof-params key 5) is absent, the Verifier MUST treat the mode as
+   having no waypoints and apply the lower c-swf bound accordingly.
 
    The merkle-root field (process-proof key 4) MUST contain the Merkle
    tree root computed over all intermediate states.  The final state
@@ -1883,43 +2008,104 @@ Table of Contents
 
 16.2.  Verification Protocol
 
-   The Verifier MUST:
+16.2.1.  Modes 20/21 Verification (Merkle-Sampled)
+
+   For swf-argon2id (20) and swf-argon2id-entangled (21), the Verifier
+   MUST:
 
    1.  Recompute Argon2id from the declared seed to obtain state_0.
 
-   2.  For each sampled proof in the Merkle tree, verify the sibling
-       path against the committed root and recompute the state
-       transition: for modes 20/21, recompute Argon2id(state_i,
-       salt=H("PoP-salt" || I2OSP(i+1, 4)), t=t, m=m, p=1, len=hash_len)
-       and verify it equals state_{i+1}; for mode 10, recompute
-       H(state_i) and verify it equals state_{i+1}.
+   2.  For each Fiat-Shamir sampled proof in the Merkle tree, verify the
+       sibling path against the committed root using tagged hashing (see
+       Section 16.5) and recompute the state transition:
+       Argon2id(state_i, salt=H(0x01 || "PoP-salt-v1" || I2OSP(i+1, 4)),
+       t=t, m=m, p=1, len=hash_len).  Verify the result equals
+       state_{i+1}.
 
    3.  Verify the final state (state_steps) by checking its Merkle proof
        against the committed root (process-proof key 4, merkle-root).
        If the final-leaf index is not included in the Fiat-Shamir sample
-       set, the Verifier SHOULD additionally derive or request a proof
-       for it.
+       set, the Verifier MUST additionally derive or request a proof for
+       it.
 
    A minimum of 20 sampled proofs is REQUIRED for CORE profile.
    ENHANCED profile requires 50 proofs.  MAXIMUM profile requires 100
    proofs.
 
-   NOTE: For modes 20/21, each sampled proof requires one Argon2id
-   evaluation to verify.  Verification cost is O(k) Argon2id
-   evaluations, each requiring m KiB of memory.  For CORE (k=20, m=65536
-   KiB), verification requires approximately 2 seconds on reference
-   hardware.  Verifiers MUST verify samples sequentially or limit
-   concurrent evaluations to avoid excessive memory consumption.
+   NOTE: Each sampled proof requires one Argon2id evaluation to verify.
+   Verification cost is O(k) Argon2id evaluations, each requiring m KiB
+   of memory.  For CORE (k=20, m=65536 KiB), verification requires
+   approximately 2 seconds on reference hardware.  Verifiers MUST verify
+   samples sequentially or limit concurrent evaluations to avoid
+   excessive memory consumption.
+
+16.2.2.  Mode 10 Verification (Deterministic Full-Chain)
+
+   For swf-sha256 (10), the Verifier SHOULD perform deterministic full-
+   chain verification rather than Merkle-sampled verification.  The
+   Verifier MUST:
+
+   1.  Recompute state_0 = Argon2id(seed, salt=H(0x00 || "PoP-salt-
+       v1" || seed), t=t, m=m, p=1, len=32).
+
+   2.  Recompute the full chain sequentially: for i in 1..steps, if i
+       mod W == 0, compute state_i = Argon2id(state_{i-1},
+       salt=H(0x01 || "PoP-salt-v1" || I2OSP(i, 4)), t=1, m=m_waypoint,
+       p=1, len=32); otherwise, compute state_i = H(state_{i-1}).
+
+   3.  Construct the Merkle tree from all recomputed states using tagged
+       hashing (Section 16.5).
+
+   4.  Verify the computed Merkle root equals the committed root
+       (process-proof key 4).
+
+   Full-chain verification requires steps/W Argon2id evaluations plus
+   steps SHA-256 evaluations.  For CORE (W=1000, steps=10000), this
+   costs approximately 10 Argon2id evaluations (~1 second) plus 10,000
+   SHA-256 evaluations (~1 millisecond).  This is comparable to or less
+   than Mode 20 sampled verification cost.
+
+   Full-chain verification provides deterministic guarantees: all
+   waypoints AND all SHA-256 transitions are verified with zero false
+   negatives.  Unlike Merkle-sampled verification, it is not subject to
+   the waypoint sampling gap (where uniform random sampling under-
+   represents the rare but expensive waypoint steps).
+
+   When full-chain verification is impractical (e.g., constrained
+   Verifier environments), the Verifier MAY fall back to Merkle-sampled
+   verification per Section 16.3.  In this fallback mode, the Verifier
+   MUST additionally verify all waypoint transitions by requesting
+   Merkle proofs for index pairs (iW-1, iW) for i in 1..steps/W.  This
+   ensures memory-hard waypoints are always verified regardless of the
+   Fiat-Shamir sample draw.  The Attester MUST include these mandatory
+   waypoint proofs in addition to the k Fiat-Shamir sampled proofs when
+   the Verifier indicates sampled verification mode.
 
 16.3.  Fiat-Shamir Sample Derivation
 
    Merkle proof sample positions MUST be derived deterministically via
    Fiat-Shamir transform:
 
-   sample_seed = H(merkle_root || process-proof.input)
+   sample_seed = H(
+       "PoP-Fiat-Shamir-v1" ||
+       I2OSP(proof-algorithm, 2) ||
+       CBOR-encode(proof-params) ||
+       process-proof.input ||
+       merkle_root
+   )
    for j in 0..k-1:
        okm_j   = HKDF-Expand(sample_seed, I2OSP(j, 4), 4)
        index_j = OS2IP(okm_j) mod (steps + 1)
+
+   The sample seed MUST incorporate a versioned domain separation tag
+   ("PoP-Fiat-Shamir-v1") followed by the full proof context: the
+   algorithm identifier, all parameters, the SWF input seed, and the
+   Merkle root.  The DST prefix provides version agility consistent with
+   all other hash constructions in the protocol and prevents cross-
+   protocol confusion.  The algorithm and parameter binding prevents
+   cross-algorithm confusion attacks where an adversary exploits a seed
+   that produces the same Merkle root under a cheaper algorithm.  CBOR-
+   encode produces deterministic CBOR per Section 4.2.1 of [RFC8949].
 
    Where k is the number of required samples (20 for CORE, 50 for
    ENHANCED, 100 for MAXIMUM).  HKDF-Expand is instantiated with H as
@@ -1948,11 +2134,13 @@ Table of Contents
        "PoP-SWF-Seed-v1" ||
        prev-hash ||
        CBOR-encode(jitter-binding.intervals) ||
-       CBOR-encode(physical-state)
+       CBOR-encode(physical-state) ||
+       edit-graph-hash
    )
 
    The swf-sha256 mode uses iterated SHA-256 as described in
-   Section 16.1.
+   Section 16.1.  When edit-graph-hash is absent, the seed MUST be
+   computed without the final term.
 
    For swf-argon2id (20), the SWF seed for each checkpoint MUST be
    derived as:
@@ -1961,8 +2149,12 @@ Table of Contents
        "PoP-SWF-Seed-v1" ||
        prev-hash ||
        CBOR-encode(jitter-binding.intervals) ||
-       CBOR-encode(physical-state)
+       CBOR-encode(physical-state) ||
+       edit-graph-hash
    )
+
+   When edit-graph-hash is absent, the seed MUST be computed without the
+   final term.
 
    For swf-argon2id-entangled (21), the Attester MUST entangle the
    previous checkpoint's SWF output.  The seed is derived as:
@@ -1972,14 +2164,26 @@ Table of Contents
        prev-hash ||
        prev-swf-output ||
        CBOR-encode(jitter-binding.intervals) ||
-       CBOR-encode(physical-state)
+       CBOR-encode(physical-state) ||
+       edit-graph-hash
    )
+
+   When edit-graph-hash is absent, the seed MUST be computed without the
+   final term.
 
    Where prev-swf-output is the final Argon2id state from the
    immediately preceding checkpoint's sequential work function
    computation.  This creates a strict cryptographic dependency chain:
    each checkpoint's SWF cannot begin until the previous checkpoint's
    SWF has completed.
+
+   When a verifier-nonce is present (Section 16.11), the nonce MUST be
+   inserted into the seed derivation after prev-swf-output (for Mode 21)
+   or after prev-hash (for Modes 10/20), before any behavioral data.
+   When both verifier-nonce and beacon-anchor are used, the verifier-
+   nonce MUST precede the beacon value in the seed derivation.  When
+   edit-graph-hash is present, it MUST be the final term in the seed
+   derivation, after all behavioral data and any beacon-anchor value.
 
    For the first checkpoint (sequence = 1), all modes use:
 
@@ -1988,6 +2192,9 @@ Table of Contents
        CBOR-encode(document-ref) ||
        initial-jitter-sample
    )
+
+   The first checkpoint seed does not include edit-graph-hash because no
+   editing trajectory has accumulated at session start.
 
    Where initial-jitter-sample is a minimum 32-byte sample of behavioral
    entropy collected before the first checkpoint.  When jitter-binding
@@ -2004,17 +2211,26 @@ Table of Contents
 
 16.5.  Merkle Tree Construction
 
-   The SWF Merkle tree is constructed over all intermediate states as
-   follows:
+   The SWF Merkle tree is constructed over all intermediate states using
+   domain-separated hashing following the tagged hash construction from
+   [RFC6962]:
 
-   *  Leaves: state_i for i in 0..steps, where leaf-index = i and leaf-
-      value = state_i.  The total number of leaves is (steps + 1).
+   *  Leaf nodes: H(0x00 || state_i) for i in 0..steps, where leaf-index
+      = i and leaf-value = state_i.  The total number of leaves is
+      (steps + 1).  The 0x00 prefix tag identifies leaf-level hashes.
 
-   *  Internal nodes: H(left_child || right_child)
+   *  Internal nodes: H(0x01 || left_child || right_child).  The 0x01
+      prefix tag identifies internal node hashes.  This domain
+      separation prevents second-preimage attacks on the tree structure
+      where an adversary constructs an internal node that masquerades as
+      a leaf or vice versa.
 
-   *  Tree structure: binary Merkle tree.  If the number of leaves is
-      not a power of 2, the tree is padded by duplicating the last leaf
-      until the count reaches the next power of 2.
+   *  Padding: If the number of leaves is not a power of 2, the tree is
+      padded with sentinel values: pad_value = H(0x02 || I2OSP(steps +
+      1, 4)), repeated until the count reaches the next power of 2.  The
+      0x02 prefix tag and embedded tree size make padding nodes
+      cryptographically distinguishable from both leaf and internal
+      nodes and bind the padding to the specific chain length.
 
    *  The Merkle root is stored in process-proof.merkle-root (key 4).
 
@@ -2023,8 +2239,10 @@ Table of Contents
 
 16.6.  Mandatory SWF Parameters
 
-   Conforming Attesters MUST use the following minimum SWF parameters
-   for each Evidence Content Tier.
+   Conforming Attesters SHOULD use the following minimum SWF parameters
+   for each Evidence Content Tier.  These values are initial calibration
+   parameters (see Section 17) and may be revised based on deployment
+   experience.
 
    For swf-argon2id (20) and swf-argon2id-entangled (21):
 
@@ -2046,21 +2264,31 @@ Table of Contents
 
    For swf-sha256 (10):
 
-           +======================+=======+==========+=========+
-           | Parameter            | CORE  | ENHANCED | MAXIMUM |
-           +======================+=======+==========+=========+
-           | time-cost (t)        | 1     | 1        | 1       |
-           +----------------------+-------+----------+---------+
-           | memory-cost (m, KiB) | 65536 | 65536    | 131072  |
-           +----------------------+-------+----------+---------+
-           | parallelism (p)      | 1     | 1        | 1       |
-           +----------------------+-------+----------+---------+
-           | steps                | 10000 | 50000    | 100000  |
-           +----------------------+-------+----------+---------+
-           | Merkle samples (k)   | 20    | 50       | 100     |
-           +----------------------+-------+----------+---------+
+         +==========================+=======+==========+=========+
+         | Parameter                | CORE  | ENHANCED | MAXIMUM |
+         +==========================+=======+==========+=========+
+         | time-cost (t)            | 1     | 1        | 1       |
+         +--------------------------+-------+----------+---------+
+         | memory-cost (m, KiB)     | 65536 | 65536    | 131072  |
+         +--------------------------+-------+----------+---------+
+         | parallelism (p)          | 1     | 1        | 1       |
+         +--------------------------+-------+----------+---------+
+         | steps                    | 10000 | 50000    | 100000  |
+         +--------------------------+-------+----------+---------+
+         | waypoint-interval (W)    | 1000  | 1000     | 1000    |
+         +--------------------------+-------+----------+---------+
+         | waypoint-memory (KiB)    | 32768 | 65536    | 65536   |
+         +--------------------------+-------+----------+---------+
+         | Effective Argon2id evals | 10    | 50       | 100     |
+         +--------------------------+-------+----------+---------+
+         | Merkle samples (k)       | 20    | 50       | 100     |
+         +--------------------------+-------+----------+---------+
 
                                   Table 5
+
+   The waypoint-interval and waypoint-memory parameters MUST be declared
+   in proof-params (keys 5 and 6) for Mode 10 Evidence.  Verifiers MUST
+   reject Mode 10 Evidence that omits these parameters.
 
    Verifiers MUST reject Evidence where declared proof-params are below
    the mandatory minimums for the claimed content tier.
@@ -2088,51 +2316,180 @@ Table of Contents
    Verifiers MUST reject ENHANCED or MAXIMUM Evidence that uses proof-
    algorithm 20 instead of 21.
 
-16.8.  Entangled MAC Computation
+16.8.  Entangled Binding Computation
 
-   When present, the entangled-mac field (checkpoint key 12) MUST be
-   computed as HMAC-H [RFC2104] with the following inputs:
+   When present, the entangled-binding field (checkpoint key 12) MUST be
+   computed as HMAC-H [RFC2104] with keys derived via the two-stage HKDF
+   hierarchy defined below.
 
-   mac-key  = HKDF-Expand(process-proof.merkle-root,
-                          "PoP-entangled-mac", hash_len)
-   mac-input = prev-hash || content-hash ||
-               CBOR-encode(jitter-binding) ||
-               CBOR-encode(physical-state)
-   entangled-mac = HMAC-H(mac-key, mac-input)
+16.8.1.  Key Derivation Hierarchy
 
-   Where HKDF-Expand is defined in [RFC5869], || denotes concatenation,
-   and CBOR-encode produces deterministic CBOR per Section 4.2.1 of
-   [RFC8949].
+   All keyed consistency tags within a checkpoint MUST derive keys from
+   a single pseudorandom key (PRK) using the HKDF Extract-then-Expand
+   paradigm per [RFC5869]:
+
+   PRK = HKDF-Extract(
+       salt = "PoP-key-derivation-v1",
+       IKM  = process-proof.merkle-root || process-proof.input
+   )
+   binding-key = HKDF-Expand(PRK, "PoP-entangled-binding-v1", hash_len)
+   tag-key     = HKDF-Expand(PRK, "PoP-jitter-tag-v1", hash_len)
+
+   The HKDF-Extract step concentrates entropy from the Merkle root (a
+   hash output) and the SWF input seed into a properly structured PRK.
+   Including process-proof.input alongside the Merkle root ensures that
+   the PRK depends on both the computation output and its input,
+   providing defense-in-depth against multi-target Merkle root collision
+   attacks.  HKDF-Expand then derives independent keys for each
+   consistency tag using distinct info strings.
+
+16.8.2.  Entangled Binding
+
+   The entangled-binding value is computed as:
+
+   binding-input = prev-hash || content-hash ||
+                   CBOR-encode(jitter-binding) ||
+                   CBOR-encode(physical-state)
+   entangled-binding = HMAC-H(binding-key, binding-input)
+
+   Where || denotes concatenation and CBOR-encode produces deterministic
+   CBOR per Section 4.2.1 of [RFC8949].
 
    NOTE: In the adversarial Attester model, the Attester generates the
-   SWF output and therefore knows the MAC key.  The entangled-mac
-   provides internal consistency binding but does NOT prevent forgery by
-   a malicious Attester (see Section 19.8).
+   SWF output and therefore knows the binding key.  The entangled-
+   binding provides internal consistency but does not prevent forgery by
+   a malicious Attester (see Section 19.9).
 
-16.9.  Jitter Seal Computation
+16.9.  Jitter Tag Computation
 
-   When present, the jitter-seal field (jitter-binding key 3) MUST be
-   computed as HMAC-H with the following inputs:
+   When present, the jitter-tag field (jitter-binding key 3) MUST be
+   computed as HMAC-H using the tag-key derived from the shared PRK (see
+   Section 16.8.1):
 
-   seal-key   = HKDF-Expand(process-proof.merkle-root,
-                            "PoP-jitter-seal", hash_len)
-   seal-input = CBOR-encode(jitter-binding.intervals)
-   jitter-seal = HMAC-H(seal-key, seal-input)
+   tag-input = CBOR-encode(jitter-binding.intervals)
+   jitter-tag = HMAC-H(tag-key, tag-input)
 
-   The jitter-seal binds the timing measurements to the checkpoint's SWF
+   The jitter-tag binds the timing measurements to the checkpoint's SWF
    computation, preventing transplantation of jitter data from a
    different session.  It is subject to the same adversarial Attester
-   limitation as the entangled-mac (Section 19.8).
+   limitation as the entangled-binding (Section 19.9).
 
    NOTE: In the adversarial Attester model, the Attester generates both
-   the SWF output (from which the MAC key is derived) and the MAC input
-   data.  The entangled-mac and jitter-seal therefore provide data
-   integrity binding but do not prevent an adversarial Attester from
-   computing MACs over fabricated data.  Their security value is limited
-   to ensuring internal consistency within an honestly-generated
+   the SWF output (from which the binding keys are derived) and the
+   input data.  The entangled-binding and jitter-tag therefore provide
+   data integrity binding but do not prevent an adversarial Attester
+   from computing tags over fabricated data.  Their security value is
+   limited to ensuring internal consistency within an honestly-generated
    checkpoint.  See Section 19.
 
-16.10.  Security Bound
+16.10.  Beacon-Anchored Binding (Optional)
+
+   Attesters MAY anchor checkpoints to a public randomness beacon to
+   provide verifiable temporal ordering without hardware attestation.
+   When beacon-anchoring is used, the Attester MUST:
+
+   1.  Commit to the checkpoint data (including the SWF Merkle root)
+       before the beacon value is available.
+
+   2.  Wait for the beacon to publish the value for the round
+       corresponding to the checkpoint timestamp plus a protocol-defined
+       delay (RECOMMENDED: 60 seconds).
+
+   3.  Incorporate the beacon value into the key derivation:
+
+   PRK = HKDF-Extract(
+       salt = "PoP-key-derivation-v1",
+       IKM  = process-proof.merkle-root ||
+              process-proof.input ||
+              beacon-anchor.beacon-value
+   )
+
+   1.  Compute the entangled-binding and jitter-tag using keys derived
+       from the beacon-augmented PRK.
+
+   2.  Include the beacon-anchor field (checkpoint key 16) in the
+       checkpoint.
+
+   The beacon-anchor structure is:
+
+   beacon-anchor = {
+       1 => tstr,          ; beacon-source (URI of beacon service)
+       2 => uint,          ; beacon-round (round number)
+       3 => bstr .size 32, ; beacon-value (randomness output)
+   }
+
+   The Verifier MUST independently fetch the beacon value for the
+   declared round from the beacon-source and verify it matches beacon-
+   anchor.beacon-value.  The Verifier MUST verify that the beacon round
+   is consistent with the checkpoint timestamp plus the protocol-defined
+   delay.
+
+   This mechanism transforms T1 temporal ordering from self-reported
+   timestamps to externally verifiable time commitments
+   [HaberStornetta1991].  The beacon value is not predictable at
+   checkpoint creation time, preventing retroactive fabrication of
+   Evidence with backdated timestamps.
+
+16.11.  Verifier-Nonce Binding (Optional)
+
+   For interactive deployments where the Verifier is online during the
+   authoring session, the Attester MAY incorporate a Verifier-supplied
+   nonce into each checkpoint's SWF seed.  This provides the strongest
+   available anti-precomputation guarantee: the SWF cannot begin until
+   the Verifier releases the nonce, and the Verifier chooses the nonce
+   after the preceding checkpoint is submitted.
+
+16.11.1.  Protocol
+
+   1.  The Attester submits checkpoint N-1 to the Verifier.
+
+   2.  The Verifier responds with a 32-byte random nonce: verifier-nonce
+       = CSPRNG(32).
+
+   3.  The Attester incorporates the nonce into checkpoint N's SWF seed
+       derivation (see Section 16.4):
+
+   seed = H(
+       "PoP-SWF-Seed-v1" ||
+       prev-hash ||
+       prev-swf-output ||          ; Mode 21 only
+       verifier-nonce ||
+       CBOR-encode(jitter-binding.intervals) ||
+       CBOR-encode(physical-state)
+   )
+
+   1.  The Attester includes the verifier-nonce in checkpoint key 17.
+
+   2.  The Verifier checks that the nonce in the submitted checkpoint
+       matches the nonce it issued.
+
+16.11.2.  Security Properties
+
+   The verifier-nonce is strictly stronger than beacon anchoring
+   because:
+
+   *  The nonce is chosen by the Verifier specifically for this Attester
+      and checkpoint, with full 256-bit entropy.
+
+   *  The Attester cannot predict the nonce (it is revealed only after
+      the preceding checkpoint is submitted).
+
+   *  The Attester cannot precompute the SWF because the seed depends on
+      the nonce.
+
+   *  No dependency on external beacon services or network availability.
+
+   The verifier-nonce creates a strict request-response dependency
+   chain: the Verifier controls the pace of checkpoint production by
+   controlling nonce release timing.  This is appropriate for real-time
+   supervised authoring but not for offline or asynchronous workflows.
+
+   When both verifier-nonce and beacon-anchoring are used, the seed MUST
+   incorporate both values.  The two mechanisms are complementary: the
+   nonce provides per-Attester freshness, while the beacon provides
+   publicly verifiable temporal ordering.
+
+16.12.  Security Bound
 
    An adversary who skips fraction f of steps will be detected with
    probability 1-(1-f)^k where k is the number of sampled proofs.  With
@@ -2145,12 +2502,102 @@ Table of Contents
    that biases all k samples away from skipped steps requires inverting
    H, which is computationally infeasible under standard assumptions.
 
-16.11.  Hardware-Anchored Time (HAT)
+16.12.1.  Seed Grinding Resistance
 
-   In T3/T4 tiers, the AE MUST anchor the SWF seed to the TPM Monotonic
-   Counter.  This prevents "SWF Speed-up" attacks by ensuring that the
-   temporal proof is bound to the hardware's internal perception of
-   time.
+   A grinding adversary may try multiple seeds, selecting one where the
+   Fiat-Shamir samples avoid skipped steps.  This strategy is strictly
+   anti-profitable for all skip fractions and sample counts:
+
+   Theorem: For any fraction f in (0,1) of skipped steps and sample
+   count k >= 2, the expected total work of a grinding adversary
+   strictly exceeds honest computation.
+
+   Proof sketch: Let n be the step count.  Per grinding trial, the
+   adversary computes a new seed (negligible cost), executes (1-f)*n
+   steps honestly, fills f*n positions with invalid data, builds the
+   Merkle tree, and derives sample positions.  The probability of all k
+   samples missing skipped positions is (1-f)^k per trial.  The expected
+   number of trials is (1-f)^{-k}. The expected total work is:
+
+   W_grind = (1-f)*n * (1-f)^{-k} = n * (1-f)^{1-k}
+
+   Since k >= 2, the exponent (1-k) <= -1, so (1-f)^{1-k} = 1 /
+   (1-f)^{k-1} > 1 for all f in (0,1).  Therefore W_grind > n =
+   W_honest.
+
+   The grinding overhead is multiplicative and grows rapidly: for k=20
+   and f=0.10, W_grind is approximately 8.2n (8.2x honest work); for
+   k=100 and f=0.05, W_grind is approximately 131n.  Grinding is
+   counterproductive because each trial requires computing the full
+   honest chain to obtain the Merkle root from which sample positions
+   are derived, but the savings from skipping are sublinear in the trial
+   count.  This result holds regardless of the adversary's computational
+   resources.
+
+16.13.  Hardware-Anchored Time (HAT)
+
+   In T3/T4 tiers, the AE MUST construct a HAT proof bracketing each SWF
+   computation to bind the temporal claim to the TPM's internal clock.
+   This prevents "SWF Speed-up" attacks by ensuring that the temporal
+   proof is bound to hardware-attested time that the adversarial
+   Attester cannot compress or manipulate.
+
+16.13.1.  HAT Proof Construction
+
+   The Attester MUST obtain TPM-attested time readings before and after
+   each SWF computation:
+
+   T_before = TPM2_GetTime(aikHandle)
+   seed = H("PoP-SWF-Seed-v1" || ... || T_before.attestation)
+   ... execute SWF ...
+   T_after = TPM2_GetTime(aikHandle)
+
+   The HAT proof structure is:
+
+   hat-proof = {
+       1 => bstr,     ; time-before (TPMS_TIME_ATTEST_INFO)
+       2 => bstr,     ; time-after (TPMS_TIME_ATTEST_INFO)
+       3 => bstr,     ; sig-before (AIK signature)
+       4 => bstr,     ; sig-after (AIK signature)
+   }
+
+   The Attester MUST include the hat-proof in checkpoint key 15.  The
+   SWF seed derivation (Section 16.4) MUST incorporate the
+   T_before.attestation value, binding the SWF computation to the pre-
+   SWF TPM clock reading.
+
+16.13.2.  HAT Verification
+
+   The Verifier MUST perform the following checks on HAT proofs:
+
+   1.  Verify both signatures (sig-before, sig-after) against the AIK
+       public key from the TPM Endorsement hierarchy.
+
+   2.  Verify that resetCount is identical in both time-before and time-
+       after attestations, confirming no platform reboot occurred
+       between measurements.
+
+   3.  Verify T_before.clockInfo.safe is true, confirming the TPM clock
+       was not disturbed.
+
+   4.  Verify the time delta: T_after.clock - T_before.clock MUST be
+       greater than or equal to the expected SWF duration for the
+       declared steps and parameters.  This bounds the minimum
+       computation time to what the TPM's hardware clock observed.
+
+   5.  Verify that process-proof.input (seed) incorporates
+       T_before.attestation as specified in Section 16.4.
+
+   6.  For checkpoints after the first, verify T_before.clock is
+       strictly greater than the preceding checkpoint's T_after.clock,
+       ensuring temporal chain continuity at the hardware level.
+
+   The temporal sandwich bounds both acceleration (the SWF cannot
+   complete in less time than the TPM clock interval) and replay (the
+   TPM clock is monotonic and the resetCount check detects reboots).
+   Combined with Mode 21 cryptographic entanglement, this creates a
+   double-layered temporal chain: hardware-attested time intervals AND
+   cryptographic sequential dependency.
 
 17.  Experimental Status Rationale
 
@@ -2182,6 +2629,13 @@ Table of Contents
        tool provider key discovery mechanism that is deferred to a
        companion document.  The EAT profile and SEAT integration points
        reference specifications that are themselves in development.
+
+   5.  _Forensic thresholds:_ The MUST-level forensic flagging
+       thresholds in [PoP-Appraisal] (spectral flatness, CLC
+       correlation, CoV bounds, etc.) ensure interoperable Verifier
+       behavior for initial deployments but may be relaxed to SHOULD in
+       a future revision based on false positive analysis across diverse
+       author populations.
 
    Implementers are encouraged to report deployment experience,
    particularly regarding SWF performance on diverse hardware, false
@@ -2251,8 +2705,8 @@ Table of Contents
 
 18.4.  Media Types
 
-   This document requests registration of the following media types per
-   RFC 6838:
+   This document requests provisional registration of the following
+   media types in the Standards tree per [RFC6838]:
 
    application/cpop+cbor:
 
@@ -2264,16 +2718,47 @@ Table of Contents
 
    Optional parameters:  none
 
-   Encoding considerations:  binary (CBOR)
+   Encoding considerations:  binary (CBOR, [RFC8949])
 
-   Security considerations:  See Section 19 of this document
+   Security considerations:  See Section 19 of this document.  PoP
+      Evidence Packets contain cryptographic hashes and timing data but
+      no document content.  Receivers MUST validate CBOR structure
+      before processing.  Evidence Packets may contain privacy-sensitive
+      behavioral data (keystroke timing).
 
-   Interoperability considerations:  See Section 15 of this document
+   Interoperability considerations:  See Section 15 of this document.
+      Evidence Packets are CBOR-encoded maps tagged with CBOR tag
+      1129336656.
 
    Published specification:  [this document]
 
-   Person and email address to contact:  David Condrey
-      (david@writerslogic.com)
+   Applications that use this media type:  Authorship attestation
+      systems, content provenance platforms, digital forensics tools,
+      and publishing workflow systems that generate or consume PoP
+      Evidence Packets.
+
+   Fragment identifier considerations:  N/A; this media type does not
+      define fragment identifiers.
+
+   Additional information:  Deprecated alias names for this type:  N/A
+
+                            Magic number(s):  N/A (identified by CBOR
+         tag 1129336656)
+
+                            File extension(s):  .cpop
+
+                            Macintosh file type code(s):  N/A
+
+   Person & email address to contact for further information:  David
+      Condrey (david@writerslogic.com)
+
+   Intended usage:  COMMON
+
+   Restrictions on usage:  none
+
+   Author:  David Condrey
+
+   Change controller:  David Condrey (david@writerslogic.com)
 
    application/cwar+cbor:
 
@@ -2285,27 +2770,56 @@ Table of Contents
 
    Optional parameters:  none
 
-   Encoding considerations:  binary (CBOR)
+   Encoding considerations:  binary (CBOR, [RFC8949])
 
-   Security considerations:  See [PoP-Appraisal]
+   Security considerations:  See [PoP-Appraisal].  Attestation Results
+      contain forensic assessment outcomes and forgery cost estimates.
+      Receivers MUST validate CBOR structure and COSE signatures before
+      relying on verdict fields.
 
-   Interoperability considerations:  See [PoP-Appraisal]
+   Interoperability considerations:  See [PoP-Appraisal].  Attestation
+      Results are CBOR-encoded maps tagged with CBOR tag 1129791826.
 
    Published specification:  [this document], [PoP-Appraisal]
 
-   Person and email address to contact:  David Condrey
-      (david@writerslogic.com)
+   Applications that use this media type:  Authorship verification
+      systems, content trust platforms, and relying party applications
+      that consume PoP Attestation Results (Cryptographic Writers
+      Authenticity Reports).
+
+   Fragment identifier considerations:  N/A; this media type does not
+      define fragment identifiers.
+
+   Additional information:  Deprecated alias names for this type:  N/A
+
+                            Magic number(s):  N/A (identified by CBOR
+         tag 1129791826)
+
+                            File extension(s):  .cwar
+
+                            Macintosh file type code(s):  N/A
+
+   Person & email address to contact for further information:  David
+      Condrey (david@writerslogic.com)
+
+   Intended usage:  COMMON
+
+   Restrictions on usage:  none
+
+   Author:  David Condrey
+
+   Change controller:  David Condrey (david@writerslogic.com)
 
 18.5.  TLS Exporter Label
 
-   This document registers the following TLS exporter label in the "TLS
-   Exporter Labels" registry defined in [RFC5705]:
+   This document requests registration of the following TLS exporter
+   label in the "TLS Exporter Labels" registry defined in [RFC5705]:
 
    Value:  EXPORTER-PoP-channel-binding
 
    DTLS-OK:  Y
 
-   Recommended:  Y
+   Recommended:  N
 
    Reference:  [this document]
 
@@ -2334,7 +2848,43 @@ Table of Contents
    adversarial Attester as the primary threat actor.  Detailed forensic
    security analysis is provided in [PoP-Appraisal].
 
-19.1.  Primary Threat: Adversarial Attester
+19.1.  Security Layer Model
+
+   PoP security guarantees operate at three distinct layers with
+   different assurance properties.  Verifiers MUST NOT treat lower
+   layers as providing the formal guarantees of higher layers.
+
+   Layer 1, Temporal Binding (Cryptographic):  The SWF forces minimum
+      real wall-clock cost derivable from Argon2id memory-hardness
+      [RFC9106] and the sequential dependency chain.  With entangled
+      mode at 50% duty cycle, forging N hours of Evidence requires
+      approximately N/2 hours of computation at minimum.  This is a
+      formal, quantifiable guarantee independent of behavioral signal
+      quality.
+
+   Layer 2, Behavioral Analysis (Statistical):  SNR, CLC, error
+      topology, cadence analysis, and session consistency mechanisms
+      detect fabricated behavioral data and raise the practical cost of
+      forgery.  These mechanisms provide defense-in-depth but carry no
+      formal cryptographic guarantee.  Thresholds are grounded in the
+      keystroke dynamics literature
+      [Monrose2000][Monaco2018][Salthouse1986][Dhakal2018] and
+      calibrated against real-world composition data
+      [ScholaWrite][ScholaWriteAugmented].  Single-feature timing
+      approaches are demonstrably insecure [Condrey2026Attack]; the
+      multi-dimensional cross-domain entanglement architecture is a
+      direct response to those attack classes.
+
+   Layer 3, Hardware Attestation (Physical):  T3/T4 non-repudiation via
+      hardware roots of trust provides physical freshness markers non-
+      reproducible by the Attester operator.
+
+   The forgery cost estimates in the WAR derive from Layer 1 and Layer 3
+   only.  Layer 2 mechanisms inform the forensic-summary and forensic-
+   flag fields but do not contribute to the C_swf or C_hardware cost
+   bounds.
+
+19.2.  Primary Threat: Adversarial Attester
 
    Unlike traditional remote attestation where external adversaries
    threaten system integrity, PoP's primary threat is the Attester
@@ -2356,7 +2906,7 @@ Table of Contents
    *  Trust in Evidence scales with the Attestation Tier and the cost of
       bypassing its guarantees
 
-19.2.  Retype Attack Defenses
+19.3.  Retype Attack Defenses
 
    The retype attack (see Section 8.3.1) is the canonical forgery
    vector.  Defenses are layered:
@@ -2368,21 +2918,22 @@ Table of Contents
    Error Topology Analysis:  Authentic authoring produces characteristic
       error patterns: corrections localized near recent insertions,
       deletion-to-insertion ratios consistent with human cognitive
-      models [Salthouse1986], and fractal self-similarity in revision
-      patterns.  Retyping produces either unnaturally low error rates or
-      randomly distributed artificial errors.
+      models [Salthouse1986][ScholaWrite][ScholaWriteAugmented], and
+      fractal self-similarity in revision patterns.  Retyping produces
+      either unnaturally low error rates or randomly distributed
+      artificial errors.
 
    Temporal Cost:  Even successful retype attacks require real-time
       effort.  A 5,000-word document with 10-second checkpoint intervals
       requires 8+ hours of continuous typing effort to forge.  The
       attack does not scale economically for high-volume forgery.
 
-   Relying Parties SHOULD be aware that retype attacks remain viable for
-   short documents or high-value targets willing to invest real time.
-   PoP provides graduated assurance proportional to document length and
-   checkpoint density.
+   Relying Parties need to be aware that retype attacks remain viable
+   for short documents or high-value targets willing to invest real
+   time.  PoP provides graduated assurance proportional to document
+   length and checkpoint density.
 
-19.3.  Relay and Replay Attack Defenses
+19.4.  Relay and Replay Attack Defenses
 
    As defined in Section 8.3.2 and Section 8.3.3, these attacks are
    defeated through Physical Freshness anchors binding Evidence to non-
@@ -2400,7 +2951,7 @@ Table of Contents
    stale, inconsistent with timestamps, or exhibit patterns suggesting
    simulation.
 
-19.4.  SWF Acceleration Defenses
+19.5.  SWF Acceleration Defenses
 
    As analyzed in Section 8.3.4, specialized hardware attacks are
    mitigated by:
@@ -2409,17 +2960,21 @@ Table of Contents
       Argon2id evaluation bounded by memory bandwidth (approximately 50
       GB/s for DDR5), not ALU throughput.  ASICs provide minimal
       advantage per step, and this resistance compounds across all steps
-      in the chain.
+      in the chain.  For mode 10, memory-hard waypoints (Section 16.1)
+      bound the ASIC advantage at waypoint steps to the Argon2id limit.
 
-   *  _Hardware-Anchored Time (T3/T4):_ SWF seeds are bound to TPM
-      monotonic counters, preventing time compression even with faster
-      computation.
+   *  _Hardware-Anchored Time (T3/T4):_ The HAT temporal sandwich
+      protocol (Section 16.13) brackets each SWF computation with TPM-
+      attested clock readings, preventing time compression even with
+      faster computation.  The Verifier checks that the TPM clock delta
+      meets or exceeds the expected SWF duration.
 
    *  _Merkle sampling:_ Skipping SWF steps is detected
       probabilistically.  With k=100 samples, skipping 5% of steps has
-      >99.4% detection probability.
+      >99.4% detection probability.  Seed grinding does not improve the
+      adversary's position (Section 16.12.1).
 
-19.5.  Trust Gradation by Tier
+19.6.  Trust Gradation by Tier
 
    Relying Parties SHOULD interpret Evidence according to its
    Attestation Tier.  Detailed per-tier verification constraints are
@@ -2443,7 +2998,7 @@ Table of Contents
 
                                  Table 6
 
-19.6.  Forgery Cost Bounds
+19.7.  Forgery Cost Bounds
 
    Implementations SHOULD report quantified forgery cost estimates in
    Attestation Results.  For CORE profile with swf-argon2id (90 steps,
@@ -2471,7 +3026,46 @@ Table of Contents
    checkpoint count due to session consistency requirements across the
    behavioral dimensions.
 
-19.7.  Denial of Service
+19.7.1.  ASIC Advantage Analysis
+
+   The ASIC advantage for Argon2id-based SWF modes is bounded by three
+   independent factors:
+
+   Time-Memory Tradeoff (TMTO):  Single-pass Argon2id (t=1) permits at
+      most ~2x reduction in time-area product via ranking-based tradeoff
+      attacks (Alwen-Blocki 2016).  Multi-pass reduces this to ~1.33x
+      ([RFC9106], Section 7).  PoP uses t=1 because the TMTO advantage
+      is offset by the multiplicative effect of iterated evaluations: an
+      adversary gaining 2x per step gains 2x overall (not 2^steps),
+      while t>1 would reduce Attester throughput and therefore the
+      achievable step count per checkpoint interval.
+
+   Memory Bandwidth:  Each Argon2id step is bounded by memory bandwidth,
+      not ALU throughput.  Consumer DDR4 provides ~25 GB/s; DDR5
+      provides ~50 GB/s.  HBM3 (available in datacenter ASICs) provides
+      ~800 GB/s per stack but at approximately 100x the cost per device.
+      The effective economic advantage is approximately 3-4x when
+      amortized over device cost.
+
+   Silicon Optimization:  Custom Argon2id ASICs can eliminate
+      instruction decode overhead and optimize the Blake2b core,
+      providing an estimated 1.5-2x advantage over general-purpose CPUs
+      for the same memory bandwidth.
+
+   Combined Advantage:  The multiplicative combination of these factors
+      yields an upper bound of approximately 8-16x for a fully optimized
+      ASIC versus consumer DDR4 hardware.  However, the economic cost of
+      such hardware ensures that the forgery cost in USD remains
+      substantial.  Verifiers SHOULD use a conservative ASIC advantage
+      factor of 10x when computing c-swf in forgery-cost-estimate.
+
+   For swf-sha256 (Mode 10) SHA-256 iterations between waypoints, the
+   ASIC advantage exceeds 10,000x.  The memory-hard waypoints
+   (Section 16.1) ensure that the effective ASIC advantage over a full
+   Mode 10 chain is bounded by the Argon2id advantage at waypoint steps,
+   since waypoints dominate the total computation time.
+
+19.8.  Denial of Service
 
    SWF verification is asymmetric: Merkle-sampled proofs verify in O(k)
    versus O(n) generation, where k is the sample count and n is the step
@@ -2482,27 +3076,59 @@ Table of Contents
    Implementations SHOULD implement rate limiting on Evidence
    submission.
 
-19.8.  MAC Field Security Limitations
+19.9.  Consistency Binding Limitations
 
-   The entangled-mac and jitter-seal fields are HMAC values keyed from
-   the SWF output.  In the adversarial Attester model, the Attester
-   generates the SWF output and therefore knows the MAC key.  An
-   adversarial Attester can compute valid MACs over fabricated data
-   (synthetic jitter, manufactured physical state).  These fields
-   provide internal consistency checking but do NOT prevent forgery by
-   the Attester.  Their value is limited to:
+   The entangled-binding and jitter-tag fields are HMAC values keyed
+   from the SWF output via a two-stage HKDF hierarchy (Section 16.8.1).
+   In the adversarial Attester model, the Attester generates the SWF
+   output and therefore knows the binding keys.  An adversarial Attester
+   can compute valid bindings over fabricated data (synthetic jitter,
+   manufactured physical state).  These fields provide internal
+   consistency checking but do not prevent forgery by the Attester.
+   Their value is limited to:
 
    *  Binding data fields to the SWF computation within an honestly-
-      generated checkpoint
+      generated checkpoint, ensuring the data was committed at
+      checkpoint-generation time (when the SWF output was computed)
+      rather than substituted afterward
 
-   *  Providing internal consistency verification (note: the MAC keys
-      are derivable from the public merkle-root field; these MACs do not
-      provide third-party tamper detection)
+   *  Providing internal consistency verification (note: the binding
+      keys are derivable from the public merkle-root field; these
+      bindings do not provide third-party tamper detection)
 
    *  In T3/T4 tiers, the packet-level hardware-bound signature (see
       Section 11) provides the actual integrity guarantee
 
-19.9.  Physical Freshness by Tier
+   *  When beacon-anchoring (Section 16.10) is used, the binding keys
+      incorporate externally-verifiable randomness, providing temporal
+      anchoring even without hardware attestation
+
+19.10.  Edit Graph Commitment Limitations
+
+   The edit-graph-hash (Section 15.1) entangles editing trajectory data
+   into the SWF seed, binding the claimed editing pattern to the SWF
+   time proof.  This binding ensures that an adversary cannot substitute
+   a different editing pattern after SWF computation without recomputing
+   the entire chain.
+
+   However, the edit graph commitment does not prove that the committed
+   data reflects genuine human authoring.  In T1/T2 tiers, the
+   adversarial Attester controls the Attestation Environment and can
+   fabricate plausible cursor positions, revision depths, and pause
+   durations before computing the SWF.  The edit-graph-hash adds one
+   additional dimension of data that must be fabricated consistently,
+   but does not create a cryptographic barrier to fabrication.
+
+   The MAXIMUM-tier histograms (Section 15.2) enable statistical
+   analysis of editing patterns by Verifiers.  These histograms may
+   reveal anomalies such as unnaturally uniform distributions, missing
+   burstiness in pause patterns, or zero revision depth across all
+   regions.  Such statistical tests are probabilistic and can be
+   defeated by a sufficiently sophisticated adversary.  Verifiers SHOULD
+   treat histogram analysis as one signal among many, not as definitive
+   authentication.
+
+19.11.  Physical Freshness by Tier
 
    In T1 (Software-Only) and T2 (Attested Software) tiers, the Attester
    controls all software including the operating system.  Physical state
@@ -2517,7 +3143,7 @@ Table of Contents
    T3/T4 tiers where hardware attestation binds physical state readings
    to a trusted execution environment.
 
-19.10.  Implementation Security Requirements
+19.12.  Implementation Security Requirements
 
    Conforming implementations MUST:
 
@@ -2538,7 +3164,7 @@ Table of Contents
 
    *  Verify platform integrity before Evidence generation
 
-19.11.  Signing Key Lifecycle and Rotation
+19.13.  Signing Key Lifecycle and Rotation
 
    For T1/T2 tiers where signing keys are software-managed, the Attester
    SHOULD implement a key rotation policy to limit the impact of key
@@ -2706,6 +3332,10 @@ Table of Contents
               DOI 10.17487/RFC9106, September 2021,
               <https://www.rfc-editor.org/rfc/rfc9106>.
 
+   [RFC9266]  Whited, S., "Channel Bindings for TLS 1.3", RFC 9266,
+              DOI 10.17487/RFC9266, July 2022,
+              <https://www.rfc-editor.org/rfc/rfc9266>.
+
    [RFC9334]  Birkholz, H., Thaler, D., Richardson, M., Smith, N., and
               W. Pan, "Remote ATtestation procedureS (RATS)
               Architecture", RFC 9334, DOI 10.17487/RFC9334, January
@@ -2740,6 +3370,18 @@ Table of Contents
               <https://c2pa.org/specifications/specifications/2.2/specs/
               C2PA_Specification.html>.
 
+   [Condrey2026Attack]
+              Condrey, D., "On the Insecurity of Keystroke-Based AI
+              Authorship Detection: Timing-Forgery Attacks Against
+              Motor-Signal Verification", arXiv 2601.17280, 2026,
+              <https://arxiv.org/abs/2601.17280>.
+
+   [Dhakal2018]
+              Dhakal, V., Feit, A.M., Kristensson, P.O., and A.
+              Oulasvirta, "Observations on Typing from 136 Million
+              Keystrokes", ACM CHI 2018, 2018,
+              <https://doi.org/10.1145/3173574.3174220>.
+
    [Dolev-Yao]
               Dolev, D. and A. Yao, "On the Security of Public Key
               Protocols", IEEE Transactions on Information Theory 29(2),
@@ -2747,6 +3389,11 @@ Table of Contents
 
    [GPTZero]  GPTZero, Inc., "GPTZero: AI Detection and Writing Process
               for Google Docs", 2025, <https://gptzero.me/chrome>.
+
+   [HaberStornetta1991]
+              Haber, S. and W.S. Stornetta, "How to Time-Stamp a Digital
+              Document", Journal of Cryptology 3(2), 99-111, 1991,
+              <https://doi.org/10.1007/BF00196791>.
 
    [HHS-AI-RFI]
               U.S. Department of Health and Human Services, Office of
@@ -2762,6 +3409,17 @@ Table of Contents
               "GPT Detectors Are Biased Against Non-Native English
               Writers", Patterns 4(7), 100779, July 2023,
               <https://doi.org/10.1016/j.patter.2023.100779>.
+
+   [Monaco2018]
+              Monaco, J.V., "SoK: Keylogging Side Channels", IEEE
+              Symposium on Security and Privacy pp. 211-228, 2018,
+              <https://doi.org/10.1109/SP.2018.00026>.
+
+   [Monrose2000]
+              Monrose, F. and A. Rubin, "Keystroke Dynamics as a
+              Biometric for Authentication", Future Generation Computer
+              Systems 16(4), 351-359, 2000,
+              <https://doi.org/10.1016/S0167-739X(99)00059-X>.
 
    [NIST-AI-Agents-RFI]
               National Institute of Standards and Technology, "Request
@@ -2795,15 +3453,20 @@ Table of Contents
               DOI 10.17487/RFC3552, July 2003,
               <https://www.rfc-editor.org/rfc/rfc3552>.
 
+   [RFC6838]  Freed, N., Klensin, J., and T. Hansen, "Media Type
+              Specifications and Registration Procedures", BCP 13,
+              RFC 6838, DOI 10.17487/RFC6838, January 2013,
+              <https://www.rfc-editor.org/rfc/rfc6838>.
+
+   [RFC6962]  Laurie, B., Langley, A., and E. Kasper, "Certificate
+              Transparency", RFC 6962, DOI 10.17487/RFC6962, June 2013,
+              <https://www.rfc-editor.org/rfc/rfc6962>.
+
    [RFC6973]  Cooper, A., Tschofenig, H., Aboba, B., Peterson, J.,
               Morris, J., Hansen, M., and R. Smith, "Privacy
               Considerations for Internet Protocols", RFC 6973,
               DOI 10.17487/RFC6973, July 2013,
               <https://www.rfc-editor.org/rfc/rfc6973>.
-
-   [RFC9266]  Whited, S., "Channel Bindings for TLS 1.3", RFC 9266,
-              DOI 10.17487/RFC9266, July 2022,
-              <https://www.rfc-editor.org/rfc/rfc9266>.
 
    [Salthouse1986]
               Salthouse, T.A., "Perceptual, Cognitive, and Motoric
@@ -2817,6 +3480,19 @@ Table of Contents
               Internet-Draft, draft-sardar-rats-sec-cons-02, February
               2026, <https://datatracker.ietf.org/doc/html/draft-sardar-
               rats-sec-cons-02>.
+
+   [ScholaWrite]
+              Wang, L., Lee, M., Volkov, R., and D. Kang, "ScholaWrite:
+              A Dataset of End-to-End Scholarly Writing Process",
+              arXiv 2502.02904, 2025,
+              <https://arxiv.org/abs/2502.02904>.
+
+   [ScholaWriteAugmented]
+              Condrey, D., "ScholaWrite-Augmented: Revision-Tracked
+              Scholarly Writing Dataset with Annotated External
+              Insertion Events", GitHub writerslogic/scholawrite-
+              augmented, 2026,
+              <https://github.com/writerslogic/scholawrite-augmented>.
 
    [SEAT-EXPAT]
               Sardar, M.U., Fossati, T., Reddy, T., Sheffer, Y.,
@@ -2845,54 +3521,67 @@ SWF Test Vectors
 
    The following test vectors validate SWF implementations.
 
+   These test vectors use the type-tagged salt derivation (0x00/0x01
+   prefixes) and memory-hard waypoints for Mode 10 as specified in
+   Section 16.1.  All vectors use SHA-256 (hash-algorithm value 1).
+
 swf-sha256 (Mode 10) Test Vector
 
-   NOTE: This vector uses SHA-256 (hash-algorithm value 1) and the swf-
-   sha256 construction: one Argon2id initialization followed by iterated
-   SHA-256 hashing.  The salt is derived as H("PoP-salt" || seed) where
-   H is SHA-256.
+   NOTE: This vector uses the swf-sha256 construction with memory-hard
+   waypoints (W=1000, waypoint-memory=32768 KiB): Argon2id
+   initialization, then iterated SHA-256 with Argon2id waypoints at
+   every 1000th step.  The initial salt uses the type-tagged derivation
+   H(0x00 || "PoP-salt-v1" || seed).  Waypoint salts use H(0x01 || "PoP-
+   salt-v1" || I2OSP(i, 4)).
 
    Seed: "witnessd-genesis-v1"
    Seed (hex): 7769746e657373642d67656e657369732d7631
-   Salt: H("PoP-salt" || seed)  [H = SHA-256 for this vector]
+   Salt: H(0x00 || "PoP-salt-v1" || seed)  [H = SHA-256]
 
-   Argon2id Parameters:
+   Argon2id Parameters (initialization):
      Time Cost (t): 1
      Memory Cost (m): 65536 KiB
      Parallelism (p): 1
      Output Length: 32 bytes
 
-   Steps: 10,000
+   Argon2id Parameters (waypoints):
+     Time Cost (t): 1
+     Memory Cost (m): 32768 KiB
+     Parallelism (p): 1
+     Output Length: 32 bytes
 
-   Salt (hex): c5de0ba53fa83ab477ead9013bfca978
-                339e5072882cafb3d0efc8cc40299155
+   Steps: 10,000
+   Waypoint Interval (W): 1000
+
+   Salt (hex): 966efc16acdedf88bd3b841d9576d6b9
+                5b3a58dfba2d9b2087b6f02da126d296
 
    Intermediate States:
      state_0 (Argon2id):
-       a40e0f73832f88dc8bfe5f8956fff4a0
-       ad2fc4de5455e9d85497c6083b3b1802
-     state_1000 (SHA-256 chain):
-       c727ead9631eef95ca9a5976a947f71a
-       6f4f29a5c80aa2dc7f120f9a4193d7b4
-     state_5000:
-       d6cba1225d1a2d25dddecfcf2d473020
-       a19df736878f40ccdfb9334df5af58a5
-     state_9999:
-       d7482a780c9e89c787f1ff1e2c566b7b
-       536260e37d24c539e46de1598321aea2
-     state_10000 (final):
-       e445a3cdc8152d66c71366d22b2c5975
-       cff4d0c8ee6ec0e76515b04d143bd148
+       55518d63068b5f245d9dccf5919cbcdc
+       1fa1b3256e89a5c1eb7a7b37609b323f
+     state_1000 (waypoint, Argon2id):
+       f880ebfd403904f134c8ddaaa85e21dd
+       4803293a8e5eb95eafe7ec88944f28c6
+     state_5000 (waypoint, Argon2id):
+       f9884b1c4bd487cda521ee3476079ae1
+       8be449a086ec06ffbd4f8b09c75ad9f9
+     state_9999 (SHA-256):
+       b0ccd34431edab8f4fe568bee0fa4bdd
+       ac971a3d7057bf23d33097d87eb81968
+     state_10000 (waypoint, Argon2id, final):
+       19cbc991d4f154f47f912aa232a0c36b
+       c9f205c6cc1609984a142c9bd1f745a7
 
 swf-argon2id (Mode 20) Test Vector
 
-   NOTE: This vector uses SHA-256 (hash-algorithm value 1) and the swf-
-   argon2id construction: iterated Argon2id evaluations.  Each step
-   feeds the previous state as the password input.  The salt for step i
-   >= 1 is H("PoP-salt" || I2OSP(i, 4)).  Implementers should verify
+   NOTE: This vector uses the swf-argon2id construction: iterated
+   Argon2id evaluations with type-tagged salts.  Each step feeds the
+   previous state as the password input.  The salt for state_0 is
+   H(0x00 || "PoP-salt-v1" || seed).  The salt for step i >= 1 is
+   H(0x01 || "PoP-salt-v1" || I2OSP(i, 4)).  Implementers should verify
    state_0 matches the swf-sha256 vector above (identical Argon2id
-   initialization), then verify state_1 to confirm the iterated
-   construction.
+   initialization).
 
    Seed: "witnessd-genesis-v1"
    Seed (hex): 7769746e657373642d67656e657369732d7631
@@ -2906,21 +3595,22 @@ swf-argon2id (Mode 20) Test Vector
    Steps: 3
 
    Intermediate States:
-     state_0 (Argon2id, seed as password):
-       a40e0f73832f88dc8bfe5f8956fff4a0
-       ad2fc4de5455e9d85497c6083b3b1802
+     state_0 (Argon2id, seed as password,
+              salt=H(0x00 || "PoP-salt-v1" || seed)):
+       55518d63068b5f245d9dccf5919cbcdc
+       1fa1b3256e89a5c1eb7a7b37609b323f
      state_1 (Argon2id, state_0 as password,
-              salt=H("PoP-salt" || I2OSP(1, 4))):
-       381cb3958af8f1cae818b56d52611ebf
-       63790f81c8fd25d31a4255ae861de62d
+              salt=H(0x01 || "PoP-salt-v1" || I2OSP(1, 4))):
+       6a6df1cfbce07c09036526e19f7b6e73
+       ef2ce911d1ea77a66bb23bde5b033a79
      state_2 (Argon2id, state_1 as password,
-              salt=H("PoP-salt" || I2OSP(2, 4))):
-       ba72607209114f46c076db653bf06d8a
-       8aa6038acb32293d1f1004d68ca24c1e
+              salt=H(0x01 || "PoP-salt-v1" || I2OSP(2, 4))):
+       bfa124c53651b2aedc79f48ec562342f
+       91efc8bc61cd8f833a5e63efbb41af44
      state_3 (Argon2id, state_2 as password,
-              salt=H("PoP-salt" || I2OSP(3, 4))):
-       d2c7c5589636bbd5d71c13e66be2d737
-       71b4bfbded2e3cdfd1a9a4c8c352e745
+              salt=H(0x01 || "PoP-salt-v1" || I2OSP(3, 4))):
+       bdd55e641b507d2d2d49cb67cb34c78d
+       92952ce025ef1b22a906f4721bcceb7c
 
 Acknowledgements
 
