@@ -1481,7 +1481,7 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
           <p id="section-4-2.3.1"><em>Temporal Order:</em> For each process-proof, recompute Argon2id from the declared seed to obtain state_0, then verify sampled Merkle proofs against the committed root (process-proof key 4, merkle-root). Verify that claimed-duration is within [0.5x, 3.0x] of the expected wall-clock time for the declared proof-params on reference hardware (defined as a system with DDR4 memory providing approximately 25 GB/s sustained bandwidth). Expected times are defined in <span>[<a href="#PoP-Protocol" class="cite xref">PoP-Protocol</a>]</span>, Mandatory SWF Parameters section. When comparing timestamps across devices or against external time sources, the clock skew tolerances defined in <a href="#clock-skew-tolerance" class="auto internal xref">Section 4.1</a> <span class="bcp14">MUST</span> be applied.<a href="#section-4-2.3.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-4-2.4">
-          <p id="section-4-2.4.1"><em>Entropy Threshold:</em> Independently estimate entropy from the jitter-binding intervals array using a standard entropy estimator (e.g., NIST SP 800-90B most common value estimator). Verify the independent estimate meets or exceeds 3.0 bits per inter-keystroke interval. The Attester's self-reported entropy-estimate field <span class="bcp14">MUST NOT</span> be relied upon. Low-entropy segments (below threshold) <span class="bcp14">MUST</span> be flagged as "Non-Biological."<a href="#section-4-2.4.1" class="pilcrow">¶</a></p>
+          <p id="section-4-2.4.1"><em>Entropy Threshold:</em> Independently estimate entropy from the jitter-binding intervals array using a standard entropy estimator (e.g., NIST SP 800-90B most common value estimator). Verify the independent estimate meets or exceeds 3.0 bits per inter-keystroke interval <span>[<a href="#Dhakal2018" class="cite xref">Dhakal2018</a>]</span>. The Attester's self-reported entropy-estimate field <span class="bcp14">MUST NOT</span> be relied upon. Low-entropy segments (below threshold) <span class="bcp14">MUST</span> be flagged as "Non-Biological."<a href="#section-4-2.4.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-4-2.5">
           <p id="section-4-2.5.1"><em>Entanglement:</em> Verify the HMAC value (entangled-binding) over the combined document, jitter, and physical state.<a href="#section-4-2.5.1" class="pilcrow">¶</a></p>
@@ -1596,7 +1596,7 @@ verdict (see the composite assessment procedure below).<a href="#section-5-2" cl
         <dd class="break"></dd>
 <dt id="section-5-3.3">Cognitive Load Correlation (CLC):</dt>
         <dd style="margin-left: 1.5em" id="section-5-3.4">
-          <p id="section-5-3.4.1">Verifiers <span class="bcp14">MUST</span> correlate timing patterns with semantic complexity. Human authors exhibit increased inter-keystroke intervals (IKI) and pause frequency during composition of semantically complex segments compared to simple connective text. Verifiers <span class="bcp14">MUST</span> compute the Pearson correlation between segment semantic complexity and mean IKI. Evidence with r &lt; 0.2 (or r &lt; 0.1 in assistive mode) <span class="bcp14">MUST</span> be flagged as a Semantic Mismatch.<a href="#section-5-3.4.1" class="pilcrow">¶</a></p>
+          <p id="section-5-3.4.1">Verifiers <span class="bcp14">MUST</span> correlate timing patterns with semantic complexity. Human authors exhibit increased inter-keystroke intervals (IKI) and pause frequency during composition of semantically complex segments compared to simple connective text <span>[<a href="#Dhakal2018" class="cite xref">Dhakal2018</a>]</span>. Verifiers <span class="bcp14">MUST</span> compute the Pearson correlation between segment semantic complexity and mean IKI. Evidence with r &lt; 0.2 (or r &lt; 0.1 in assistive mode) <span class="bcp14">MUST</span> be flagged as a Semantic Mismatch.<a href="#section-5-3.4.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-5-3.5">Mechanical Turk Detection:</dt>
@@ -1616,7 +1616,7 @@ verdict (see the composite assessment procedure below).<a href="#section-5-2" cl
         <dd class="break"></dd>
 <dt id="section-5-3.11">Session Consistency Analysis:</dt>
         <dd style="margin-left: 1.5em" id="section-5-3.12">
-          <p id="section-5-3.12.1">Verifiers <span class="bcp14">MUST</span> analyze cross-checkpoint behavioral trends. IKI distributions should exhibit gradual drift consistent with fatigue effects. An abrupt change is defined as a shift in mean IKI between consecutive checkpoints exceeding 2 standard deviations of the session-wide IKI distribution. Verifiers <span class="bcp14">MUST</span> flag transitions exceeding this threshold as potential data source switching. Jitter-binding intervals across consecutive checkpoints <span class="bcp14">MUST</span> be checked for statistical independence (cross-checkpoint correlation below 0.3). Edit-delta patterns <span class="bcp14">SHOULD</span> be checked for non-stationarity consistent with human creative flow.<a href="#section-5-3.12.1" class="pilcrow">¶</a></p>
+          <p id="section-5-3.12.1">Verifiers <span class="bcp14">MUST</span> analyze cross-checkpoint behavioral trends. IKI distributions should exhibit gradual drift consistent with fatigue effects <span>[<a href="#Dhakal2018" class="cite xref">Dhakal2018</a>]</span>. An abrupt change is defined as a shift in mean IKI between consecutive checkpoints exceeding 2 standard deviations of the session-wide IKI distribution. Verifiers <span class="bcp14">MUST</span> flag transitions exceeding this threshold as potential data source switching. Jitter-binding intervals across consecutive checkpoints <span class="bcp14">MUST</span> be checked for statistical independence (cross-checkpoint correlation below 0.3). Edit-delta patterns <span class="bcp14">SHOULD</span> be checked for non-stationarity consistent with human creative flow.<a href="#section-5-3.12.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-5-3.13">Spatial-Temporal Divergence (Informative):</dt>
@@ -1682,7 +1682,7 @@ time-delay coordinates, the Verifier can estimate the
 correlation dimension of the resulting trajectory. Biological
 motor control processes typically produce a low-dimensional
 attractor (dimension 2-5), reflecting the finite degrees of
-freedom in the neuromuscular system. Synthetic or AI-injected
+freedom in the neuromuscular system <span>[<a href="#Orden2003" class="cite xref">Orden2003</a>]</span>. Synthetic or AI-injected
 timing noise will typically fail to produce a low-dimensional
 biological attractor in the embedded space, instead exhibiting
 high or non-convergent correlation dimension estimates. This
@@ -1919,7 +1919,7 @@ where:
 <li class="normal" id="section-5.7-4.1">
             <p id="section-5.7-4.1.1">Human typing (composition): CoV 0.25-0.70, reflecting
 natural motor variance, micro-pauses for word selection,
-and variable key travel distances.<a href="#section-5.7-4.1.1" class="pilcrow">¶</a></p>
+and variable key travel distances <span>[<a href="#Dhakal2018" class="cite xref">Dhakal2018</a>]</span><span>[<a href="#Salthouse1986" class="cite xref">Salthouse1986</a>]</span>.<a href="#section-5.7-4.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.7-4.2">
             <p id="section-5.7-4.2.1">Human typing (transcription): CoV 0.15-0.40, more
@@ -3440,6 +3440,10 @@ include a warning in the Attestation Result warnings field
 <dt id="Monrose2000">[Monrose2000]</dt>
         <dd>
 <span class="refAuthor">Monrose, F.</span> and <span class="refAuthor">A. Rubin</span>, <span class="refTitle">"Keystroke dynamics as a biometric for authentication"</span>, <time datetime="2000" class="refDate">2000</time>, <span>&lt;<a href="https://doi.org/10.1016/S0167-739X(99)00059-X">https://doi.org/10.1016/S0167-739X(99)00059-X</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="Orden2003">[Orden2003]</dt>
+        <dd>
+<span class="refAuthor">Van Orden, G.C.</span>, <span class="refAuthor">Holden, J.G.</span>, and <span class="refAuthor">M.T. Turvey</span>, <span class="refTitle">"Self-Organization of Cognitive Performance"</span>, <span class="seriesInfo">Journal of Experimental Psychology: General 132(3), 331-350</span>, <time datetime="2003" class="refDate">2003</time>, <span>&lt;<a href="https://doi.org/10.1037/0096-3445.132.3.331">https://doi.org/10.1037/0096-3445.132.3.331</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9106">[RFC9106]</dt>
         <dd>

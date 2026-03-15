@@ -2919,9 +2919,9 @@ Table of Contents
       error patterns: corrections localized near recent insertions,
       deletion-to-insertion ratios consistent with human cognitive
       models [Salthouse1986][ScholaWrite][ScholaWriteAugmented], and
-      fractal self-similarity in revision patterns.  Retyping produces
-      either unnaturally low error rates or randomly distributed
-      artificial errors.
+      fractal self-similarity in revision patterns [Orden2003].
+      Retyping produces either unnaturally low error rates or randomly
+      distributed artificial errors.
 
    Temporal Cost:  Even successful retype attacks require real-time
       effort.  A 5,000-word document with 10-second checkpoint intervals
@@ -3427,6 +3427,12 @@ Table of Contents
               Artificial Intelligence Agents", Federal
               Register 2026-00206, January 2026,
               <https://www.regulations.gov/docket/NIST-2025-0035>.
+
+   [Orden2003]
+              Van Orden, G.C., Holden, J.G., and M.T. Turvey, "Self-
+              Organization of Cognitive Performance", Journal of
+              Experimental Psychology: General 132(3), 331-350, 2003,
+              <https://doi.org/10.1037/0096-3445.132.3.331>.
 
    [PoP-Appraisal]
               Condrey, D., "Cryptographic Proof of Process (PoP):
