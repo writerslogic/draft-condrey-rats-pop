@@ -70,6 +70,77 @@ informative:
     date: 2018
     seriesinfo:
       "IEEE Symposium on Security and Privacy (SP)": "pp. 211-228"
+  Dhakal2018:
+    title: "Observations on Typing from 136 Million Keystrokes"
+    target: https://doi.org/10.1145/3173574.3174220
+    author:
+      - fullname: Vivek Dhakal
+        initials: V.
+        surname: Dhakal
+      - fullname: Anna Maria Feit
+        initials: A.M.
+        surname: Feit
+      - fullname: Per Ola Kristensson
+        initials: P.O.
+        surname: Kristensson
+      - fullname: Antti Oulasvirta
+        initials: A.
+        surname: Oulasvirta
+    date: 2018
+    seriesinfo:
+      "ACM CHI": "2018"
+  ScholaWrite:
+    title: "ScholaWrite: A Dataset of End-to-End Scholarly Writing Process"
+    target: https://arxiv.org/abs/2502.02904
+    author:
+      - fullname: Linghe Wang
+        initials: L.
+        surname: Wang
+      - fullname: Minhwa Lee
+        initials: M.
+        surname: Lee
+      - fullname: Ross Volkov
+        initials: R.
+        surname: Volkov
+      - fullname: Dongyeop Kang
+        initials: D.
+        surname: Kang
+    date: 2025
+    seriesinfo:
+      arXiv: "2502.02904"
+  ScholaWriteAugmented:
+    title: "ScholaWrite-Augmented: Revision-Tracked Scholarly Writing Dataset with Annotated External Insertion Events"
+    target: https://github.com/writerslogic/scholawrite-augmented
+    author:
+      - fullname: David Condrey
+        initials: D.
+        surname: Condrey
+    date: 2026
+    seriesinfo:
+      GitHub: "writerslogic/scholawrite-augmented"
+  HaberStornetta1991:
+    title: "How to Time-Stamp a Digital Document"
+    target: https://doi.org/10.1007/BF00196791
+    author:
+      - fullname: Stuart Haber
+        initials: S.
+        surname: Haber
+      - fullname: W. Scott Stornetta
+        initials: W.S.
+        surname: Stornetta
+    date: 1991
+    seriesinfo:
+      "Journal of Cryptology": "3(2), 99-111"
+  Condrey2026Attack:
+    title: "On the Insecurity of Keystroke-Based AI Authorship Detection: Timing-Forgery Attacks Against Motor-Signal Verification"
+    target: https://arxiv.org/abs/2601.17280
+    author:
+      - fullname: David Condrey
+        initials: D.
+        surname: Condrey
+    date: 2026
+    seriesinfo:
+      arXiv: "2601.17280"
   Salthouse1986:
     title: "Perceptual, Cognitive, and Motoric Aspects of Transcription Typing"
     target: https://doi.org/10.1037/0033-2909.99.3.303
@@ -330,7 +401,7 @@ The appraisal logic is designed to detect "Synthetic Authoring" -- content gener
 NOTE: The specific numeric thresholds in this section (e.g.,
 spectral flatness 0.9, CLC correlation r < 0.2, CoV bounds)
 are initial calibration values derived from empirical
-observation of human authoring behavior. Refinement of these
+observation of human authoring behavior {{ScholaWrite}}. Refinement of these
 values based on implementation experience is an explicit goal
 of the Experimental status of this specification (see
 {{experimental-status-rationale}}). The MUST-level flagging
@@ -345,10 +416,10 @@ Cognitive Load Correlation (CLC):
 : Verifiers MUST correlate timing patterns with semantic complexity. Human authors exhibit increased inter-keystroke intervals (IKI) and pause frequency during composition of semantically complex segments compared to simple connective text. Verifiers MUST compute the Pearson correlation between segment semantic complexity and mean IKI. Evidence with r < 0.2 (or r < 0.1 in assistive mode) MUST be flagged as a Semantic Mismatch.
 
 Mechanical Turk Detection:
-: Verifiers MUST compute C_intra (Pearson correlation between pause duration and subsequent edit complexity within each checkpoint). C_intra values below 0.15 MUST be flagged as indicating robotic pacing, where an automated system maintains a machine-clocked editing rate independent of content demands. Checkpoints containing receipt structures (key 13) MUST have their associated paste events excluded from C_intra computation.
+: Verifiers MUST compute C_intra (Pearson correlation between pause duration and subsequent edit complexity within each checkpoint). C_intra values below 0.15 MUST be flagged as indicating robotic pacing, where an automated system maintains a machine-clocked editing rate independent of content demands.{{Monrose2000}}{{Monaco2018}} Checkpoints containing receipt structures (key 13) MUST have their associated paste events excluded from C_intra computation.
 
 Error Topology Analysis:
-: Verifiers SHOULD analyze error patterns for consistency with human cognitive processing {{Salthouse1986}}: localized corrections near recent insertions, fractal self-similarity in revision patterns, and deletion-to-insertion ratios consistent with natural composition. Evidence exhibiting unnaturally low error rates (below 1 correction per 500 characters) or randomly distributed errors lacking positional correlation SHOULD be flagged.
+: Verifiers SHOULD analyze error patterns for consistency with human cognitive processing {{Salthouse1986}}: localized corrections near recent insertions, fractal self-similarity in revision patterns, and deletion-to-insertion ratios consistent with natural composition. Evidence exhibiting unnaturally low error rates (below 1 correction per 500 characters) or randomly distributed errors lacking positional correlation SHOULD be flagged.{{ScholaWriteAugmented}}
 
 QR Presence Challenge (OOB-PC):
 : When presence-challenge structures are present in the Evidence Packet, Verifiers MUST verify that the response-time is within the corresponding checkpoint's time window (subject to the cross-device clock skew tolerance defined in {{clock-skew-tolerance}}) and MUST validate the device-signature. NOTE: The Attester-side procedure for issuing presence challenges is specified in {{PoP-Protocol}}.
@@ -363,7 +434,7 @@ Perplexity Scoring:
 : Verifiers SHOULD compute the character-level perplexity of text inserted during each checkpoint interval using a reference language model. Sudden drops in perplexity (highly predictable text) that correlate with rapid insertion rates (characters per second exceeding the session's 95th percentile) MUST be flagged as potential AI injection. A perplexity drop exceeding 50% relative to the session median, sustained for more than 100 consecutive inserted characters, constitutes a flag. Checkpoints containing receipt structures (key 13) MUST have their associated paste events excluded from perplexity scoring.
 
 Biological Cadence Analysis:
-: Verifiers MUST compute the Coefficient of Variation (CoV = standard deviation / mean) of inter-keystroke intervals within each checkpoint. Human typing exhibits characteristic CoV values reflecting biological motor variance. Evidence with per-checkpoint CoV consistently below 0.15 (mechanically regular) MUST be flagged as potentially non-biological. Evidence with per-checkpoint CoV consistently above 0.90 (chaotically irregular) SHOULD be flagged as potentially injected random noise. The session-wide CoV trend SHOULD exhibit gradual drift consistent with fatigue and warm-up effects.
+: Verifiers MUST compute the Coefficient of Variation (CoV = standard deviation / mean) of inter-keystroke intervals within each checkpoint. Human typing exhibits characteristic CoV values reflecting biological motor variance. Evidence with per-checkpoint CoV consistently below 0.15 (mechanically regular) MUST be flagged as potentially non-biological.{{Monrose2000}}{{Dhakal2018}} Evidence with per-checkpoint CoV consistently above 0.90 (chaotically irregular) SHOULD be flagged as potentially injected random noise. The session-wide CoV trend SHOULD exhibit gradual drift consistent with fatigue and warm-up effects.
 
 A conforming Verifier MUST evaluate all forensic mechanisms for
 which the Evidence Packet contains sufficient data. Verifiers
@@ -1273,6 +1344,7 @@ This document inherits the adversary model defined in the Threat Model section o
 
 Tier 1 (Casual):
 : SWF time-binding provides the primary defense. The T1 appraisal policy accepts the risk of basic retype attacks.
+External timestamping via append-only ledgers {{HaberStornetta1991}} is complementary infrastructure that establishes a lower bound on when content was created but does not substitute for SWF-based minimum elapsed computation.
 
 Tier 2 (Motivated):
 : Multi-dimensional behavioral analysis (SNR + CLC + mechanical turk detection).
@@ -1566,7 +1638,7 @@ This document defines forensic appraisal procedures that inherit and extend the 
 
 ## Entropy Manipulation Attacks {#sec-entropy-manipulation}
 
-An adversary may attempt to inject synthetic jitter patterns that satisfy entropy thresholds while lacking biological origin. The use of multi-dimensional analysis (SNR, CLC, Error Topology) rather than single metrics provides defense-in-depth against high-fidelity simulation.
+An adversary may attempt to inject synthetic jitter patterns that satisfy entropy thresholds while lacking biological origin {{Condrey2026Attack}}. The use of multi-dimensional analysis (SNR, CLC, Error Topology) rather than single metrics provides defense-in-depth against high-fidelity simulation.
 
 ## Verifier Trust Model {#sec-verifier-trust}
 

@@ -104,6 +104,100 @@ informative:
     date: 1986
     seriesinfo:
       "Psychological Bulletin": "99(3), 303-319"
+  Monrose2000:
+    title: "Keystroke Dynamics as a Biometric for Authentication"
+    target: "https://doi.org/10.1016/S0167-739X(99)00059-X"
+    author:
+      - fullname: F. Monrose
+        initials: F.
+        surname: Monrose
+      - fullname: A. Rubin
+        initials: A.
+        surname: Rubin
+    date: 2000
+    seriesinfo:
+      "Future Generation Computer Systems": "16(4), 351-359"
+  Monaco2018:
+    title: "SoK: Keylogging Side Channels"
+    target: "https://doi.org/10.1109/SP.2018.00026"
+    author:
+      - fullname: John V. Monaco
+        initials: J.V.
+        surname: Monaco
+    date: 2018
+    seriesinfo:
+      "IEEE Symposium on Security and Privacy": "pp. 211-228"
+  Dhakal2018:
+    title: "Observations on Typing from 136 Million Keystrokes"
+    target: "https://doi.org/10.1145/3173574.3174220"
+    author:
+      - fullname: Vivek Dhakal
+        initials: V.
+        surname: Dhakal
+      - fullname: Anna Maria Feit
+        initials: A.M.
+        surname: Feit
+      - fullname: Per Ola Kristensson
+        initials: P.O.
+        surname: Kristensson
+      - fullname: Antti Oulasvirta
+        initials: A.
+        surname: Oulasvirta
+    date: 2018
+    seriesinfo:
+      "ACM CHI": "2018"
+  ScholaWrite:
+    title: "ScholaWrite: A Dataset of End-to-End Scholarly Writing Process"
+    target: "https://arxiv.org/abs/2502.02904"
+    author:
+      - fullname: Linghe Wang
+        initials: L.
+        surname: Wang
+      - fullname: Minhwa Lee
+        initials: M.
+        surname: Lee
+      - fullname: Ross Volkov
+        initials: R.
+        surname: Volkov
+      - fullname: Dongyeop Kang
+        initials: D.
+        surname: Kang
+    date: 2025
+    seriesinfo:
+      arXiv: "2502.02904"
+  ScholaWriteAugmented:
+    title: "ScholaWrite-Augmented: Revision-Tracked Scholarly Writing Dataset with Annotated External Insertion Events"
+    target: "https://github.com/writerslogic/scholawrite-augmented"
+    author:
+      - fullname: David Condrey
+        initials: D.
+        surname: Condrey
+    date: 2026
+    seriesinfo:
+      GitHub: "writerslogic/scholawrite-augmented"
+  HaberStornetta1991:
+    title: "How to Time-Stamp a Digital Document"
+    target: "https://doi.org/10.1007/BF00196791"
+    author:
+      - fullname: Stuart Haber
+        initials: S.
+        surname: Haber
+      - fullname: W. Scott Stornetta
+        initials: W.S.
+        surname: Stornetta
+    date: 1991
+    seriesinfo:
+      "Journal of Cryptology": "3(2), 99-111"
+  Condrey2026Attack:
+    title: "On the Insecurity of Keystroke-Based AI Authorship Detection: Timing-Forgery Attacks Against Motor-Signal Verification"
+    target: "https://arxiv.org/abs/2601.17280"
+    author:
+      - fullname: David Condrey
+        initials: D.
+        surname: Condrey
+    date: 2026
+    seriesinfo:
+      arXiv: "2601.17280"
   Sardar-RATS:
     title: "Security Considerations for Remote ATtestation procedureS (RATS)"
     target: "https://datatracker.ietf.org/doc/html/draft-sardar-rats-sec-cons-02"
@@ -562,6 +656,9 @@ Endorser:
 Reference Value Provider:
 : The PoP specification itself (behavioral patterns, SWF parameters) and calibration services that provide updated forensic baselines.
 
+Target Environment:
+: The document editor session and its content state. The Target Environment is measured by the Attesting Environment at each checkpoint via content hashing and behavioral telemetry capture.
+
 ## Compatibility with RATS Architecture {#rats-compatibility}
 
 PoP extends RATS from device state attestation to process attestation, verifying that a physical process (human authorship) occurred as claimed. The fundamental problem structure is identical: an Attester generates Evidence, conveys it to a Verifier, and the Verifier produces Attestation Results for Relying Parties.
@@ -985,10 +1082,10 @@ CORE (Tier Value 1):
 : Checkpoint chain with SWF proofs, hash-based content binding, and physical freshness anchors. Proves temporal ordering and content integrity.
 
 ENHANCED (Tier Value 2):
-: All CORE components plus behavioral entropy capture (Jitter Seals) and intra-checkpoint correlation. Adds evidence of interactive authoring behavior.
+: All CORE components plus behavioral entropy capture (Jitter Seals), intra-checkpoint correlation, and edit-graph-hash commitment ({{edit-graph-hash}}). Adds evidence of interactive authoring behavior.
 
 MAXIMUM (Tier Value 3):
-: All ENHANCED components plus entangled MACs binding physical state, error topology analysis, and forgery cost bounds. Provides the strongest available evidence.
+: All ENHANCED components plus entangled MACs binding physical state, error topology analysis, edit graph histograms ({{edit-graph-histograms}}), and forgery cost bounds. Provides the strongest available evidence.
 
 PoP Evidence is classified along two orthogonal axes. Evidence Content
 Tier (CORE/ENHANCED/MAXIMUM) determines the depth of behavioral and
@@ -1059,6 +1156,8 @@ The PoP specification defines three implementation profiles that establish Manda
 | 2 | content-binding | M | M | M |
 | 4 | checkpoint-chain | M | M | M |
 | 50 | behavioral-entropy | O | M | M |
+| 51 | edit-graph-hash | O | M | M |
+| 52 | edit-graph-histograms | O | O | M |
 | 60 | assistive-mode | O | O | O |
 | 105 | hardware-attestation | O | O | M |
 
@@ -1203,6 +1302,11 @@ edit-delta = {
     2 => uint,                    ; chars-deleted
     3 => uint,                    ; op-count
     ? 4 => [* edit-position],     ; positions
+    ? 5 => hash-digest,           ; edit-graph-hash (ENHANCED+)
+    ; keys 6-8 reserved for future use
+    ? 9 => [8*8 uint],             ; cursor-trajectory-histogram (MAXIMUM)
+    ? 10 => [8*8 uint],            ; revision-depth-histogram (MAXIMUM)
+    ? 11 => [8*8 uint],            ; pause-duration-histogram (MAXIMUM)
 }
 
 edit-position = [
@@ -1459,6 +1563,70 @@ Positive values indicate insertion of characters at the offset;
 negative values indicate deletion. A zero change value is
 semantically meaningless and MUST NOT appear.
 
+## Edit Graph Hash {#edit-graph-hash}
+
+The edit-graph-hash (edit-delta key 5) provides a cryptographic
+commitment to the full editing trajectory within a checkpoint
+interval. It MUST be present in ENHANCED and MAXIMUM content
+tiers and MAY be present in CORE.
+
+The Attestation Environment MUST compute the edit-graph-hash
+as follows:
+
+~~~ pseudocode
+edit-graph-input = [
+    cursor-positions,    ; [* uint] char offsets, 100ms sample
+    revision-depths,     ; [* uint] edit depth at each sample
+    pause-durations      ; [* uint] inter-keystroke gaps in ms
+]
+
+edit-graph-hash = H(
+    "PoP-EditGraph-v1" ||
+    CBOR-encode(edit-graph-input)
+)
+~~~
+
+Where H is the Evidence Packet's selected hash function and
+CBOR-encode produces deterministic CBOR per Section 4.2.1 of
+{{RFC8949}}. The cursor-positions array MUST contain cursor
+position samples at minimum 100ms intervals. The
+revision-depths array MUST record the number of prior edits
+at each cursor position at the same sample rate. The
+pause-durations array MUST record all inter-keystroke intervals
+exceeding 500ms. Arrays MUST be truncated to the most recent
+10,000 samples when longer.
+
+When the edit-graph-hash is present, it is entangled into the
+SWF seed derivation ({{swf-seed-derivation}}).
+
+## Edit Graph Histograms {#edit-graph-histograms}
+
+Edit-delta keys 9-11 carry 8-bin histograms summarizing the
+editing trajectory. These fields MUST be present in MAXIMUM
+content tier and MUST be absent in CORE. They MAY be present
+in ENHANCED.
+
+Each histogram is an array of exactly 8 unsigned integers
+representing event counts per bin. The bin boundaries are:
+
+Cursor Trajectory Histogram (key 9):
+: Cumulative cursor travel distance in characters between
+  consecutive samples. Bins: \[0, 50\], \[51, 200\],
+  \[201, 500\], \[501, 1000\], \[1001, 2500\],
+  \[2501, 5000\], \[5001, 10000\], \[10001, +inf\).
+
+Revision Depth Histogram (key 10):
+: Maximum revision depth per edited region. Bins correspond
+  to depths 0 through 6 individually, with bin 7 covering
+  depth 7 and above.
+
+Pause Duration Histogram (key 11):
+: Inter-keystroke pause durations in milliseconds. Pauses
+  below 500ms are excluded. Bins: \[500, 1000\],
+  \[1001, 2000\], \[2001, 5000\], \[5001, 10000\],
+  \[10001, 30000\], \[30001, 60000\], \[60001, 300000\],
+  \[300001, +inf\).
+
 The device-signature in a presence-challenge MUST be a COSE_Sign1
 structure {{RFC9052}} covering the challenge-nonce.
 The signing key MUST be hardware-bound on the secondary device.
@@ -1519,7 +1687,7 @@ checkpoint-hash = H(
 )
 ~~~
 
-Where H is the Evidence Packet's selected hash function, \|\| denotes concatenation, and CBOR-encode produces deterministic CBOR per Section 4.2.1 of {{RFC8949}}. The UTF-8 Domain Separation Tag (DST) prefix "PoP-Checkpoint-v1" MUST be prepended as the first input to prevent cross-context hash collisions.
+Where H is the Evidence Packet's selected hash function, \|\| denotes concatenation, and CBOR-encode produces deterministic CBOR per Section 4.2.1 of {{RFC8949}}. The UTF-8 Domain Separation Tag (DST) prefix "PoP-Checkpoint-v1" MUST be prepended as the first input to prevent cross-context hash collisions. When edit-graph-hash (edit-delta key 5) is present, it is already included within the CBOR-encoded edit-delta and requires no separate term in the checkpoint-hash computation.
 
 For the first checkpoint in the initial Evidence Packet of a series (or a standalone packet), prev-hash MUST be set to H(CBOR-encode(document-ref)). This anchors the chain to the document identity. For the first checkpoint in a continuation packet (previous-packet-ref present), prev-hash MUST be set to the final checkpoint-hash of the preceding Evidence Packet (see {{session-continuation}}).
 
@@ -1529,11 +1697,12 @@ When jitter-binding and physical-state fields are absent (CORE profile), the che
 
 The fields within a checkpoint MUST be computed in the following order:
 
-1. Compute the SWF: run the proof-algorithm with the derived seed. For modes 20/21, evaluate Argon2id iteratively for the configured number of steps. For mode 10, evaluate Argon2id once then iterate SHA-256 with memory-hard waypoints at every W-th step. Construct the Merkle tree over all intermediate states using tagged hashing ({{merkle-tree-construction}}) to obtain the merkle-root (process-proof key 4).
-2. Derive the shared PRK and per-field keys via the two-stage HKDF hierarchy ({{key-derivation-hierarchy}}).
-3. Compute the jitter-tag using the tag-key and jitter-binding.intervals as HMAC input. Assemble the jitter-binding structure (intervals, entropy-estimate, jitter-tag).
-4. Compute the entangled-binding using the binding-key and prev-hash, content-hash, jitter-binding, and physical-state as HMAC input.
-5. Compute the checkpoint-hash over the DST "PoP-Checkpoint-v1", prev-hash, content-hash, edit-delta, jitter-binding, physical-state, and merkle-root.
+1. When edit-graph-hash is present: compute the edit-graph-hash from the accumulated cursor-positions, revision-depths, and pause-durations arrays per {{edit-graph-hash}}. When histograms are present (MAXIMUM tier): populate the 8-bin arrays per {{edit-graph-histograms}}. Assemble the edit-delta structure including these fields.
+2. Compute the SWF: run the proof-algorithm with the derived seed (which incorporates the edit-graph-hash when present). For modes 20/21, evaluate Argon2id iteratively for the configured number of steps. For mode 10, evaluate Argon2id once then iterate SHA-256 with memory-hard waypoints at every W-th step. Construct the Merkle tree over all intermediate states using tagged hashing ({{merkle-tree-construction}}) to obtain the merkle-root (process-proof key 4).
+3. Derive the shared PRK and per-field keys via the two-stage HKDF hierarchy ({{key-derivation-hierarchy}}).
+4. Compute the jitter-tag using the tag-key and jitter-binding.intervals as HMAC input. Assemble the jitter-binding structure (intervals, entropy-estimate, jitter-tag).
+5. Compute the entangled-binding using the binding-key and prev-hash, content-hash, jitter-binding, and physical-state as HMAC input.
+6. Compute the checkpoint-hash over the DST "PoP-Checkpoint-v1", prev-hash, content-hash, edit-delta, jitter-binding, physical-state, and merkle-root.
 
 This ordering ensures that each subsequent computation can reference the outputs of prior steps. Implementations MUST follow this order to produce interoperable checkpoints.
 
@@ -1783,12 +1952,14 @@ seed = H(
     "PoP-SWF-Seed-v1" ||
     prev-hash ||
     CBOR-encode(jitter-binding.intervals) ||
-    CBOR-encode(physical-state)
+    CBOR-encode(physical-state) ||
+    edit-graph-hash
 )
 ~~~
 
 The `swf-sha256` mode uses iterated SHA-256 as described
-in {{swf-algorithm}}.
+in {{swf-algorithm}}. When edit-graph-hash is absent, the
+seed MUST be computed without the final term.
 
 For `swf-argon2id` (20), the SWF seed for each
 checkpoint MUST be derived as:
@@ -1798,9 +1969,13 @@ seed = H(
     "PoP-SWF-Seed-v1" ||
     prev-hash ||
     CBOR-encode(jitter-binding.intervals) ||
-    CBOR-encode(physical-state)
+    CBOR-encode(physical-state) ||
+    edit-graph-hash
 )
 ~~~
+
+When edit-graph-hash is absent, the seed MUST be computed
+without the final term.
 
 For `swf-argon2id-entangled` (21), the Attester MUST
 entangle the previous checkpoint's SWF output. The seed is
@@ -1812,9 +1987,13 @@ seed = H(
     prev-hash ||
     prev-swf-output ||
     CBOR-encode(jitter-binding.intervals) ||
-    CBOR-encode(physical-state)
+    CBOR-encode(physical-state) ||
+    edit-graph-hash
 )
 ~~~
+
+When edit-graph-hash is absent, the seed MUST be computed
+without the final term.
 
 Where `prev-swf-output` is the final Argon2id state
 from the immediately preceding checkpoint's sequential work
@@ -1827,7 +2006,9 @@ the nonce MUST be inserted into the seed derivation after
 prev-swf-output (for Mode 21) or after prev-hash (for Modes
 10/20), before any behavioral data. When both verifier-nonce and
 beacon-anchor are used, the verifier-nonce MUST precede the
-beacon value in the seed derivation.
+beacon value in the seed derivation. When edit-graph-hash is
+present, it MUST be the final term in the seed derivation,
+after all behavioral data and any beacon-anchor value.
 
 For the first checkpoint (sequence = 1), all modes use:
 
@@ -1838,6 +2019,9 @@ seed = H(
     initial-jitter-sample
 )
 ~~~
+
+The first checkpoint seed does not include edit-graph-hash
+because no editing trajectory has accumulated at session start.
 
 Where initial-jitter-sample is a minimum 32-byte sample of
 behavioral entropy collected before the first checkpoint.
@@ -2052,7 +2236,7 @@ beacon round is consistent with the checkpoint timestamp plus the
 protocol-defined delay.
 
 This mechanism transforms T1 temporal ordering from self-reported
-timestamps to externally verifiable time commitments. The beacon
+timestamps to externally verifiable time commitments {{HaberStornetta1991}}. The beacon
 value is not predictable at checkpoint creation time, preventing
 retroactive fabrication of Evidence with backdated timestamps.
 
@@ -2525,6 +2709,21 @@ to enable interoperable extension.
 
 This section provides security analysis following {{RFC3552}} guidelines. The threat model is defined in {{threat-model}} with the adversarial Attester as the primary threat actor. Detailed forensic security analysis is provided in {{PoP-Appraisal}}.
 
+## Security Layer Model {#sec-layer-model}
+
+PoP security guarantees operate at three distinct layers with different assurance properties. Verifiers MUST NOT treat lower layers as providing the formal guarantees of higher layers.
+
+Layer 1, Temporal Binding (Cryptographic):
+: The SWF forces minimum real wall-clock cost derivable from Argon2id memory-hardness {{RFC9106}} and the sequential dependency chain. With entangled mode at 50% duty cycle, forging N hours of Evidence requires approximately N/2 hours of computation at minimum. This is a formal, quantifiable guarantee independent of behavioral signal quality.
+
+Layer 2, Behavioral Analysis (Statistical):
+: SNR, CLC, error topology, cadence analysis, and session consistency mechanisms detect fabricated behavioral data and raise the practical cost of forgery. These mechanisms provide defense-in-depth but carry no formal cryptographic guarantee. Thresholds are grounded in the keystroke dynamics literature {{Monrose2000}}{{Monaco2018}}{{Salthouse1986}}{{Dhakal2018}} and calibrated against real-world composition data {{ScholaWrite}}{{ScholaWriteAugmented}}. Single-feature timing approaches are demonstrably insecure {{Condrey2026Attack}}; the multi-dimensional cross-domain entanglement architecture is a direct response to those attack classes.
+
+Layer 3, Hardware Attestation (Physical):
+: T3/T4 non-repudiation via hardware roots of trust provides physical freshness markers non-reproducible by the Attester operator.
+
+The forgery cost estimates in the WAR derive from Layer 1 and Layer 3 only. Layer 2 mechanisms inform the forensic-summary and forensic-flag fields but do not contribute to the C_swf or C_hardware cost bounds.
+
 ## Primary Threat: Adversarial Attester {#sec-primary-threat}
 
 Unlike traditional remote attestation where external adversaries threaten system integrity, PoP's primary threat is the Attester operator themselves. The author controls the Attesting Environment and has incentive to claim authenticity for AI-generated or assisted content.
@@ -2544,7 +2743,7 @@ Cognitive Load Correlation (CLC):
 : Verifiers analyze correlation between content complexity and typing cadence as specified in {{PoP-Appraisal}}.
 
 Error Topology Analysis:
-: Authentic authoring produces characteristic error patterns: corrections localized near recent insertions, deletion-to-insertion ratios consistent with human cognitive models {{Salthouse1986}}, and fractal self-similarity in revision patterns. Retyping produces either unnaturally low error rates or randomly distributed artificial errors.
+: Authentic authoring produces characteristic error patterns: corrections localized near recent insertions, deletion-to-insertion ratios consistent with human cognitive models {{Salthouse1986}}{{ScholaWrite}}{{ScholaWriteAugmented}}, and fractal self-similarity in revision patterns. Retyping produces either unnaturally low error rates or randomly distributed artificial errors.
 
 Temporal Cost:
 : Even successful retype attacks require real-time effort. A 5,000-word document with 10-second checkpoint intervals requires 8+ hours of continuous typing effort to forge. The attack does not scale economically for high-volume forgery.
@@ -2653,6 +2852,33 @@ not prevent forgery by the Attester. Their value is limited to:
 * Providing internal consistency verification (note: the binding keys are derivable from the public merkle-root field; these bindings do not provide third-party tamper detection)
 * In T3/T4 tiers, the packet-level hardware-bound signature (see {{attester-state-machine}}) provides the actual integrity guarantee
 * When beacon-anchoring ({{beacon-binding}}) is used, the binding keys incorporate externally-verifiable randomness, providing temporal anchoring even without hardware attestation
+
+## Edit Graph Commitment Limitations {#sec-edit-graph-limitations}
+
+The edit-graph-hash ({{edit-graph-hash}}) entangles editing
+trajectory data into the SWF seed, binding the claimed editing
+pattern to the SWF time proof. This binding ensures that an
+adversary cannot substitute a different editing pattern after
+SWF computation without recomputing the entire chain.
+
+However, the edit graph commitment does not prove that the
+committed data reflects genuine human authoring. In T1/T2
+tiers, the adversarial Attester controls the Attestation
+Environment and can fabricate plausible cursor positions,
+revision depths, and pause durations before computing the SWF.
+The edit-graph-hash adds one additional dimension of data that
+must be fabricated consistently, but does not create a
+cryptographic barrier to fabrication.
+
+The MAXIMUM-tier histograms ({{edit-graph-histograms}}) enable
+statistical analysis of editing patterns by Verifiers. These
+histograms may reveal anomalies such as unnaturally uniform
+distributions, missing burstiness in pause patterns, or
+zero revision depth across all regions. Such statistical tests
+are probabilistic and can be defeated by a sufficiently
+sophisticated adversary. Verifiers SHOULD treat histogram
+analysis as one signal among many, not as definitive
+authentication.
 
 ## Physical Freshness by Tier {#sec-physical-freshness-tiers}
 
