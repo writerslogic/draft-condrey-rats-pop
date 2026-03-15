@@ -1591,7 +1591,7 @@ verdict (see the composite assessment procedure below).<a href="#section-5-2" cl
 <span class="break"></span><dl class="dlParallel" id="section-5-3">
         <dt id="section-5-3.1">SNR (Signal-to-Noise Ratio) Analysis:</dt>
         <dd style="margin-left: 1.5em" id="section-5-3.2">
-          <p id="section-5-3.2.1">Verifiers <span class="bcp14">MUST</span> compute the power spectral density of jitter intervals. Human motor signals exhibit characteristic noise patterns consistent with biological motor control <span>[<a href="#Monrose2000" class="cite xref">Monrose2000</a>]</span>. Evidence exhibiting spectral flatness greater than 0.9 (indicating white noise rather than biological 1/f-like noise) <span class="bcp14">MUST</span> be flagged as potentially synthetic.<a href="#section-5-3.2.1" class="pilcrow">¶</a></p>
+          <p id="section-5-3.2.1">Verifiers <span class="bcp14">MUST</span> compute the power spectral density of jitter intervals. Human motor signals exhibit characteristic noise patterns consistent with biological motor control <span>[<a href="#Monrose2000" class="cite xref">Monrose2000</a>]</span>. Evidence exhibiting spectral flatness greater than 0.9 (indicating white noise rather than biological 1/f-like noise <span>[<a href="#Gilden2001" class="cite xref">Gilden2001</a>]</span><span>[<a href="#Kello2007" class="cite xref">Kello2007</a>]</span>) <span class="bcp14">MUST</span> be flagged as potentially synthetic.<a href="#section-5-3.2.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-5-3.3">Cognitive Load Correlation (CLC):</dt>
@@ -1606,7 +1606,7 @@ verdict (see the composite assessment procedure below).<a href="#section-5-2" cl
         <dd class="break"></dd>
 <dt id="section-5-3.7">Error Topology Analysis:</dt>
         <dd style="margin-left: 1.5em" id="section-5-3.8">
-          <p id="section-5-3.8.1">Verifiers <span class="bcp14">SHOULD</span> analyze error patterns for consistency with human cognitive processing <span>[<a href="#Salthouse1986" class="cite xref">Salthouse1986</a>]</span>: localized corrections near recent insertions, fractal self-similarity in revision patterns, and deletion-to-insertion ratios consistent with natural composition. Evidence exhibiting unnaturally low error rates (below 1 correction per 500 characters) or randomly distributed errors lacking positional correlation <span class="bcp14">SHOULD</span> be flagged.<span>[<a href="#ScholaWriteAugmented" class="cite xref">ScholaWriteAugmented</a>]</span><a href="#section-5-3.8.1" class="pilcrow">¶</a></p>
+          <p id="section-5-3.8.1">Verifiers <span class="bcp14">SHOULD</span> analyze error patterns for consistency with human cognitive processing <span>[<a href="#Salthouse1986" class="cite xref">Salthouse1986</a>]</span>: localized corrections near recent insertions, fractal self-similarity in revision patterns, and deletion-to-insertion ratios consistent with natural composition. Evidence exhibiting unnaturally low error rates (below 1 correction per 500 characters <span>[<a href="#Dhakal2018" class="cite xref">Dhakal2018</a>]</span>) or randomly distributed errors lacking positional correlation <span class="bcp14">SHOULD</span> be flagged.<span>[<a href="#ScholaWriteAugmented" class="cite xref">ScholaWriteAugmented</a>]</span><a href="#section-5-3.8.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-5-3.9">QR Presence Challenge (OOB-PC):</dt>
@@ -1631,7 +1631,7 @@ verdict (see the composite assessment procedure below).<a href="#section-5-2" cl
         <dd class="break"></dd>
 <dt id="section-5-3.17">Biological Cadence Analysis:</dt>
         <dd style="margin-left: 1.5em" id="section-5-3.18">
-          <p id="section-5-3.18.1">Verifiers <span class="bcp14">MUST</span> compute the Coefficient of Variation (CoV = standard deviation / mean) of inter-keystroke intervals within each checkpoint. Human typing exhibits characteristic CoV values reflecting biological motor variance. Evidence with per-checkpoint CoV consistently below 0.15 (mechanically regular) <span class="bcp14">MUST</span> be flagged as potentially non-biological.<span>[<a href="#Monrose2000" class="cite xref">Monrose2000</a>]</span><span>[<a href="#Dhakal2018" class="cite xref">Dhakal2018</a>]</span> Evidence with per-checkpoint CoV consistently above 0.90 (chaotically irregular) <span class="bcp14">SHOULD</span> be flagged as potentially injected random noise. The session-wide CoV trend <span class="bcp14">SHOULD</span> exhibit gradual drift consistent with fatigue and warm-up effects.<a href="#section-5-3.18.1" class="pilcrow">¶</a></p>
+          <p id="section-5-3.18.1">Verifiers <span class="bcp14">MUST</span> compute the Coefficient of Variation (CoV = standard deviation / mean) of inter-keystroke intervals within each checkpoint. Human typing exhibits characteristic CoV values reflecting biological motor variance. Evidence with per-checkpoint CoV consistently below 0.15 (mechanically regular) <span class="bcp14">MUST</span> be flagged as potentially non-biological.<span>[<a href="#Monrose2000" class="cite xref">Monrose2000</a>]</span><span>[<a href="#Dhakal2018" class="cite xref">Dhakal2018</a>]</span> Evidence with per-checkpoint CoV consistently above 0.90 (chaotically irregular) <span class="bcp14">SHOULD</span> be flagged as potentially injected random noise. The session-wide CoV trend <span class="bcp14">SHOULD</span> exhibit gradual drift consistent with fatigue and warm-up effects <span>[<a href="#Adams1961" class="cite xref">Adams1961</a>]</span>.<a href="#section-5-3.18.1" class="pilcrow">¶</a></p>
 </dd>
       <dd class="break"></dd>
 </dl>
@@ -1682,7 +1682,7 @@ time-delay coordinates, the Verifier can estimate the
 correlation dimension of the resulting trajectory. Biological
 motor control processes typically produce a low-dimensional
 attractor (dimension 2-5), reflecting the finite degrees of
-freedom in the neuromuscular system <span>[<a href="#Orden2003" class="cite xref">Orden2003</a>]</span>. Synthetic or AI-injected
+freedom in the neuromuscular system <span>[<a href="#Takens1981" class="cite xref">Takens1981</a>]</span><span>[<a href="#Orden2003" class="cite xref">Orden2003</a>]</span>. Synthetic or AI-injected
 timing noise will typically fail to produce a low-dimensional
 biological attractor in the embedded space, instead exhibiting
 high or non-convergent correlation dimension estimates. This
@@ -1922,7 +1922,7 @@ natural motor variance, micro-pauses for word selection,
 and variable key travel distances <span>[<a href="#Dhakal2018" class="cite xref">Dhakal2018</a>]</span><span>[<a href="#Salthouse1986" class="cite xref">Salthouse1986</a>]</span>.<a href="#section-5.7-4.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.7-4.2">
-            <p id="section-5.7-4.2.1">Human typing (transcription): CoV 0.15-0.40, more
+            <p id="section-5.7-4.2.1">Human typing (transcription): CoV 0.15-0.40 <span>[<a href="#Gentner1983" class="cite xref">Gentner1983</a>]</span>, more
 regular due to reduced cognitive load but still
 biologically variable.<a href="#section-5.7-4.2.1" class="pilcrow">¶</a></p>
 </li>
@@ -2890,7 +2890,7 @@ linking authorship sessions to real-world identities.<a href="#section-13.3-1" c
         <h3 id="name-eye-tracking-mode">
 <a href="#section-14.1" class="section-number selfRef">14.1. </a><a href="#name-eye-tracking-mode" class="section-name selfRef">Eye-Tracking Mode</a>
         </h3>
-<p id="section-14.1-1">Eye-tracking input produces IKI ranges of 500-3000 ms (versus
+<p id="section-14.1-1">Eye-tracking input produces IKI ranges of 500-3000 ms <span>[<a href="#Majaranta2009" class="cite xref">Majaranta2009</a>]</span> (versus
 100-300 ms for keyboard). Adjusted thresholds:<a href="#section-14.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-14.1-2.1">
@@ -2917,7 +2917,7 @@ errors.<a href="#section-14.1-2.4.1" class="pilcrow">¶</a></p>
 <a href="#section-14.2" class="section-number selfRef">14.2. </a><a href="#name-dictation-mode" class="section-name selfRef">Dictation Mode</a>
         </h3>
 <p id="section-14.2-1">Dictation input produces burst patterns with higher cadence
-variance than keyboard. Adjusted thresholds:<a href="#section-14.2-1" class="pilcrow">¶</a></p>
+variance than keyboard <span>[<a href="#Karat1999" class="cite xref">Karat1999</a>]</span>. Adjusted thresholds:<a href="#section-14.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-14.2-2.1">
             <p id="section-14.2-2.1.1">SNR: -8 dB to +8 dB (wider range reflecting speech pauses)<a href="#section-14.2-2.1.1" class="pilcrow">¶</a></p>
@@ -3413,6 +3413,10 @@ include a warning in the Attestation Result warnings field
 <a href="#section-19.2" class="section-number selfRef">19.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
+<dt id="Adams1961">[Adams1961]</dt>
+        <dd>
+<span class="refAuthor">Adams, J.A.</span>, <span class="refTitle">"The Second Facet of Forgetting: A Review of Warmup Decrement"</span>, <span class="seriesInfo">Psychological Bulletin 58(4), 257-273</span>, <time datetime="1961" class="refDate">1961</time>, <span>&lt;<a href="https://doi.org/10.1037/h0044798">https://doi.org/10.1037/h0044798</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="AR4SI">[AR4SI]</dt>
         <dd>
 <span class="refAuthor">Fossati, T.</span>, <span class="refAuthor">Voit, E.</span>, and <span class="refAuthor">H. Birkholz</span>, <span class="refTitle">"Attestation Results for Secure Interactions"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-rats-ar4si-09</span>, <time datetime="2025-08" class="refDate">August 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-rats-ar4si-09">https://datatracker.ietf.org/doc/html/draft-ietf-rats-ar4si-09</a>&gt;</span>. </dd>
@@ -3429,9 +3433,29 @@ include a warning in the Attestation Result warnings field
         <dd>
 <span class="refAuthor">Fossati, T.</span>, <span class="refAuthor">Voit, E.</span>, and <span class="refAuthor">S. Trofimov</span>, <span class="refTitle">"EAT Attestation Results"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-rats-ear-02</span>, <time datetime="2026-01" class="refDate">January 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-rats-ear-02">https://datatracker.ietf.org/doc/html/draft-ietf-rats-ear-02</a>&gt;</span>. </dd>
 <dd class="break"></dd>
+<dt id="Gentner1983">[Gentner1983]</dt>
+        <dd>
+<span class="refAuthor">Gentner, D.R.</span>, <span class="refTitle">"Keystroke Timing in Transcription Typing"</span>, <span class="seriesInfo">Cognitive Aspects of Skilled Typewriting pp. 95-120</span>, <time datetime="1983" class="refDate">1983</time>, <span>&lt;<a href="https://doi.org/10.1007/978-1-4612-5470-6_5">https://doi.org/10.1007/978-1-4612-5470-6_5</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="Gilden2001">[Gilden2001]</dt>
+        <dd>
+<span class="refAuthor">Gilden, D.L.</span>, <span class="refTitle">"Cognitive Emissions of 1/f Noise"</span>, <span class="seriesInfo">Psychological Review 108(1), 33-56</span>, <time datetime="2001" class="refDate">2001</time>, <span>&lt;<a href="https://doi.org/10.1037/0033-295X.108.1.33">https://doi.org/10.1037/0033-295X.108.1.33</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="HaberStornetta1991">[HaberStornetta1991]</dt>
         <dd>
 <span class="refAuthor">Haber, S.</span> and <span class="refAuthor">W.S. Stornetta</span>, <span class="refTitle">"How to Time-Stamp a Digital Document"</span>, <span class="seriesInfo">Journal of Cryptology 3(2), 99-111</span>, <time datetime="1991" class="refDate">1991</time>, <span>&lt;<a href="https://doi.org/10.1007/BF00196791">https://doi.org/10.1007/BF00196791</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="Karat1999">[Karat1999]</dt>
+        <dd>
+<span class="refAuthor">Karat, C.-M.</span>, <span class="refAuthor">Halverson, C.</span>, <span class="refAuthor">Horn, D.</span>, and <span class="refAuthor">J. Karat</span>, <span class="refTitle">"Patterns of Entry and Correction in Large Vocabulary Continuous Speech Recognition Systems"</span>, <span class="seriesInfo">ACM CHI 1999</span>, <time datetime="1999" class="refDate">1999</time>, <span>&lt;<a href="https://doi.org/10.1145/302979.303160">https://doi.org/10.1145/302979.303160</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="Kello2007">[Kello2007]</dt>
+        <dd>
+<span class="refAuthor">Kello, C.T.</span>, <span class="refAuthor">Beltz, B.C.</span>, <span class="refAuthor">Holden, J.G.</span>, and <span class="refAuthor">G.C. Van Orden</span>, <span class="refTitle">"The Emergent Coordination of Cognitive Function"</span>, <span class="seriesInfo">Journal of Experimental Psychology: General 136(4), 551-568</span>, <time datetime="2007" class="refDate">2007</time>, <span>&lt;<a href="https://doi.org/10.1037/0096-3445.136.4.551">https://doi.org/10.1037/0096-3445.136.4.551</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="Majaranta2009">[Majaranta2009]</dt>
+        <dd>
+<span class="refAuthor">Majaranta, P.</span>, <span class="refAuthor">Ahola, U.-K.</span>, and <span class="refAuthor">O. Spakov</span>, <span class="refTitle">"Fast Gaze Typing with an Adjustable Dwell Time"</span>, <span class="seriesInfo">ACM CHI 2009</span>, <time datetime="2009" class="refDate">2009</time>, <span>&lt;<a href="https://doi.org/10.1145/1518701.1518758">https://doi.org/10.1145/1518701.1518758</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="Monaco2018">[Monaco2018]</dt>
         <dd>
@@ -3478,8 +3502,12 @@ include a warning in the Attestation Result warnings field
 <span class="refAuthor">Sardar, M.U.</span>, <span class="refAuthor">Fossati, T.</span>, <span class="refAuthor">Reddy, T.</span>, <span class="refAuthor">Sheffer, Y.</span>, <span class="refAuthor">Tschofenig, H.</span>, and <span class="refAuthor">I. Mihalcea</span>, <span class="refTitle">"Remote Attestation with Exported Authenticators"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-fossati-seat-expat-01</span>, <time datetime="2026-01" class="refDate">January 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-fossati-seat-expat-01">https://datatracker.ietf.org/doc/html/draft-fossati-seat-expat-01</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="SEAT-UseCases">[SEAT-UseCases]</dt>
-      <dd>
+        <dd>
 <span class="refAuthor">Mihalcea, I.</span>, <span class="refAuthor">Sardar, M.U.</span>, <span class="refAuthor">Fossati, T.</span>, <span class="refAuthor">Reddy, T.</span>, <span class="refAuthor">Jiang, Y.</span>, and <span class="refAuthor">M. Chen</span>, <span class="refTitle">"Use Cases and Properties for Integrating Remote Attestation with Secure Channel Protocols"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mihalcea-seat-use-cases-01</span>, <time datetime="2026-01" class="refDate">January 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mihalcea-seat-use-cases-01">https://datatracker.ietf.org/doc/html/draft-mihalcea-seat-use-cases-01</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="Takens1981">[Takens1981]</dt>
+      <dd>
+<span class="refAuthor">Takens, F.</span>, <span class="refTitle">"Detecting Strange Attractors in Turbulence"</span>, <span class="seriesInfo">Lecture Notes in Mathematics 898, 366-381</span>, <time datetime="1981" class="refDate">1981</time>, <span>&lt;<a href="https://doi.org/10.1007/BFb0091924">https://doi.org/10.1007/BFb0091924</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>

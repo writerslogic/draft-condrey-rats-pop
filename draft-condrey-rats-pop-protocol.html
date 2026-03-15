@@ -3873,9 +3873,9 @@ reject Mode 10 Evidence that omits these parameters.<a href="#section-16.6-6" cl
 <p id="section-16.6-7">Verifiers <span class="bcp14">MUST</span> reject Evidence where declared proof-params are
 below the mandatory minimums for the claimed content tier.<a href="#section-16.6-7" class="pilcrow">¶</a></p>
 <p id="section-16.6-8">Expected wall-clock times for <code>swf-argon2id</code> modes on reference
-hardware (DDR4, approximately 25 GB/s memory bandwidth): each
+hardware (DDR4, approximately 25 GB/s memory bandwidth <span>[<a href="#JESD79-4" class="cite xref">JESD79-4</a>]</span>): each
 Argon2id step with t=1, m=65536 KiB requires approximately
-100ms. Target duty cycles at 30-second default checkpoint
+100ms <span>[<a href="#Biryukov2016" class="cite xref">Biryukov2016</a>]</span>. Target duty cycles at 30-second default checkpoint
 intervals: CORE approximately 30% (90 steps, ~9s), ENHANCED
 approximately 50% (150 steps, ~15s), MAXIMUM approximately 70%
 (210 steps, ~21s). For ENHANCED and MAXIMUM, entangled mode
@@ -4807,7 +4807,7 @@ to enable interoperable extension.<a href="#section-18.6-2" class="pilcrow">¶</
           <dd class="break"></dd>
 <dt id="section-19.3-2.3">Error Topology Analysis:</dt>
           <dd style="margin-left: 1.5em" id="section-19.3-2.4">
-            <p id="section-19.3-2.4.1">Authentic authoring produces characteristic error patterns: corrections localized near recent insertions, deletion-to-insertion ratios consistent with human cognitive models <span>[<a href="#Salthouse1986" class="cite xref">Salthouse1986</a>]</span><span>[<a href="#ScholaWrite" class="cite xref">ScholaWrite</a>]</span><span>[<a href="#ScholaWriteAugmented" class="cite xref">ScholaWriteAugmented</a>]</span>, and fractal self-similarity in revision patterns <span>[<a href="#Orden2003" class="cite xref">Orden2003</a>]</span>. Retyping produces either unnaturally low error rates or randomly distributed artificial errors.<a href="#section-19.3-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-19.3-2.4.1">Authentic authoring produces characteristic error patterns: corrections localized near recent insertions, deletion-to-insertion ratios consistent with human cognitive models <span>[<a href="#Salthouse1986" class="cite xref">Salthouse1986</a>]</span><span>[<a href="#ScholaWrite" class="cite xref">ScholaWrite</a>]</span><span>[<a href="#ScholaWriteAugmented" class="cite xref">ScholaWriteAugmented</a>]</span>, and fractal self-similarity in revision patterns <span>[<a href="#Takens1981" class="cite xref">Takens1981</a>]</span><span>[<a href="#Orden2003" class="cite xref">Orden2003</a>]</span>. Retyping produces either unnaturally low error rates or randomly distributed artificial errors.<a href="#section-19.3-2.4.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-19.3-2.5">Temporal Cost:</dt>
@@ -4847,7 +4847,7 @@ to enable interoperable extension.<a href="#section-18.6-2" class="pilcrow">¶</
 <p id="section-19.5-1">As analyzed in <a href="#swf-acceleration" class="auto internal xref">Section 8.3.4</a>, specialized hardware attacks are mitigated by:<a href="#section-19.5-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-19.5-2.1">
-            <p id="section-19.5-2.1.1"><em>Memory-hardness:</em> For modes 20/21, every SWF step is a full Argon2id evaluation bounded by memory bandwidth (approximately 50 GB/s for DDR5), not ALU throughput. ASICs provide minimal advantage per step, and this resistance compounds across all steps in the chain. For mode 10, memory-hard waypoints (<a href="#swf-algorithm" class="auto internal xref">Section 16.1</a>) bound the ASIC advantage at waypoint steps to the Argon2id limit.<a href="#section-19.5-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-19.5-2.1.1"><em>Memory-hardness:</em> For modes 20/21, every SWF step is a full Argon2id evaluation bounded by memory bandwidth (approximately 50 GB/s for DDR5 <span>[<a href="#JESD79-5" class="cite xref">JESD79-5</a>]</span>), not ALU throughput. ASICs provide minimal advantage per step, and this resistance compounds across all steps in the chain. For mode 10, memory-hard waypoints (<a href="#swf-algorithm" class="auto internal xref">Section 16.1</a>) bound the ASIC advantage at waypoint steps to the Argon2id limit.<a href="#section-19.5-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-19.5-2.2">
             <p id="section-19.5-2.2.1"><em>Hardware-Anchored Time (T3/T4):</em> The HAT temporal sandwich protocol (<a href="#hat" class="auto internal xref">Section 16.13</a>) brackets each SWF computation with TPM-attested clock readings, preventing time compression even with faster computation. The Verifier checks that the TPM clock delta meets or exceeds the expected SWF duration.<a href="#section-19.5-2.2.1" class="pilcrow">¶</a></p>
@@ -4931,7 +4931,7 @@ independent factors:<a href="#section-19.7.1-1" class="pilcrow">¶</a></p>
             <dd style="margin-left: 1.5em" id="section-19.7.1-2.2">
               <p id="section-19.7.1-2.2.1">Single-pass Argon2id (t=1) permits at most ~2x reduction in
 time-area product via ranking-based tradeoff attacks
-(Alwen-Blocki 2016). Multi-pass reduces this to ~1.33x
+(<span>[<a href="#RenDevadas2017" class="cite xref">RenDevadas2017</a>]</span>). Multi-pass reduces this to ~1.33x
 (<span>[<a href="#RFC9106" class="cite xref">RFC9106</a>]</span>, Section 7). PoP uses t=1 because the TMTO
 advantage is offset by the multiplicative effect of iterated
 evaluations: an adversary gaining 2x per step gains 2x overall
@@ -4942,9 +4942,9 @@ therefore the achievable step count per checkpoint interval.<a href="#section-19
 <dt id="section-19.7.1-2.3">Memory Bandwidth:</dt>
             <dd style="margin-left: 1.5em" id="section-19.7.1-2.4">
               <p id="section-19.7.1-2.4.1">Each Argon2id step is bounded by memory bandwidth, not ALU
-throughput. Consumer DDR4 provides ~25 GB/s; DDR5 provides
-~50 GB/s. HBM3 (available in datacenter ASICs) provides
-~800 GB/s per stack but at approximately 100x the cost per
+throughput. Consumer DDR4 provides ~25 GB/s <span>[<a href="#JESD79-4" class="cite xref">JESD79-4</a>]</span>; DDR5 provides
+~50 GB/s <span>[<a href="#JESD79-5" class="cite xref">JESD79-5</a>]</span>. HBM3 (available in datacenter ASICs) provides
+~800 GB/s per stack <span>[<a href="#JESD238" class="cite xref">JESD238</a>]</span> but at substantially higher cost per
 device. The effective economic advantage is approximately
 3-4x when amortized over device cost.<a href="#section-19.7.1-2.4.1" class="pilcrow">¶</a></p>
 </dd>
@@ -4954,7 +4954,7 @@ device. The effective economic advantage is approximately
               <p id="section-19.7.1-2.6.1">Custom Argon2id ASICs can eliminate instruction decode overhead
 and optimize the Blake2b core, providing an estimated 1.5-2x
 advantage over general-purpose CPUs for the same memory
-bandwidth.<a href="#section-19.7.1-2.6.1" class="pilcrow">¶</a></p>
+bandwidth <span>[<a href="#Biryukov2016" class="cite xref">Biryukov2016</a>]</span><span>[<a href="#RenDevadas2017" class="cite xref">RenDevadas2017</a>]</span>.<a href="#section-19.7.1-2.6.1" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
 <dt id="section-19.7.1-2.7">Combined Advantage:</dt>
@@ -5331,6 +5331,10 @@ minimizing the behavioral data emitted.<a href="#section-20.5-2.8.1" class="pilc
         <dd>
 <span class="refAuthor">Amazon.com, Inc.</span>, <span class="refTitle">"Kindle Direct Publishing Content Guidelines"</span>, <time datetime="2025" class="refDate">2025</time>, <span>&lt;<a href="https://kdp.amazon.com/en_US/help/topic/G200672390">https://kdp.amazon.com/en_US/help/topic/G200672390</a>&gt;</span>. </dd>
 <dd class="break"></dd>
+<dt id="Biryukov2016">[Biryukov2016]</dt>
+        <dd>
+<span class="refAuthor">Biryukov, A.</span>, <span class="refAuthor">Dinu, D.</span>, and <span class="refAuthor">D. Khovratovich</span>, <span class="refTitle">"Argon2: New Generation of Memory-Hard Functions for Password Hashing and Other Applications"</span>, <span class="seriesInfo">IEEE EuroS&amp;P pp. 292-302</span>, <time datetime="2016" class="refDate">2016</time>, <span>&lt;<a href="https://doi.org/10.1109/EuroSP.2016.31">https://doi.org/10.1109/EuroSP.2016.31</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="Boneh2018">[Boneh2018]</dt>
         <dd>
 <span class="refAuthor">Boneh, D.</span>, <span class="refAuthor">Bonneau, J.</span>, <span class="refAuthor">Bunz, B.</span>, and <span class="refAuthor">B. Fisch</span>, <span class="refTitle">"Verifiable Delay Functions"</span>, <span class="seriesInfo">CRYPTO 2018</span>, <time datetime="2018" class="refDate">2018</time>, <span>&lt;<a href="https://doi.org/10.1007/978-3-319-96884-1_25">https://doi.org/10.1007/978-3-319-96884-1_25</a>&gt;</span>. </dd>
@@ -5363,6 +5367,18 @@ minimizing the behavioral data emitted.<a href="#section-20.5-2.8.1" class="pilc
         <dd>
 <span class="refAuthor">U.S. Department of Health and Human Services, Office of the National Coordinator for Health Information Technology</span>, <span class="refTitle">"Request for Information: Accelerating the Adoption and Use of Artificial Intelligence as Part of Clinical Care"</span>, <span class="seriesInfo">Federal Register 2025-23641</span>, <time datetime="2025-12" class="refDate">December 2025</time>, <span>&lt;<a href="https://www.regulations.gov/docket/HHS-ONC-2026-0001">https://www.regulations.gov/docket/HHS-ONC-2026-0001</a>&gt;</span>. </dd>
 <dd class="break"></dd>
+<dt id="JESD238">[JESD238]</dt>
+        <dd>
+<span class="refAuthor">JEDEC Solid State Technology Association</span>, <span class="refTitle">"High Bandwidth Memory (HBM3) DRAM"</span>, <span class="seriesInfo">JEDEC JESD238A</span>, <time datetime="2022" class="refDate">2022</time>, <span>&lt;<a href="https://www.jedec.org/standards-documents/docs/jesd238b01">https://www.jedec.org/standards-documents/docs/jesd238b01</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="JESD79-4">[JESD79-4]</dt>
+        <dd>
+<span class="refAuthor">JEDEC Solid State Technology Association</span>, <span class="refTitle">"DDR4 SDRAM Standard"</span>, <span class="seriesInfo">JEDEC JESD79-4D</span>, <time datetime="2012" class="refDate">2012</time>, <span>&lt;<a href="https://www.jedec.org/standards-documents/docs/jesd79-4a">https://www.jedec.org/standards-documents/docs/jesd79-4a</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="JESD79-5">[JESD79-5]</dt>
+        <dd>
+<span class="refAuthor">JEDEC Solid State Technology Association</span>, <span class="refTitle">"DDR5 SDRAM Standard"</span>, <span class="seriesInfo">JEDEC JESD79-5D</span>, <time datetime="2020" class="refDate">2020</time>, <span>&lt;<a href="https://www.jedec.org/standards-documents/docs/jesd79-5d">https://www.jedec.org/standards-documents/docs/jesd79-5d</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="Liang2023">[Liang2023]</dt>
         <dd>
 <span class="refAuthor">Liang, W.</span>, <span class="refAuthor">Yuksekgonul, M.</span>, <span class="refAuthor">Mao, Y.</span>, <span class="refAuthor">Wu, E.</span>, and <span class="refAuthor">J. Zou</span>, <span class="refTitle">"GPT Detectors Are Biased Against Non-Native English Writers"</span>, <span class="seriesInfo">Patterns 4(7), 100779</span>, <time datetime="2023-07" class="refDate">July 2023</time>, <span>&lt;<a href="https://doi.org/10.1016/j.patter.2023.100779">https://doi.org/10.1016/j.patter.2023.100779</a>&gt;</span>. </dd>
@@ -5390,6 +5406,10 @@ minimizing the behavioral data emitted.<a href="#section-20.5-2.8.1" class="pilc
 <dt id="RATS-Models">[RATS-Models]</dt>
         <dd>
 <span class="refAuthor">Birkholz, H.</span>, <span class="refAuthor">Eckel, M.</span>, <span class="refAuthor">Pan, W.</span>, and <span class="refAuthor">E. Voit</span>, <span class="refTitle">"Reference Interaction Models for Remote Attestation Procedures"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-rats-reference-interaction-models-15</span>, <time datetime="2025" class="refDate">2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-rats-reference-interaction-models-15">https://datatracker.ietf.org/doc/html/draft-ietf-rats-reference-interaction-models-15</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RenDevadas2017">[RenDevadas2017]</dt>
+        <dd>
+<span class="refAuthor">Ren, L.</span> and <span class="refAuthor">S. Devadas</span>, <span class="refTitle">"Bandwidth Hard Functions for ASIC Resistance"</span>, <span class="seriesInfo">TCC 2017, LNCS 10677, pp. 466-492</span>, <time datetime="2017" class="refDate">2017</time>, <span>&lt;<a href="https://doi.org/10.1007/978-3-319-70500-2_16">https://doi.org/10.1007/978-3-319-70500-2_16</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC3161">[RFC3161]</dt>
         <dd>
@@ -5436,8 +5456,12 @@ minimizing the behavioral data emitted.<a href="#section-20.5-2.8.1" class="pilc
 <span class="refAuthor">Sardar, M.U.</span>, <span class="refTitle">"Pre-, Intra- and Post-handshake Attestation"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-usama-seat-intra-vs-post-03</span>, <time datetime="2026-01" class="refDate">January 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-usama-seat-intra-vs-post-03">https://datatracker.ietf.org/doc/html/draft-usama-seat-intra-vs-post-03</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="SEAT-UseCases">[SEAT-UseCases]</dt>
-      <dd>
+        <dd>
 <span class="refAuthor">Mihalcea, I.</span>, <span class="refAuthor">Sardar, M.U.</span>, <span class="refAuthor">Fossati, T.</span>, <span class="refAuthor">Reddy, T.</span>, <span class="refAuthor">Jiang, Y.</span>, and <span class="refAuthor">M. Chen</span>, <span class="refTitle">"Use Cases and Properties for Integrating Remote Attestation with Secure Channel Protocols"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mihalcea-seat-use-cases-01</span>, <time datetime="2026-01" class="refDate">January 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mihalcea-seat-use-cases-01">https://datatracker.ietf.org/doc/html/draft-mihalcea-seat-use-cases-01</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="Takens1981">[Takens1981]</dt>
+      <dd>
+<span class="refAuthor">Takens, F.</span>, <span class="refTitle">"Detecting Strange Attractors in Turbulence"</span>, <span class="seriesInfo">Lecture Notes in Mathematics 898, 366-381</span>, <time datetime="1981" class="refDate">1981</time>, <span>&lt;<a href="https://doi.org/10.1007/BFb0091924">https://doi.org/10.1007/BFb0091924</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>

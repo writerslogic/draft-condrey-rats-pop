@@ -344,8 +344,8 @@ Table of Contents
       exhibit characteristic noise patterns consistent with biological
       motor control [Monrose2000].  Evidence exhibiting spectral
       flatness greater than 0.9 (indicating white noise rather than
-      biological 1/f-like noise) MUST be flagged as potentially
-      synthetic.
+      biological 1/f-like noise [Gilden2001][Kello2007]) MUST be flagged
+      as potentially synthetic.
 
    Cognitive Load Correlation (CLC):  Verifiers MUST correlate timing
       patterns with semantic complexity.  Human authors exhibit
@@ -370,8 +370,8 @@ Table of Contents
       localized corrections near recent insertions, fractal self-
       similarity in revision patterns, and deletion-to-insertion ratios
       consistent with natural composition.  Evidence exhibiting
-      unnaturally low error rates (below 1 correction per 500
-      characters) or randomly distributed errors lacking positional
+      unnaturally low error rates (below 1 correction per 500 characters
+      [Dhakal2018]) or randomly distributed errors lacking positional
       correlation SHOULD be flagged.[ScholaWriteAugmented]
 
    QR Presence Challenge (OOB-PC):  When presence-challenge structures
@@ -424,7 +424,7 @@ Table of Contents
       CoV consistently above 0.90 (chaotically irregular) SHOULD be
       flagged as potentially injected random noise.  The session-wide
       CoV trend SHOULD exhibit gradual drift consistent with fatigue and
-      warm-up effects.
+      warm-up effects [Adams1961].
 
    A conforming Verifier MUST evaluate all forensic mechanisms for which
    the Evidence Packet contains sufficient data.  Verifiers MAY
@@ -466,12 +466,12 @@ Table of Contents
    the resulting trajectory.  Biological motor control processes
    typically produce a low-dimensional attractor (dimension 2-5),
    reflecting the finite degrees of freedom in the neuromuscular system
-   [Orden2003].  Synthetic or AI-injected timing noise will typically
-   fail to produce a low-dimensional biological attractor in the
-   embedded space, instead exhibiting high or non-convergent correlation
-   dimension estimates.  This provides a high-confidence signal for
-   adversarial probing that is complementary to the spectral (SNR) and
-   distributional (KL divergence) checks.
+   [Takens1981][Orden2003].  Synthetic or AI-injected timing noise will
+   typically fail to produce a low-dimensional biological attractor in
+   the embedded space, instead exhibiting high or non-convergent
+   correlation dimension estimates.  This provides a high-confidence
+   signal for adversarial probing that is complementary to the spectral
+   (SNR) and distributional (KL divergence) checks.
 
 5.2.  SNR Computation (Informative)
 
@@ -642,8 +642,9 @@ Table of Contents
       motor variance, micro-pauses for word selection, and variable key
       travel distances [Dhakal2018][Salthouse1986].
 
-   *  Human typing (transcription): CoV 0.15-0.40, more regular due to
-      reduced cognitive load but still biologically variable.
+   *  Human typing (transcription): CoV 0.15-0.40 [Gentner1983], more
+      regular due to reduced cognitive load but still biologically
+      variable.
 
    *  Automated injection (scripted replay): CoV below 0.10,
       mechanically uniform timing from software-driven keystroke
@@ -1392,8 +1393,8 @@ Table of Contents
 
 14.1.  Eye-Tracking Mode
 
-   Eye-tracking input produces IKI ranges of 500-3000 ms (versus 100-300
-   ms for keyboard).  Adjusted thresholds:
+   Eye-tracking input produces IKI ranges of 500-3000 ms [Majaranta2009]
+   (versus 100-300 ms for keyboard).  Adjusted thresholds:
 
    *  Entropy: 2.0 to 4.0 bits/sample (reduced from 3.0 minimum)
 
@@ -1408,7 +1409,7 @@ Table of Contents
 14.2.  Dictation Mode
 
    Dictation input produces burst patterns with higher cadence variance
-   than keyboard.  Adjusted thresholds:
+   than keyboard [Karat1999].  Adjusted thresholds:
 
    *  SNR: -8 dB to +8 dB (wider range reflecting speech pauses)
 
@@ -1757,6 +1758,11 @@ Table of Contents
 
 19.2.  Informative References
 
+   [Adams1961]
+              Adams, J.A., "The Second Facet of Forgetting: A Review of
+              Warmup Decrement", Psychological Bulletin 58(4), 257-273,
+              1961, <https://doi.org/10.1037/h0044798>.
+
    [AR4SI]    Fossati, T., Voit, E., and H. Birkholz, "Attestation
               Results for Secure Interactions", Work in Progress,
               Internet-Draft, draft-ietf-rats-ar4si-09, August 2025,
@@ -1781,10 +1787,38 @@ Table of Contents
               <https://datatracker.ietf.org/doc/html/draft-ietf-rats-
               ear-02>.
 
+   [Gentner1983]
+              Gentner, D.R., "Keystroke Timing in Transcription Typing",
+              Cognitive Aspects of Skilled Typewriting pp. 95-120, 1983,
+              <https://doi.org/10.1007/978-1-4612-5470-6_5>.
+
+   [Gilden2001]
+              Gilden, D.L., "Cognitive Emissions of 1/f Noise",
+              Psychological Review 108(1), 33-56, 2001,
+              <https://doi.org/10.1037/0033-295X.108.1.33>.
+
    [HaberStornetta1991]
               Haber, S. and W.S. Stornetta, "How to Time-Stamp a Digital
               Document", Journal of Cryptology 3(2), 99-111, 1991,
               <https://doi.org/10.1007/BF00196791>.
+
+   [Karat1999]
+              Karat, C.-M., Halverson, C., Horn, D., and J. Karat,
+              "Patterns of Entry and Correction in Large Vocabulary
+              Continuous Speech Recognition Systems", ACM CHI 1999,
+              1999, <https://doi.org/10.1145/302979.303160>.
+
+   [Kello2007]
+              Kello, C.T., Beltz, B.C., Holden, J.G., and G.C. Van
+              Orden, "The Emergent Coordination of Cognitive Function",
+              Journal of Experimental Psychology: General 136(4),
+              551-568, 2007,
+              <https://doi.org/10.1037/0096-3445.136.4.551>.
+
+   [Majaranta2009]
+              Majaranta, P., Ahola, U.-K., and O. Spakov, "Fast Gaze
+              Typing with an Adjustable Dwell Time", ACM CHI 2009, 2009,
+              <https://doi.org/10.1145/1518701.1518758>.
 
    [Monaco2018]
               Monaco, J.V., "SoK: Keylogging Side Channels", IEEE
@@ -1859,6 +1893,11 @@ Table of Contents
               Progress, Internet-Draft, draft-mihalcea-seat-use-cases-
               01, January 2026, <https://datatracker.ietf.org/doc/html/
               draft-mihalcea-seat-use-cases-01>.
+
+   [Takens1981]
+              Takens, F., "Detecting Strange Attractors in Turbulence",
+              Lecture Notes in Mathematics 898, 366-381, 1981,
+              <https://doi.org/10.1007/BFb0091924>.
 
 Verification Constraint Summary
 

@@ -2294,13 +2294,13 @@ Table of Contents
    the mandatory minimums for the claimed content tier.
 
    Expected wall-clock times for swf-argon2id modes on reference
-   hardware (DDR4, approximately 25 GB/s memory bandwidth): each
-   Argon2id step with t=1, m=65536 KiB requires approximately 100ms.
-   Target duty cycles at 30-second default checkpoint intervals: CORE
-   approximately 30% (90 steps, ~9s), ENHANCED approximately 50% (150
-   steps, ~15s), MAXIMUM approximately 70% (210 steps, ~21s).  For
-   ENHANCED and MAXIMUM, entangled mode (swf-argon2id-entangled) is
-   MANDATORY per Section 16.7.
+   hardware (DDR4, approximately 25 GB/s memory bandwidth [JESD79-4]):
+   each Argon2id step with t=1, m=65536 KiB requires approximately 100ms
+   [Biryukov2016].  Target duty cycles at 30-second default checkpoint
+   intervals: CORE approximately 30% (90 steps, ~9s), ENHANCED
+   approximately 50% (150 steps, ~15s), MAXIMUM approximately 70% (210
+   steps, ~21s).  For ENHANCED and MAXIMUM, entangled mode (swf-
+   argon2id-entangled) is MANDATORY per Section 16.7.
 
    For swf-sha256 mode, the initial Argon2id evaluation requires
    approximately 50-100ms; subsequent SHA-256 steps add approximately
@@ -2919,9 +2919,9 @@ Table of Contents
       error patterns: corrections localized near recent insertions,
       deletion-to-insertion ratios consistent with human cognitive
       models [Salthouse1986][ScholaWrite][ScholaWriteAugmented], and
-      fractal self-similarity in revision patterns [Orden2003].
-      Retyping produces either unnaturally low error rates or randomly
-      distributed artificial errors.
+      fractal self-similarity in revision patterns
+      [Takens1981][Orden2003].  Retyping produces either unnaturally low
+      error rates or randomly distributed artificial errors.
 
    Temporal Cost:  Even successful retype attacks require real-time
       effort.  A 5,000-word document with 10-second checkpoint intervals
@@ -2958,10 +2958,11 @@ Table of Contents
 
    *  _Memory-hardness:_ For modes 20/21, every SWF step is a full
       Argon2id evaluation bounded by memory bandwidth (approximately 50
-      GB/s for DDR5), not ALU throughput.  ASICs provide minimal
-      advantage per step, and this resistance compounds across all steps
-      in the chain.  For mode 10, memory-hard waypoints (Section 16.1)
-      bound the ASIC advantage at waypoint steps to the Argon2id limit.
+      GB/s for DDR5 [JESD79-5]), not ALU throughput.  ASICs provide
+      minimal advantage per step, and this resistance compounds across
+      all steps in the chain.  For mode 10, memory-hard waypoints
+      (Section 16.1) bound the ASIC advantage at waypoint steps to the
+      Argon2id limit.
 
    *  _Hardware-Anchored Time (T3/T4):_ The HAT temporal sandwich
       protocol (Section 16.13) brackets each SWF computation with TPM-
@@ -3033,7 +3034,7 @@ Table of Contents
 
    Time-Memory Tradeoff (TMTO):  Single-pass Argon2id (t=1) permits at
       most ~2x reduction in time-area product via ranking-based tradeoff
-      attacks (Alwen-Blocki 2016).  Multi-pass reduces this to ~1.33x
+      attacks ([RenDevadas2017]).  Multi-pass reduces this to ~1.33x
       ([RFC9106], Section 7).  PoP uses t=1 because the TMTO advantage
       is offset by the multiplicative effect of iterated evaluations: an
       adversary gaining 2x per step gains 2x overall (not 2^steps),
@@ -3041,16 +3042,16 @@ Table of Contents
       achievable step count per checkpoint interval.
 
    Memory Bandwidth:  Each Argon2id step is bounded by memory bandwidth,
-      not ALU throughput.  Consumer DDR4 provides ~25 GB/s; DDR5
-      provides ~50 GB/s.  HBM3 (available in datacenter ASICs) provides
-      ~800 GB/s per stack but at approximately 100x the cost per device.
-      The effective economic advantage is approximately 3-4x when
-      amortized over device cost.
+      not ALU throughput.  Consumer DDR4 provides ~25 GB/s [JESD79-4];
+      DDR5 provides ~50 GB/s [JESD79-5].  HBM3 (available in datacenter
+      ASICs) provides ~800 GB/s per stack [JESD238] but at substantially
+      higher cost per device.  The effective economic advantage is
+      approximately 3-4x when amortized over device cost.
 
    Silicon Optimization:  Custom Argon2id ASICs can eliminate
       instruction decode overhead and optimize the Blake2b core,
       providing an estimated 1.5-2x advantage over general-purpose CPUs
-      for the same memory bandwidth.
+      for the same memory bandwidth [Biryukov2016][RenDevadas2017].
 
    Combined Advantage:  The multiplicative combination of these factors
       yields an upper bound of approximately 8-16x for a fully optimized
@@ -3360,6 +3361,12 @@ Table of Contents
               Guidelines", 2025,
               <https://kdp.amazon.com/en_US/help/topic/G200672390>.
 
+   [Biryukov2016]
+              Biryukov, A., Dinu, D., and D. Khovratovich, "Argon2: New
+              Generation of Memory-Hard Functions for Password Hashing
+              and Other Applications", IEEE EuroS&P pp. 292-302, 2016,
+              <https://doi.org/10.1109/EuroSP.2016.31>.
+
    [Boneh2018]
               Boneh, D., Bonneau, J., Bunz, B., and B. Fisch,
               "Verifiable Delay Functions", CRYPTO 2018, 2018,
@@ -3403,6 +3410,19 @@ Table of Contents
               Clinical Care", Federal Register 2025-23641, December
               2025,
               <https://www.regulations.gov/docket/HHS-ONC-2026-0001>.
+
+   [JESD238]  JEDEC Solid State Technology Association, "High Bandwidth
+              Memory (HBM3) DRAM", JEDEC JESD238A, 2022,
+              <https://www.jedec.org/standards-documents/docs/
+              jesd238b01>.
+
+   [JESD79-4] JEDEC Solid State Technology Association, "DDR4 SDRAM
+              Standard", JEDEC JESD79-4D, 2012, <https://www.jedec.org/
+              standards-documents/docs/jesd79-4a>.
+
+   [JESD79-5] JEDEC Solid State Technology Association, "DDR5 SDRAM
+              Standard", JEDEC JESD79-5D, 2020, <https://www.jedec.org/
+              standards-documents/docs/jesd79-5d>.
 
    [Liang2023]
               Liang, W., Yuksekgonul, M., Mao, Y., Wu, E., and J. Zou,
@@ -3448,6 +3468,11 @@ Table of Contents
               reference-interaction-models-15, 2025,
               <https://datatracker.ietf.org/doc/html/draft-ietf-rats-
               reference-interaction-models-15>.
+
+   [RenDevadas2017]
+              Ren, L. and S. Devadas, "Bandwidth Hard Functions for ASIC
+              Resistance", TCC 2017, LNCS 10677, pp. 466-492, 2017,
+              <https://doi.org/10.1007/978-3-319-70500-2_16>.
 
    [RFC3161]  Adams, C., Cain, P., Pinkas, D., and R. Zuccherato,
               "Internet X.509 Public Key Infrastructure Time-Stamp
@@ -3522,6 +3547,11 @@ Table of Contents
               Progress, Internet-Draft, draft-mihalcea-seat-use-cases-
               01, January 2026, <https://datatracker.ietf.org/doc/html/
               draft-mihalcea-seat-use-cases-01>.
+
+   [Takens1981]
+              Takens, F., "Detecting Strange Attractors in Turbulence",
+              Lecture Notes in Mathematics 898, 366-381, 1981,
+              <https://doi.org/10.1007/BFb0091924>.
 
 SWF Test Vectors
 
