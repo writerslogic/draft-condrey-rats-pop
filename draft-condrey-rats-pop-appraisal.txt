@@ -1411,7 +1411,8 @@ Table of Contents
    Dictation input produces burst patterns with higher cadence variance
    than keyboard [Karat1999].  Adjusted thresholds:
 
-   *  SNR: -8 dB to +8 dB (wider range reflecting speech pauses)
+   *  SNR: -8 dB to +8 dB (wider range reflecting speech pauses
+      [Shangguan2021])
 
    *  CLC correlation: r > 0.1 (range 0.1 to 0.8)
 
@@ -1430,10 +1431,10 @@ Table of Contents
 
    *  IKI analysis: Verifiers MUST account for the bimodal distribution
       of IME input.  Composition-phase keystrokes exhibit intervals of
-      50-200 ms; inter-sequence pauses during candidate selection range
-      from 300-2000 ms.  Verifiers MUST segment IKI analysis by
-      composition phase rather than applying a single distribution
-      model.
+      50-200 ms [Liang2009]; inter-sequence pauses during candidate
+      selection range from 300-2000 ms [WangZhai2001].  Verifiers MUST
+      segment IKI analysis by composition phase rather than applying a
+      single distribution model.
 
    *  SNR: -5 dB to +8 dB (wider than keyboard due to candidate
       selection pauses).
@@ -1815,6 +1816,12 @@ Table of Contents
               551-568, 2007,
               <https://doi.org/10.1037/0096-3445.136.4.551>.
 
+   [Liang2009]
+              Liang, H.-W., Hwang, Y.-H., and F.-H. Chang, "Effects of
+              Input Methods on Inter-Key Press Intervals During
+              Continuous Typing", Ergonomics 52(9), 1153-1161, 2009,
+              <https://doi.org/10.1080/00140130902919121>.
+
    [Majaranta2009]
               Majaranta, P., Ahola, U.-K., and O. Spakov, "Fast Gaze
               Typing with an Adjustable Dwell Time", ACM CHI 2009, 2009,
@@ -1894,10 +1901,21 @@ Table of Contents
               01, January 2026, <https://datatracker.ietf.org/doc/html/
               draft-mihalcea-seat-use-cases-01>.
 
+   [Shangguan2021]
+              Shangguan, Y., Knister, K., He, Y., and I. McGraw,
+              "Dissecting User-Perceived Latency of On-Device E2E Speech
+              Recognition", INTERSPEECH 2021, 2021,
+              <https://doi.org/10.21437/Interspeech.2021-81>.
+
    [Takens1981]
               Takens, F., "Detecting Strange Attractors in Turbulence",
               Lecture Notes in Mathematics 898, 366-381, 1981,
               <https://doi.org/10.1007/BFb0091924>.
+
+   [WangZhai2001]
+              Wang, J., Zhai, S., and H. Su, "Chinese Input with
+              Keyboard and Eye-Tracking: An Anatomical Study", ACM
+              CHI 2001, 2001, <https://doi.org/10.1145/365024.365298>.
 
 Verification Constraint Summary
 

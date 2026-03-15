@@ -2920,7 +2920,7 @@ errors.<a href="#section-14.1-2.4.1" class="pilcrow">¶</a></p>
 variance than keyboard <span>[<a href="#Karat1999" class="cite xref">Karat1999</a>]</span>. Adjusted thresholds:<a href="#section-14.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-14.2-2.1">
-            <p id="section-14.2-2.1.1">SNR: -8 dB to +8 dB (wider range reflecting speech pauses)<a href="#section-14.2-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-14.2-2.1.1">SNR: -8 dB to +8 dB (wider range reflecting speech pauses <span>[<a href="#Shangguan2021" class="cite xref">Shangguan2021</a>]</span>)<a href="#section-14.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-14.2-2.2">
             <p id="section-14.2-2.2.1">CLC correlation: r &gt; 0.1 (range 0.1 to 0.8)<a href="#section-14.2-2.2.1" class="pilcrow">¶</a></p>
@@ -2950,8 +2950,8 @@ thresholds:<a href="#section-14.3-1" class="pilcrow">¶</a></p>
 <li class="normal" id="section-14.3-2.1">
             <p id="section-14.3-2.1.1">IKI analysis: Verifiers <span class="bcp14">MUST</span> account for the bimodal
 distribution of IME input. Composition-phase keystrokes
-exhibit intervals of 50-200 ms; inter-sequence pauses
-during candidate selection range from 300-2000 ms.
+exhibit intervals of 50-200 ms <span>[<a href="#Liang2009" class="cite xref">Liang2009</a>]</span>; inter-sequence pauses
+during candidate selection range from 300-2000 ms <span>[<a href="#WangZhai2001" class="cite xref">WangZhai2001</a>]</span>.
 Verifiers <span class="bcp14">MUST</span> segment IKI analysis by composition phase
 rather than applying a single distribution model.<a href="#section-14.3-2.1.1" class="pilcrow">¶</a></p>
 </li>
@@ -3453,6 +3453,10 @@ include a warning in the Attestation Result warnings field
         <dd>
 <span class="refAuthor">Kello, C.T.</span>, <span class="refAuthor">Beltz, B.C.</span>, <span class="refAuthor">Holden, J.G.</span>, and <span class="refAuthor">G.C. Van Orden</span>, <span class="refTitle">"The Emergent Coordination of Cognitive Function"</span>, <span class="seriesInfo">Journal of Experimental Psychology: General 136(4), 551-568</span>, <time datetime="2007" class="refDate">2007</time>, <span>&lt;<a href="https://doi.org/10.1037/0096-3445.136.4.551">https://doi.org/10.1037/0096-3445.136.4.551</a>&gt;</span>. </dd>
 <dd class="break"></dd>
+<dt id="Liang2009">[Liang2009]</dt>
+        <dd>
+<span class="refAuthor">Liang, H.-W.</span>, <span class="refAuthor">Hwang, Y.-H.</span>, and <span class="refAuthor">F.-H. Chang</span>, <span class="refTitle">"Effects of Input Methods on Inter-Key Press Intervals During Continuous Typing"</span>, <span class="seriesInfo">Ergonomics 52(9), 1153-1161</span>, <time datetime="2009" class="refDate">2009</time>, <span>&lt;<a href="https://doi.org/10.1080/00140130902919121">https://doi.org/10.1080/00140130902919121</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="Majaranta2009">[Majaranta2009]</dt>
         <dd>
 <span class="refAuthor">Majaranta, P.</span>, <span class="refAuthor">Ahola, U.-K.</span>, and <span class="refAuthor">O. Spakov</span>, <span class="refTitle">"Fast Gaze Typing with an Adjustable Dwell Time"</span>, <span class="seriesInfo">ACM CHI 2009</span>, <time datetime="2009" class="refDate">2009</time>, <span>&lt;<a href="https://doi.org/10.1145/1518701.1518758">https://doi.org/10.1145/1518701.1518758</a>&gt;</span>. </dd>
@@ -3505,9 +3509,17 @@ include a warning in the Attestation Result warnings field
         <dd>
 <span class="refAuthor">Mihalcea, I.</span>, <span class="refAuthor">Sardar, M.U.</span>, <span class="refAuthor">Fossati, T.</span>, <span class="refAuthor">Reddy, T.</span>, <span class="refAuthor">Jiang, Y.</span>, and <span class="refAuthor">M. Chen</span>, <span class="refTitle">"Use Cases and Properties for Integrating Remote Attestation with Secure Channel Protocols"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mihalcea-seat-use-cases-01</span>, <time datetime="2026-01" class="refDate">January 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mihalcea-seat-use-cases-01">https://datatracker.ietf.org/doc/html/draft-mihalcea-seat-use-cases-01</a>&gt;</span>. </dd>
 <dd class="break"></dd>
+<dt id="Shangguan2021">[Shangguan2021]</dt>
+        <dd>
+<span class="refAuthor">Shangguan, Y.</span>, <span class="refAuthor">Knister, K.</span>, <span class="refAuthor">He, Y.</span>, and <span class="refAuthor">I. McGraw</span>, <span class="refTitle">"Dissecting User-Perceived Latency of On-Device E2E Speech Recognition"</span>, <span class="seriesInfo">INTERSPEECH 2021</span>, <time datetime="2021" class="refDate">2021</time>, <span>&lt;<a href="https://doi.org/10.21437/Interspeech.2021-81">https://doi.org/10.21437/Interspeech.2021-81</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="Takens1981">[Takens1981]</dt>
-      <dd>
+        <dd>
 <span class="refAuthor">Takens, F.</span>, <span class="refTitle">"Detecting Strange Attractors in Turbulence"</span>, <span class="seriesInfo">Lecture Notes in Mathematics 898, 366-381</span>, <time datetime="1981" class="refDate">1981</time>, <span>&lt;<a href="https://doi.org/10.1007/BFb0091924">https://doi.org/10.1007/BFb0091924</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="WangZhai2001">[WangZhai2001]</dt>
+      <dd>
+<span class="refAuthor">Wang, J.</span>, <span class="refAuthor">Zhai, S.</span>, and <span class="refAuthor">H. Su</span>, <span class="refTitle">"Chinese Input with Keyboard and Eye-Tracking: An Anatomical Study"</span>, <span class="seriesInfo">ACM CHI 2001</span>, <time datetime="2001" class="refDate">2001</time>, <span>&lt;<a href="https://doi.org/10.1145/365024.365298">https://doi.org/10.1145/365024.365298</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
