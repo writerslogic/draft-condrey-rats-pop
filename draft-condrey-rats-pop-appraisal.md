@@ -141,6 +141,22 @@ informative:
     date: 2026
     seriesinfo:
       arXiv: "2601.17280"
+  Orden2003:
+    title: "Self-Organization of Cognitive Performance"
+    target: https://doi.org/10.1037/0096-3445.132.3.331
+    author:
+      - fullname: Guy C. Van Orden
+        initials: G.C.
+        surname: Van Orden
+      - fullname: John G. Holden
+        initials: J.G.
+        surname: Holden
+      - fullname: Michael T. Turvey
+        initials: M.T.
+        surname: Turvey
+    date: 2003
+    seriesinfo:
+      "Journal of Experimental Psychology: General": "132(3), 331-350"
   Salthouse1986:
     title: "Perceptual, Cognitive, and Motoric Aspects of Transcription Typing"
     target: https://doi.org/10.1037/0033-2909.99.3.303
@@ -318,7 +334,7 @@ A Verifier MUST perform the following procedure to appraise a PoP Evidence Packe
 
 3. *Temporal Order:* For each process-proof, recompute Argon2id from the declared seed to obtain state_0, then verify sampled Merkle proofs against the committed root (process-proof key 4, merkle-root). Verify that claimed-duration is within \[0.5x, 3.0x\] of the expected wall-clock time for the declared proof-params on reference hardware (defined as a system with DDR4 memory providing approximately 25 GB/s sustained bandwidth). Expected times are defined in {{PoP-Protocol}}, Mandatory SWF Parameters section. When comparing timestamps across devices or against external time sources, the clock skew tolerances defined in {{clock-skew-tolerance}} MUST be applied.
 
-4. *Entropy Threshold:* Independently estimate entropy from the jitter-binding intervals array using a standard entropy estimator (e.g., NIST SP 800-90B most common value estimator). Verify the independent estimate meets or exceeds 3.0 bits per inter-keystroke interval. The Attester's self-reported entropy-estimate field MUST NOT be relied upon. Low-entropy segments (below threshold) MUST be flagged as "Non-Biological."
+4. *Entropy Threshold:* Independently estimate entropy from the jitter-binding intervals array using a standard entropy estimator (e.g., NIST SP 800-90B most common value estimator). Verify the independent estimate meets or exceeds 3.0 bits per inter-keystroke interval {{Dhakal2018}}. The Attester's self-reported entropy-estimate field MUST NOT be relied upon. Low-entropy segments (below threshold) MUST be flagged as "Non-Biological."
 
 5. *Entanglement:* Verify the HMAC value (entangled-binding) over the combined document, jitter, and physical state.
 
@@ -413,7 +429,7 @@ SNR (Signal-to-Noise Ratio) Analysis:
 : Verifiers MUST compute the power spectral density of jitter intervals. Human motor signals exhibit characteristic noise patterns consistent with biological motor control {{Monrose2000}}. Evidence exhibiting spectral flatness greater than 0.9 (indicating white noise rather than biological 1/f-like noise) MUST be flagged as potentially synthetic.
 
 Cognitive Load Correlation (CLC):
-: Verifiers MUST correlate timing patterns with semantic complexity. Human authors exhibit increased inter-keystroke intervals (IKI) and pause frequency during composition of semantically complex segments compared to simple connective text. Verifiers MUST compute the Pearson correlation between segment semantic complexity and mean IKI. Evidence with r < 0.2 (or r < 0.1 in assistive mode) MUST be flagged as a Semantic Mismatch.
+: Verifiers MUST correlate timing patterns with semantic complexity. Human authors exhibit increased inter-keystroke intervals (IKI) and pause frequency during composition of semantically complex segments compared to simple connective text {{Dhakal2018}}. Verifiers MUST compute the Pearson correlation between segment semantic complexity and mean IKI. Evidence with r < 0.2 (or r < 0.1 in assistive mode) MUST be flagged as a Semantic Mismatch.
 
 Mechanical Turk Detection:
 : Verifiers MUST compute C_intra (Pearson correlation between pause duration and subsequent edit complexity within each checkpoint). C_intra values below 0.15 MUST be flagged as indicating robotic pacing, where an automated system maintains a machine-clocked editing rate independent of content demands.{{Monrose2000}}{{Monaco2018}} Checkpoints containing receipt structures (key 13) MUST have their associated paste events excluded from C_intra computation.
@@ -425,7 +441,7 @@ QR Presence Challenge (OOB-PC):
 : When presence-challenge structures are present in the Evidence Packet, Verifiers MUST verify that the response-time is within the corresponding checkpoint's time window (subject to the cross-device clock skew tolerance defined in {{clock-skew-tolerance}}) and MUST validate the device-signature. NOTE: The Attester-side procedure for issuing presence challenges is specified in {{PoP-Protocol}}.
 
 Session Consistency Analysis:
-: Verifiers MUST analyze cross-checkpoint behavioral trends. IKI distributions should exhibit gradual drift consistent with fatigue effects. An abrupt change is defined as a shift in mean IKI between consecutive checkpoints exceeding 2 standard deviations of the session-wide IKI distribution. Verifiers MUST flag transitions exceeding this threshold as potential data source switching. Jitter-binding intervals across consecutive checkpoints MUST be checked for statistical independence (cross-checkpoint correlation below 0.3). Edit-delta patterns SHOULD be checked for non-stationarity consistent with human creative flow.
+: Verifiers MUST analyze cross-checkpoint behavioral trends. IKI distributions should exhibit gradual drift consistent with fatigue effects {{Dhakal2018}}. An abrupt change is defined as a shift in mean IKI between consecutive checkpoints exceeding 2 standard deviations of the session-wide IKI distribution. Verifiers MUST flag transitions exceeding this threshold as potential data source switching. Jitter-binding intervals across consecutive checkpoints MUST be checked for statistical independence (cross-checkpoint correlation below 0.3). Edit-delta patterns SHOULD be checked for non-stationarity consistent with human creative flow.
 
 Spatial-Temporal Divergence (Informative):
 : Advanced Verifiers MAY project the 1D `jitter-binding.intervals` array into an estimated 8-zone spatial keyboard model. By binning inter-keystroke intervals (IKI) into histograms representing spatial travel distances, Verifiers can compute the Kullback-Leibler (KL) divergence against biological baseline distributions. High KL divergence indicates structural timing anomalies invisible to raw entropy checks.
@@ -479,7 +495,7 @@ time-delay coordinates, the Verifier can estimate the
 correlation dimension of the resulting trajectory. Biological
 motor control processes typically produce a low-dimensional
 attractor (dimension 2-5), reflecting the finite degrees of
-freedom in the neuromuscular system. Synthetic or AI-injected
+freedom in the neuromuscular system {{Orden2003}}. Synthetic or AI-injected
 timing noise will typically fail to produce a low-dimensional
 biological attractor in the embedded space, instead exhibiting
 high or non-convergent correlation dimension estimates. This
@@ -661,7 +677,7 @@ Observed CoV ranges for different input sources:
 
 * Human typing (composition): CoV 0.25-0.70, reflecting
   natural motor variance, micro-pauses for word selection,
-  and variable key travel distances.
+  and variable key travel distances {{Dhakal2018}}{{Salthouse1986}}.
 * Human typing (transcription): CoV 0.15-0.40, more
   regular due to reduced cognitive load but still
   biologically variable.

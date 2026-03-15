@@ -198,6 +198,22 @@ informative:
     date: 2026
     seriesinfo:
       arXiv: "2601.17280"
+  Orden2003:
+    title: "Self-Organization of Cognitive Performance"
+    target: "https://doi.org/10.1037/0096-3445.132.3.331"
+    author:
+      - fullname: Guy C. Van Orden
+        initials: G.C.
+        surname: Van Orden
+      - fullname: John G. Holden
+        initials: J.G.
+        surname: Holden
+      - fullname: Michael T. Turvey
+        initials: M.T.
+        surname: Turvey
+    date: 2003
+    seriesinfo:
+      "Journal of Experimental Psychology: General": "132(3), 331-350"
   Sardar-RATS:
     title: "Security Considerations for Remote ATtestation procedureS (RATS)"
     target: "https://datatracker.ietf.org/doc/html/draft-sardar-rats-sec-cons-02"
@@ -2743,7 +2759,7 @@ Cognitive Load Correlation (CLC):
 : Verifiers analyze correlation between content complexity and typing cadence as specified in {{PoP-Appraisal}}.
 
 Error Topology Analysis:
-: Authentic authoring produces characteristic error patterns: corrections localized near recent insertions, deletion-to-insertion ratios consistent with human cognitive models {{Salthouse1986}}{{ScholaWrite}}{{ScholaWriteAugmented}}, and fractal self-similarity in revision patterns. Retyping produces either unnaturally low error rates or randomly distributed artificial errors.
+: Authentic authoring produces characteristic error patterns: corrections localized near recent insertions, deletion-to-insertion ratios consistent with human cognitive models {{Salthouse1986}}{{ScholaWrite}}{{ScholaWriteAugmented}}, and fractal self-similarity in revision patterns {{Orden2003}}. Retyping produces either unnaturally low error rates or randomly distributed artificial errors.
 
 Temporal Cost:
 : Even successful retype attacks require real-time effort. A 5,000-word document with 10-second checkpoint intervals requires 8+ hours of continuous typing effort to forge. The attack does not scale economically for high-volume forgery.
