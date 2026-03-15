@@ -144,6 +144,57 @@ informative:
     date: 2026
     seriesinfo:
       arXiv: "2601.17280"
+  Liang2009:
+    title: "Effects of Input Methods on Inter-Key Press Intervals During Continuous Typing"
+    target: https://doi.org/10.1080/00140130902919121
+    author:
+      - fullname: Hsieh-Wen Liang
+        initials: H.-W.
+        surname: Liang
+      - fullname: Yu-Hung Hwang
+        initials: Y.-H.
+        surname: Hwang
+      - fullname: Fang-Hsin Chang
+        initials: F.-H.
+        surname: Chang
+    date: 2009
+    seriesinfo:
+      Ergonomics: "52(9), 1153-1161"
+  WangZhai2001:
+    title: "Chinese Input with Keyboard and Eye-Tracking: An Anatomical Study"
+    target: https://doi.org/10.1145/365024.365298
+    author:
+      - fullname: Jingtao Wang
+        initials: J.
+        surname: Wang
+      - fullname: Shumin Zhai
+        initials: S.
+        surname: Zhai
+      - fullname: Hui Su
+        initials: H.
+        surname: Su
+    date: 2001
+    seriesinfo:
+      "ACM CHI": "2001"
+  Shangguan2021:
+    title: "Dissecting User-Perceived Latency of On-Device E2E Speech Recognition"
+    target: https://doi.org/10.21437/Interspeech.2021-81
+    author:
+      - fullname: Yuan Shangguan
+        initials: Y.
+        surname: Shangguan
+      - fullname: Kate Knister
+        initials: K.
+        surname: Knister
+      - fullname: Yanzhang He
+        initials: Y.
+        surname: He
+      - fullname: Ian McGraw
+        initials: I.
+        surname: McGraw
+    date: 2021
+    seriesinfo:
+      INTERSPEECH: "2021"
   Gilden2001:
     title: "Cognitive Emissions of 1/f Noise"
     target: https://doi.org/10.1037/0033-295X.108.1.33
@@ -1541,7 +1592,7 @@ Eye-tracking input produces IKI ranges of 500-3000 ms {{Majaranta2009}} (versus
 Dictation input produces burst patterns with higher cadence
 variance than keyboard {{Karat1999}}. Adjusted thresholds:
 
-* SNR: -8 dB to +8 dB (wider range reflecting speech pauses)
+* SNR: -8 dB to +8 dB (wider range reflecting speech pauses {{Shangguan2021}})
 * CLC correlation: r > 0.1 (range 0.1 to 0.8)
 * Paste-to-keystroke ratio threshold: disabled (dictation
   engines produce burst insertions by design)
@@ -1558,8 +1609,8 @@ thresholds:
 
 * IKI analysis: Verifiers MUST account for the bimodal
   distribution of IME input. Composition-phase keystrokes
-  exhibit intervals of 50-200 ms; inter-sequence pauses
-  during candidate selection range from 300-2000 ms.
+  exhibit intervals of 50-200 ms {{Liang2009}}; inter-sequence pauses
+  during candidate selection range from 300-2000 ms {{WangZhai2001}}.
   Verifiers MUST segment IKI analysis by composition phase
   rather than applying a single distribution model.
 * SNR: -5 dB to +8 dB (wider than keyboard due to
