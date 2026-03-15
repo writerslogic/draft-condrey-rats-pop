@@ -117,6 +117,11 @@ edit-delta = {
     2 => uint,                    ; chars-deleted
     3 => uint,                    ; op-count
     ? 4 => [* edit-position],     ; positions
+    ? 5 => hash-digest,           ; edit-graph-hash (ENHANCED+)
+    ; keys 6-8 reserved for future use
+    ? 9 => [8*8 uint],             ; cursor-trajectory-histogram (MAXIMUM)
+    ? 10 => [8*8 uint],            ; revision-depth-histogram (MAXIMUM)
+    ? 11 => [8*8 uint],            ; pause-duration-histogram (MAXIMUM)
 }
 
 edit-position = [
